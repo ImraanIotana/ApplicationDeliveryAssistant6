@@ -29,45 +29,17 @@ begin {
     ####################################################################################################
     ### MAIN OBJECT ###
     # Start the application stopwatch
-    $Global:AppStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    #$Global:AppStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
     # Create the Global Application Object
     [PSCustomObject]$Global:ApplicationObject = @{
         # Application
-        Name                        = [System.String]'Packaging Assistant'
-        Version                     = [System.Version]'5.7.2.100'
+        Name            = [System.String]'Application Delivery Assistant'
+        Version         = [System.Version]'6.0.0'
         # Folder Handlers
-        RootFolder                  = [System.String]$PSScriptRoot
-        LogFolder                   = [System.String](Join-Path -Path $ENV:TEMP -ChildPath 'PALogs')
-        DefaultOutputFolder         = [System.String](Join-Path -Path $ENV:USERPROFILE -ChildPath 'Downloads')
-        DefaultInstallationParent   = [System.String]$ENV:LOCALAPPDATA
-        UserDesktopFolder           = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
-        UserStartMenuFolder         = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::StartMenu)
-        WindowsFolder               = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Windows)
-        # Work Folder Leaf Names
-        WorkFolderLeafNames         = [System.Collections.Hashtable]@{
-            MainApplication         = 'MainApplication'
-            SharedFunctions         = 'MainApplication\Shared Functions'
-            SharedModules           = 'MainApplication\Shared Modules'
-            SharedAssets            = 'MainApplication\Shared Assets'
-            Settings                = 'MainApplication\Settings'
-            Modules                 = 'Modules'
-        }
-        # File Handlers
-        MainScriptFileName          = [System.String]'PackagingAssistant.ps1'
-        SettingsFileName            = [System.String]'ApplicationSettings.psd1'
-        CustomerSettingsFileName    = [System.String]'CustomerSettings.psd1'
-        IconFileName                = [System.String]'KPN.ico'
-        VersionHistoryFileName      = [System.String]'README.md'
-        # Message Handlers
-        Messages                    = [System.Collections.Hashtable]@{
-            CopyrightNotice         = 'Copyright (C) Iotana. All rights reserved.'
-            LoadingMessageFix       = 'Loading the {0} version {1}...'
-            WelcomeMessageFix       = 'Welcome to the {0} version {1}.'
-            HostPromptText          = 'Press Enter to close this window...'
-        }
+        RootFolder      = [System.String]$PSScriptRoot
         # End Handlers
-        LeaveHostOpen               = $false
+        LeaveHostOpen   = $false
     }
     # Add the calculated properties to the main object
     $Global:ApplicationObject | Add-Member -MemberType ScriptProperty -Name VersionHistoryFilePath -Value { Join-Path -Path $this.RootFolder -ChildPath $this.VersionHistoryFileName }
@@ -76,6 +48,36 @@ begin {
 
     ####################################################################################################
     ### SUPPORTING FUNCTION ###
+
+    function Import-GraphicalSettings {
+        # Import the graphical settings from the GraphicalSettings.psd1 file
+        Write-Host 'Importing graphical settings...'
+        [System.String]$GraphicalSettingsFilePath = Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter 'GraphicalSettings.psd1'
+        [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFilePath
+        # Add the GraphicalSettings hashtable to the main object
+        $Global:ApplicationObject | Add-Member -NotePropertyName GraphicalSettings -NotePropertyValue $GraphicalSettings
+        
+    }
+
+    function Add-Assemblies { param([PSCustomObject]$Object = $Global:ApplicationObject)
+        # Load the assemblies
+        @('System.Windows.Forms','System.Drawing') | ForEach-Object { Write-Host "Loading Assembly $_..." ; Add-Type -AssemblyName $_ }
+    }
+
+
+    function New-MainForm { param([PSCustomObject]$Object = $Global:ApplicationObject)
+        # Create the Global Main Form
+        [System.Windows.Forms.Form]$Global:MainForm = $NewForm = New-Object System.Windows.Forms.Form
+        $NewForm.Text = ('{0} - Version {1}' -f $Object.Name,$Object.Version)
+        $NewForm.StartPosition = 'CenterScreen'
+        $NewForm.Size = New-Object System.Drawing.Size(1200,800)
+        $NewForm.MinimumSize = New-Object System.Drawing.Size(1000,600)
+    }
+
+    function Show-MainForm {
+        # Show the main form
+        $Global:MainForm.ShowDialog()
+    }
 
     function Add-WorkFoldersToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
         # Create a new empty WorkFolders hashtable
@@ -133,16 +135,27 @@ begin {
 
     function Write-WelcomeMessage {
         # Write the copyright and welcome message
-        Write-Line $Global:ApplicationObject.Messages.CopyrightNotice
-        Write-Host ($Global:ApplicationObject.Messages.WelcomeMessageFix -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version)
+        Write-Line 'Copyright (C) Iotana. All rights reserved.'
+        Write-Host ('Welcome to the {0} version {1}!' -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version)
     }
 
     ####################################################################################################
 }
 
 process {
+    # Add the graphical settings to the main object
+    Import-GraphicalSettings
+
+    # Add the assemblies
+    Add-Assemblies
+
+    # Create the main form
+    New-MainForm
+
+    # Show the Main Form
+    Show-MainForm
     <# Start the Initialization
-    Write-Host ($Global:ApplicationObject.Messages.LoadingMessageFix -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version) -ForegroundColor DarkGray
+    Write-Host ('Loading the {0} version {1}...' -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version) -ForegroundColor DarkGray
     Add-WorkFoldersToMainObject
 
     # LOADING AND UNBLOCKING FILES
@@ -227,13 +240,13 @@ process {
 
 end {
     # Stop the stopwatch and write the elapsed time
-    $Global:AppStopwatch.Stop()
+    #$Global:AppStopwatch.Stop()
     #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
-    $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
-        Write-Host "Loading time: $RoundedSeconds seconds"
+    #$RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
+    #Write-Host "Loading time: $RoundedSeconds seconds"
 
     # If LeaveHostOpen is set to true, leave the host open
-    if ($Global:ApplicationObject.LeaveHostOpen) { Read-Host -Prompt $Global:ApplicationObject.Messages.HostPromptText }
+    if ($Global:ApplicationObject.LeaveHostOpen) { Read-Host -Prompt 'Press Enter to close this window...' }
 }
 
 ### END OF SCRIPT
