@@ -45,6 +45,9 @@ begin {
     ####################################################################################################
     ### SUPPORTING FUNCTION ###
 
+    # Import all the engine modules
+    Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
+
     function Initialize-Graphics {
         # Import the graphical settings from the GraphicalSettings.psd1 file
         Write-Host 'Importing graphical settings...' -ForegroundColor DarkGray
@@ -146,7 +149,8 @@ process {
     New-MainForm
 
     # Show the Main Form
-    Show-MainForm
+    Invoke-MainForm -Show
+
     <# Start the Initialization
     Write-Host ('Loading the {0} version {1}...' -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version) -ForegroundColor DarkGray
     Add-WorkFoldersToMainObject
