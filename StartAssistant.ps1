@@ -46,6 +46,7 @@ begin {
     ### SUPPORTING FUNCTION ###
 
     # Import all the engine modules
+    Write-Host 'Importing engine modules...' -ForegroundColor Green
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
 
     function Initialize-Graphics {
@@ -63,21 +64,7 @@ begin {
     }
 
 
-    function New-MainForm { param([PSCustomObject]$Object = $Global:ApplicationObject)
-        # Create the Global Main Form
-        [System.Windows.Forms.Form]$Global:MainForm = $NewForm = New-Object System.Windows.Forms.Form
-        $NewForm.Text = ('{0} - Version {1}' -f $Object.Name,$Object.Version)
-        $NewForm.StartPosition = 'CenterScreen'
-        $NewForm.Size = New-Object System.Drawing.Size(1200,800)
-        $NewForm.MinimumSize = New-Object System.Drawing.Size(1000,600)
-    }
-
-    function Show-MainForm {
-        # Show the main form
-        $Global:MainForm.ShowDialog() | Out-Null
-    }
-
-    function Add-WorkFoldersToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
+    <#function Add-WorkFoldersToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
         # Create a new empty WorkFolders hashtable
         Write-Host 'Setting workfolders...' -ForegroundColor DarkGray
         [System.Collections.Hashtable]$WorkFolders = @{}
@@ -98,7 +85,7 @@ begin {
 
     function Add-SettingsToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
         # Import the Settings
-        Write-Line 'Importing settings...'
+        Write-Host 'Importing settings...' -ForegroundColor DarkGray
         [System.String]$SettingsFilePath = Join-Path -Path $Object.WorkFolders.Settings -ChildPath $Object.SettingsFileName
         [System.Collections.Hashtable]$Settings = Import-PowerShellDataFile -Path $SettingsFilePath
         # Import the Customer Settings
@@ -135,7 +122,7 @@ begin {
         # Write the copyright and welcome message
         Write-Line 'Copyright (C) Iotana. All rights reserved.'
         Write-Host ('Welcome to the {0} version {1}!' -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version)
-    }
+    }#>
 
     ####################################################################################################
 }
@@ -143,11 +130,8 @@ begin {
 process {
     # Initialize the graphics by loading the settings and the assemblies
     Initialize-Graphics
-
-
     # Create the main form
-    New-MainForm
-
+    Invoke-MainForm
     # Show the Main Form
     Invoke-MainForm -Show
 

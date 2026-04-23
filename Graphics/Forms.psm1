@@ -32,32 +32,37 @@ function Invoke-MainForm {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false,HelpMessage='The main object of the application, which contains all the properties and settings.')]
-        [PSCustomObject]$Object = $Global:ApplicationObject,
+        [PSCustomObject]$InputObject = $Global:ApplicationObject,
 
         [Parameter(Mandatory=$false,HelpMessage='Switch for showing the main form.')]
         [System.Management.Automation.SwitchParameter]$Show
     )
-    
-    begin {
-        
-    }
-    
-    process {
-        if ($Show.IsPresent) {
-            # Show the main form
-            $null = $Global:MainForm.ShowDialog()
-        } else {
-            # Create the Global Main Form
-            [System.Windows.Forms.Form]$Global:MainForm = $NewForm = New-Object System.Windows.Forms.Form
-            # Set the properties of the Main Form
-            $NewForm.Text = ('{0} - Version {1}' -f $Object.Name,$Object.Version)
-            $NewForm.StartPosition = 'CenterScreen'
-            $NewForm.Size = New-Object System.Drawing.Size(1200,800)
-            $NewForm.MinimumSize = New-Object System.Drawing.Size(1000,600)
-        }
-    }
-    
-    end {
-        
+
+    # If the Show switch is present, then show the main form, otherwise create the main form and set its properties
+    if ($Show.IsPresent) {
+
+        # Show the main form
+        $null = $Global:MainForm.ShowDialog()
+
+    } else {
+
+        # Get the graphical settings from the main object
+        [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
+
+        # Create the Global Main Form
+        [System.Windows.Forms.Form]$Global:MainForm = $GMF = New-Object System.Windows.Forms.Form
+
+        # Set the properties of the Main Form
+        $GMF.Text               = "$($InputObject.Name) - Version $($InputObject.Version)"
+        $GMF.StartPosition      = 'CenterScreen'
+        $GMF.Size               = New-Object System.Drawing.Size($Settings.MainForm.Width,$Settings.MainForm.Height)
+
+        # Set the Window Buttons
+        #$GMF.MinimizeBox        = $true
+        #$GMF.MaximizeBox        = $false
+
+        # Set the Form Border Style
+        #$GMF.FormBorderStyle    = 'FixedSingle'
+
     }
 }
