@@ -13,12 +13,11 @@
 .OUTPUTS
     This script returns no stream-output. All output is written to the host during runtime.
 .NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : See below at the Version property of the Global Application Object.
     Author          : Imraan Iotana
-    Creation Date   : May 2023
-    Last Update     : February 2026
-.COPYRIGHT
-    Copyright (C) Iotana. All rights reserved.
+    Creation Date   : May 2026
+    Last Update     : May 2026
 #>
 ####################################################################################################
 
@@ -142,7 +141,7 @@ begin {
 }
 
 process {
-    # Start the Initialization
+    <# Start the Initialization
     Write-Host ($Global:ApplicationObject.Messages.LoadingMessageFix -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version) -ForegroundColor DarkGray
     Add-WorkFoldersToMainObject
 
@@ -214,8 +213,8 @@ process {
         $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
         Write-Line "Loading time: $RoundedSeconds seconds"
 
-        <#Write-Host "Aantal tabbladen: $($Global:MainTabControl.TabPages.Count)"
-        $Global:MainTabControl.TabPages | Select-Object Text | Out-Host#>
+        Write-Host "Aantal tabbladen: $($Global:MainTabControl.TabPages.Count)"
+        $Global:MainTabControl.TabPages | Select-Object Text | Out-Host
         # Write the welcome message
         Write-WelcomeMessage
         # Show the Main Form
@@ -223,10 +222,16 @@ process {
     }
     catch {
         Write-FullError
-    }
+    }#>
 }
 
 end {
+    # Stop the stopwatch and write the elapsed time
+    $Global:AppStopwatch.Stop()
+    #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
+    $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
+        Write-Line "Loading time: $RoundedSeconds seconds"
+
     # If LeaveHostOpen is set to true, leave the host open
     if ($Global:ApplicationObject.LeaveHostOpen) { Read-Host -Prompt $Global:ApplicationObject.Messages.HostPromptText }
 }
