@@ -230,7 +230,7 @@ end {
     $Global:AppStopwatch.Stop()
     #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
     $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
-        Write-Line "Loading time: $RoundedSeconds seconds"
+        Write-Host "Loading time: $RoundedSeconds seconds"
 
     # If LeaveHostOpen is set to true, leave the host open
     if ($Global:ApplicationObject.LeaveHostOpen) { Read-Host -Prompt $Global:ApplicationObject.Messages.HostPromptText }
