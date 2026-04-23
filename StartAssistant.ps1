@@ -41,26 +41,22 @@ begin {
         # End Handlers
         LeaveHostOpen   = $false
     }
-    # Add the calculated properties to the main object
-    $Global:ApplicationObject | Add-Member -MemberType ScriptProperty -Name VersionHistoryFilePath -Value { Join-Path -Path $this.RootFolder -ChildPath $this.VersionHistoryFileName }
-    $Global:ApplicationObject | Add-Member -MemberType ScriptProperty -Name DefaultInstallationFolder -Value { Join-Path -Path $this.DefaultInstallationParent -ChildPath $this.Name }
-    $Global:ApplicationObject | Add-Member -MemberType ScriptProperty -Name PowerShellExecutablePath -Value { Join-Path -Path $this.WindowsFolder -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe' }
 
     ####################################################################################################
     ### SUPPORTING FUNCTION ###
 
-    function Import-GraphicalSettings {
+    function Initialize-Graphics {
         # Import the graphical settings from the GraphicalSettings.psd1 file
-        Write-Host 'Importing graphical settings...'
-        [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter 'GraphicalSettings.psd1').FullName
+        Write-Host 'Importing graphical settings...' -ForegroundColor DarkGray
+        [System.String]$GraphicalSettingsFileName = 'GraphicalSettings.psd1'
+        [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter $GraphicalSettingsFileName -Recurse).FullName
         [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFilePath
+        
+        # Load the assemblies
+        $GraphicalSettings.Assemblies | ForEach-Object { Write-Host "Loading Assembly $_..." -ForegroundColor DarkGray ; Add-Type -AssemblyName $_ }
+
         # Add the GraphicalSettings hashtable to the main object
         $Global:ApplicationObject | Add-Member -NotePropertyName GraphicalSettings -NotePropertyValue $GraphicalSettings
-    }
-
-    function Add-Assemblies { param([PSCustomObject]$Object = $Global:ApplicationObject)
-        # Load the assemblies
-        @('System.Windows.Forms','System.Drawing') | ForEach-Object { Write-Host "Loading Assembly $_..." ; Add-Type -AssemblyName $_ }
     }
 
 
@@ -75,7 +71,7 @@ begin {
 
     function Show-MainForm {
         # Show the main form
-        $Global:MainForm.ShowDialog()
+        $Global:MainForm.ShowDialog() | Out-Null
     }
 
     function Add-WorkFoldersToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
@@ -142,11 +138,9 @@ begin {
 }
 
 process {
-    # Add the graphical settings to the main object
-    Import-GraphicalSettings
+    # Initialize the graphics by loading the settings and the assemblies
+    Initialize-Graphics
 
-    # Add the assemblies
-    Add-Assemblies
 
     # Create the main form
     New-MainForm
