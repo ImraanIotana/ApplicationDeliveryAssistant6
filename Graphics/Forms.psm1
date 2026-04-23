@@ -6,19 +6,20 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Copies a file or folder to a specified destination folder, with the option to force overwrite.
+    This function creates and manages the main form of the application.
 .DESCRIPTION
-    This function copies a file or folder to a specified destination folder. It supports both files and folders, and can force overwrite existing items.
-    It also provides options to return the output and write the output to the host.
+    This function creates and manages the main form of the application. It sets the properties of the form, including size, position, and window buttons.
 .EXAMPLE
-    Copy-ItemUDF -ThisFile "C:\Source\File.txt" -IntoThisFolder "C:\Destination" -OutHost
-    Copies the specified file to the destination folder and writes the output to the host.
+    Invoke-MainForm
+    Creates the main form of the application and sets its properties, but does not show it.
+.EXAMPLE
+    Invoke-MainForm -Show
+    Displays the main form of the application.
 .INPUTS
-    [System.String]
+    [PSCustomObject]
     [System.Management.Automation.SwitchParameter]
 .OUTPUTS
-    [System.Boolean]
-    A boolean value indicating whether the copy operation was successful, returned when using -PassThru
+    This function returns no stream output.
 .NOTES
     This script is part of the Universal Deployment Framework. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -58,11 +59,11 @@ function Invoke-MainForm {
         $GMF.Size               = New-Object System.Drawing.Size($Settings.MainForm.Width,$Settings.MainForm.Height)
 
         # Set the Window Buttons
-        #$GMF.MinimizeBox        = $true
-        #$GMF.MaximizeBox        = $false
+        $GMF.MinimizeBox        = $true
+        $GMF.MaximizeBox        = $false
 
         # Set the Form Border Style
-        #$GMF.FormBorderStyle    = 'FixedSingle'
+        $GMF.FormBorderStyle    = 'FixedSingle'
 
     }
 }

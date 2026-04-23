@@ -28,9 +28,6 @@ param (
 begin {
     ####################################################################################################
     ### MAIN OBJECT ###
-    # Start the application stopwatch
-    #$Global:AppStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-
     # Create the Global Application Object
     [PSCustomObject]$Global:ApplicationObject = @{
         # Application
@@ -45,8 +42,11 @@ begin {
     ####################################################################################################
     ### SUPPORTING FUNCTION ###
 
+    # Start the application stopwatch
+    $Global:AppStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
     # Import all the engine modules
-    Write-Host 'Importing engine modules...' -ForegroundColor Green
+    Write-Host 'Importing modules...' -ForegroundColor DarkGray
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
 
     function Initialize-Graphics {
@@ -132,6 +132,16 @@ process {
     Initialize-Graphics
     # Create the main form
     Invoke-MainForm
+
+
+    # Stop the stopwatch and write the elapsed time
+    $Global:AppStopwatch.Stop()
+    #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
+    $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
+    Write-Host "Loading time: $RoundedSeconds seconds"
+
+
+
     # Show the Main Form
     Invoke-MainForm -Show
 
@@ -220,12 +230,6 @@ process {
 }
 
 end {
-    # Stop the stopwatch and write the elapsed time
-    #$Global:AppStopwatch.Stop()
-    #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
-    #$RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
-    #Write-Host "Loading time: $RoundedSeconds seconds"
-
     # If LeaveHostOpen is set to true, leave the host open
     if ($Global:ApplicationObject.LeaveHostOpen) { Read-Host -Prompt 'Press Enter to close this window...' }
 }

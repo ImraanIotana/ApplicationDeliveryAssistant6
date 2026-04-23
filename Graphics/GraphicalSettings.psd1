@@ -29,7 +29,7 @@
         Height          = 615       # Height of the Main Form
     }
 
-    # MainTabControl settings
+    <# MainTabControl settings
     MainTabControl      = @{
         TopMargin       = 5         # Between the top of the Parent, and the top of the TabControl
         LeftMargin      = 5         # Between the left of the Parent, and the left of the TabControl
@@ -71,5 +71,5 @@
     # URL of the zip file on GitHub where the latest version of the Application Delivery Assistant can be found
     ZipFileOnGithub     = 'https://github.com/ImraanIotana/ADA6/archive/refs/heads/main.zip'
     # URL of the version file on GitHub where the version number of the latest version of the Application Delivery Assistant can be found
-    VersionFileOnGithub = 'https://github.com/ImraanIotana/ADA6/blob/main/ApplicationDeliveryAssistant.ps1'
+    VersionFileOnGithub = 'https://github.com/ImraanIotana/ADA6/blob/main/ApplicationDeliveryAssistant.ps1'#>
 }
