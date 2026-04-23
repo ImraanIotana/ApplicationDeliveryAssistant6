@@ -52,11 +52,10 @@ begin {
     function Import-GraphicalSettings {
         # Import the graphical settings from the GraphicalSettings.psd1 file
         Write-Host 'Importing graphical settings...'
-        [System.String]$GraphicalSettingsFilePath = Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter 'GraphicalSettings.psd1'
+        [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter 'GraphicalSettings.psd1').FullName
         [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFilePath
         # Add the GraphicalSettings hashtable to the main object
         $Global:ApplicationObject | Add-Member -NotePropertyName GraphicalSettings -NotePropertyValue $GraphicalSettings
-        
     }
 
     function Add-Assemblies { param([PSCustomObject]$Object = $Global:ApplicationObject)
