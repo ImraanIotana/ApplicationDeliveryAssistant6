@@ -4,7 +4,7 @@ Application Delivery Assistant version 6 - Copyright (C) Iotana. All rights rese
 Version 6.0.0
 May 2026
 - Complete rewrite of the application.
-- Rename application from Packaging Assistent to Application Delivery Assistant.
+- Renamed application from Packaging Assistent to Application Delivery Assistant.
 
 Version 5.7.2
 February 2026

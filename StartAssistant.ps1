@@ -1,13 +1,13 @@
 ﻿####################################################################################################
 <#
 .SYNOPSIS
-    This application assists Package Engineers by automating administrative tasks.
+    This application assists Application Delivery Engineers by automating common and repetitive administrative tasks.
 .DESCRIPTION
-    This application performs tasks like creating an Application Intake, creating AppLocker files, creating an MECM Application, etc.
+    This application performs tasks like creating an Application Intake, creating AppLocker files, exporting Shortcut information, etc.
 .EXAMPLE
-    %windir%\sysnative\WindowsPowerShell\v1.0\powershell.exe -Executionpolicy Bypass -WindowStyle Normal -File "PackagingAssistant.ps1"
+    C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Executionpolicy Bypass -WindowStyle Normal -File "StartAssistant.ps1"
 .EXAMPLE
-    %windir%\sysnative\WindowsPowerShell\v1.0\powershell.exe -Executionpolicy Bypass -WindowStyle Normal -File "PackagingAssistant.ps1" -Verbose
+    C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Executionpolicy Bypass -WindowStyle Normal -File "StartAssistant.ps1" -Verbose
 .INPUTS
     This script has no input parameters.
 .OUTPUTS
