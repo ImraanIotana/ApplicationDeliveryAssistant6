@@ -35,9 +35,11 @@ function Initialize-Graphics {
         [System.String]$GraphicalSettingsFileName = 'Graphics.Settings.psd1'
     )
 
+    # Get the full path to the graphical settings file
+    [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter $GraphicalSettingsFileName -Recurse).FullName
+
     # Import the graphical settings from the Graphics Settings file
     Write-Host 'Importing graphical settings...' -ForegroundColor DarkGray
-    [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter $GraphicalSettingsFileName -Recurse).FullName
     [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFilePath
     
     # Load the assemblies
@@ -46,3 +48,6 @@ function Initialize-Graphics {
     # Add the GraphicalSettings hashtable to the main object
     $Global:ApplicationObject | Add-Member -NotePropertyName GraphicalSettings -NotePropertyValue $GraphicalSettings
 }
+
+### END OF FUNCTION
+####################################################################################################

@@ -45,26 +45,11 @@ begin {
     # Start the application stopwatch
     $Global:AppStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
-    # Import all the engine modules
+    # Import all the modules
     Write-Host 'Importing modules...' -ForegroundColor DarkGray
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
 
-
-
-    <#function Add-WorkFoldersToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
-        # Create a new empty WorkFolders hashtable
-        Write-Host 'Setting workfolders...' -ForegroundColor DarkGray
-        [System.Collections.Hashtable]$WorkFolders = @{}
-        # Add the full paths to the new WorkFolders hashtable
-        $Object.WorkFolderLeafNames.GetEnumerator() | ForEach-Object {
-            [System.String]$FolderId    = $_.Name
-            [System.String]$FullPath    = Join-Path -Path $Object.RootFolder -ChildPath $_.Value
-            $WorkFolders[$FolderId] = $FullPath
-        }
-        # Add the new WorkFolders hashtable to the main object
-        $Object | Add-Member -NotePropertyName WorkFolders -NotePropertyValue $WorkFolders
-    }
-
+<#
     function New-LogFolder { param([PSCustomObject]$Object = $Global:ApplicationObject)
         # Create the LogFolder
         if (-Not(Test-Path -Path $Object.LogFolder)) { New-Item -Path $Object.LogFolder -ItemType Directory -Force | Out-Null }
@@ -109,7 +94,8 @@ begin {
         # Write the copyright and welcome message
         Write-Line 'Copyright (C) Iotana. All rights reserved.'
         Write-Host ('Welcome to the {0} version {1}!' -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version)
-    }#>
+    }
+#>
 
     ####################################################################################################
 }
@@ -120,14 +106,11 @@ process {
     # Create the main form
     Invoke-MainForm
 
-
     # Stop the stopwatch and write the elapsed time
     $Global:AppStopwatch.Stop()
     #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
     $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
     Write-Host "Loading time: $RoundedSeconds seconds"
-
-
 
     # Show the Main Form
     Invoke-MainForm -Show
@@ -140,7 +123,6 @@ process {
     # CONTINUE THE INITIALIZATION
     # After dotsourcing, all functions have become available.
     New-LogFolder
-    Import-PAModules
     Add-SettingsToMainObject
     Add-GraphicalPrerequisites
     Invoke-UserSettings -Initialize
