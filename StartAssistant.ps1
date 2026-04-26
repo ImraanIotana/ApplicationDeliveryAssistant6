@@ -50,9 +50,9 @@ begin {
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
 
     function Initialize-Graphics {
-        # Import the graphical settings from the GraphicalSettings.psd1 file
+        # Import the graphical settings from the Graphics Settings file
         Write-Host 'Importing graphical settings...' -ForegroundColor DarkGray
-        [System.String]$GraphicalSettingsFileName = 'GraphicalSettings.psd1'
+        [System.String]$GraphicalSettingsFileName = 'Graphics.Settings.psd1'
         [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter $GraphicalSettingsFileName -Recurse).FullName
         [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFilePath
         
