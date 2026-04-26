@@ -49,19 +49,6 @@ begin {
     Write-Host 'Importing modules...' -ForegroundColor DarkGray
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
 
-    function Initialize-Graphics {
-        # Import the graphical settings from the Graphics Settings file
-        Write-Host 'Importing graphical settings...' -ForegroundColor DarkGray
-        [System.String]$GraphicalSettingsFileName = 'Graphics.Settings.psd1'
-        [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter $GraphicalSettingsFileName -Recurse).FullName
-        [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFilePath
-        
-        # Load the assemblies
-        $GraphicalSettings.Assemblies | ForEach-Object { Write-Host "Loading Assembly $_..." -ForegroundColor DarkGray ; Add-Type -AssemblyName $_ }
-
-        # Add the GraphicalSettings hashtable to the main object
-        $Global:ApplicationObject | Add-Member -NotePropertyName GraphicalSettings -NotePropertyValue $GraphicalSettings
-    }
 
 
     <#function Add-WorkFoldersToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
@@ -148,20 +135,6 @@ process {
     <# Start the Initialization
     Write-Host ('Loading the {0} version {1}...' -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version) -ForegroundColor DarkGray
     Add-WorkFoldersToMainObject
-
-    # LOADING AND UNBLOCKING FILES
-    # Set the full paths to search
-    [System.String[]]$FullPathsToSearch = @('SharedFunctions','SharedModules','Modules') | ForEach-Object { $Global:ApplicationObject.WorkFolders[$_] }
-    # Get all PS1 and PSM1 file objects
-    [System.IO.FileSystemInfo[]]$AllFilesToUnblock = $FullPathsToSearch | ForEach-Object { Get-ChildItem -Path $_ -Recurse -File -Include *.ps1,*.psm1 -ErrorAction SilentlyContinue }
-    # Unblock all files and dotsource the PS1 files
-    Write-Host 'Loading functions...' -ForegroundColor DarkGray
-    $AllFilesToUnblock | ForEach-Object {
-        # Unblock the file
-        Unblock-File -Path $_.FullName
-        # If the file is a ps1, then also dotsource it
-        if ($_.Extension -eq '.ps1') { . $_.FullName }
-    }
 
 
     # CONTINUE THE INITIALIZATION

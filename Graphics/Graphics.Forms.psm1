@@ -1,5 +1,5 @@
 #
-# Module 'Forms.psm1'
+# Module 'Graphics.Forms.psm1'
 # Last Update: April 2026
 #
 
