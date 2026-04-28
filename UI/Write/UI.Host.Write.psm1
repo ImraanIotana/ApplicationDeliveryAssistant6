@@ -35,30 +35,22 @@ function Write-Line {
         [System.String]$Message,
 
         [Parameter(Mandatory=$false,HelpMessage='Type for deciding the colors.')]
-        [ValidateSet('Info','Busy','Success','Fail','Warning','Special','Separator','Debug')]
+        [ValidateSet('Info','Busy','Success','Fail','Warning','Special','Debug')]
         [AllowNull()][AllowEmptyString()]
         [System.String]$Type
     )
 
-    ####################################################################################################
-    ### MAIN PROPERTIES ###
 
+    # PREPARATION - MAIN PROPERTIES
     # Set the main properties for the message
     [System.String]$OriginalMessage         = $Message
     [System.String]$MessageType             = $Type
-    [System.String]$TimeStamp               = Get-TimeStamp -ForHost
-    # Set the calling function
-    [System.String]$FirstCallingFunction    = (Get-PSCallStack)[1].Command
-    [System.String]$SecondCallingFunction   = (Get-PSCallStack)[2].Command
-    [System.String]$CallingFunctionName     = if ($FirstCallingFunction -eq 'Write-DeploymentMessage' -or $FirstCallingFunction -eq 'Write-ErrorReport') { $SecondCallingFunction } else { $FirstCallingFunction }
-    [System.String]$CallingFunction         = "[$CallingFunctionName]:"
 
-    ####################################################################################################
+
     # PREPARATION - MESSAGE FORMATTING
     # Set the message based on the MessageType
     [System.String]$FullMessage = switch ($MessageType) {
-        'Separator'         { "$TimeStamp ----------------------------------------------------------------------------------------------------" }
-        'Debug'             { "$TimeStamp $CallingFunction $OriginalMessage" }
+        'Debug'             { [System.String]$TimeStamp = Get-TimeStamp -ForHost ; [System.String]$CallingFunction = (Get-PSCallStack)[1].Command ; "$TimeStamp [$CallingFunction] $OriginalMessage" }
         Default             { $OriginalMessage }
     }
 
@@ -71,7 +63,6 @@ function Write-Line {
         'Fail'              { 'Red' }
         'Warning'           { 'Yellow' }
         'Special'           { 'Cyan' }
-        'Separator'         { 'DarkGray' }
         'Debug'             { 'Cyan' }
         Default             { 'DarkGray' }
     }
@@ -84,10 +75,21 @@ function Write-Line {
 
     # EXECUTION
     # Write the message
-    switch ([System.String]::IsNullOrEmpty($BackgroundColor)) {
+    <#switch ([System.String]::IsNullOrEmpty($BackgroundColor)) {
         $false  { Write-Host $FullMessage -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor }
         $true   { Write-Host $FullMessage -ForegroundColor $ForegroundColor }
+    }#>
+
+    $params = @{
+        ForegroundColor = $ForegroundColor
     }
+
+    if ($BackgroundColor) {
+        $params.BackgroundColor = $BackgroundColor
+    }
+
+    Write-Host $FullMessage @params
+
 }
 
 ### END OF FUNCTION

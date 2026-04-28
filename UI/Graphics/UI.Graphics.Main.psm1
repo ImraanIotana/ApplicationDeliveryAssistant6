@@ -37,7 +37,7 @@ function Initialize-Graphics {
     [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter $GraphicalSettingsFileName -Recurse).FullName
 
     # Import the graphical settings from the Graphics Settings file
-    Write-Line 'Importing graphical settings...'
+    Write-Line 'Importing graphical settings...' -Type Debug
     [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFilePath
     
     # Load the assemblies
