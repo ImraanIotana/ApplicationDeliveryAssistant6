@@ -1,5 +1,5 @@
 #
-# Module 'Graphics.Main.psm1'
+# Module 'UI.Graphics.Main.psm1'
 # Last Update: April 2026
 #
 
@@ -30,7 +30,7 @@ function Initialize-Graphics {
     [OutputType([System.Void])]
     param (
         [Parameter(Mandatory=$false,HelpMessage='The name of the graphical settings file.')]
-        [System.String]$GraphicalSettingsFileName = 'Graphics.Settings.psd1'
+        [System.String]$GraphicalSettingsFileName = 'UI.Graphics.Settings.psd1'
     )
 
     # Get the full path to the graphical settings file
