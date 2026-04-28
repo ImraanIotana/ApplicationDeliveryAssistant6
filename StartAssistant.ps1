@@ -110,7 +110,7 @@ process {
     $Global:AppStopwatch.Stop()
     #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
     $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
-    Write-Host "Loading time: $RoundedSeconds seconds"
+    Write-Line "Loading time: $RoundedSeconds seconds"
 
     # Show the Main Form
     Invoke-MainForm -Show
