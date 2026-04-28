@@ -46,7 +46,6 @@ begin {
     $Global:AppStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
     # Import all the modules
-    Write-Host 'Importing modules...' -ForegroundColor DarkGray
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
 
 <#
@@ -57,7 +56,7 @@ begin {
 
     function Add-SettingsToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
         # Import the Settings
-        Write-Host 'Importing settings...' -ForegroundColor DarkGray
+        Write-Line 'Importing settings...'
         [System.String]$SettingsFilePath = Join-Path -Path $Object.WorkFolders.Settings -ChildPath $Object.SettingsFileName
         [System.Collections.Hashtable]$Settings = Import-PowerShellDataFile -Path $SettingsFilePath
         # Import the Customer Settings

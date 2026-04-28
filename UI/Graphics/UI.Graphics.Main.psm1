@@ -37,11 +37,11 @@ function Initialize-Graphics {
     [System.String]$GraphicalSettingsFilePath = (Get-ChildItem -Path $Global:ApplicationObject.RootFolder -File -Filter $GraphicalSettingsFileName -Recurse).FullName
 
     # Import the graphical settings from the Graphics Settings file
-    Write-Line 'Importing graphical settings...' -Type Debug
+    Write-Line 'Importing graphical settings...'
     [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFilePath
     
     # Load the assemblies
-    $GraphicalSettings.Assemblies | ForEach-Object { Write-Line "Loading Assembly $_..." ; Add-Type -AssemblyName $_ }
+    $GraphicalSettings.Assemblies | ForEach-Object { Add-Type -AssemblyName $_ }
 
     # Add the GraphicalSettings hashtable to the main object
     $Global:ApplicationObject | Add-Member -NotePropertyName GraphicalSettings -NotePropertyValue $GraphicalSettings
