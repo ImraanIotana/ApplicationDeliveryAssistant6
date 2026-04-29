@@ -72,12 +72,12 @@ function Get-TimeStamp {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Stops the global timer and reports elapsed time.
+    Stops the load timer and reports elapsed time.
 .DESCRIPTION
-    This function stops the global timer that was started at the beginning of the application and reports the elapsed time in seconds.
-    If the global timer was not started, a fail message is written to the host.
+    This function stops the load timer that was started at the beginning of the application and reports the elapsed time in seconds.
+    If the load timer was not started, a fail message is written to the host.
 .EXAMPLE
-    Stop-GlobalTimer
+    Stop-LoadTimer
 .INPUTS
     None
 .OUTPUTS
@@ -90,7 +90,7 @@ function Get-TimeStamp {
     Last Update     : April 2026
 #>
 ####################################################################################################
-function Stop-GlobalTimer {
+function Stop-LoadTimer {
         
     # EXECUTION
     # Stop the load timer and report elapsed time

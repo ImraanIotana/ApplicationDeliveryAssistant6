@@ -16,8 +16,8 @@
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : See below at the Version property of the Global Application Object.
     Author          : Imraan Iotana
-    Creation Date   : May 2026
-    Last Update     : May 2026
+    Creation Date   : April 2026
+    Last Update     : April 2026
 #>
 ####################################################################################################
 
@@ -35,7 +35,7 @@ begin {
         RootFolder      = [System.String]$PSScriptRoot
         # Other Handlers
         LoadTimer       = [System.Diagnostics.Stopwatch]::StartNew()
-        LeaveHostOpen   = $false
+        LeaveHostOpen   = [System.Boolean]$false
     }
     # Import all the modules
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
@@ -47,8 +47,8 @@ process {
         Initialize-Graphics
         # Create the main form
         Invoke-MainForm
-        # Stop the global timer and report elapsed time
-        Stop-GlobalTimer
+        # Stop the load timer and report elapsed time
+        Stop-LoadTimer
         # Write the welcome message
         Write-WelcomeMessage
         # Show the Main Form
