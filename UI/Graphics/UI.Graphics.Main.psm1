@@ -39,16 +39,16 @@ function Initialize-Graphics {
 
     # PREPARATION
     # Get the full path to the graphical settings file
-    [System.IO.FileInfo]$GraphicalSettingsFileObject = Get-ChildItem -Path $FolderToSearch -File -Filter $GraphicalSettingsFileName -Recurse | Select-Object -First 1
+    [System.IO.FileInfo]$GraphicalSettingsFileObject = Get-ChildItem -Path $FolderToSearch -File -Filter $GraphicalSettingsFileName -Recurse
 
     # Check if the graphical settings file was found
-    if (-Not $GraphicalSettingsFileObject) {
-        [System.String]$ErrorMessage = "The graphical settings file ($GraphicalSettingsFileName) was not found in folder ($FolderToSearch) or its subfolders."
+    if ($GraphicalSettingsFileObject.Count -ne 1) {
+        [System.String]$ErrorMessage = "The graphical settings file ($GraphicalSettingsFileName) was not found in folder ($FolderToSearch) or its subfolders. (Found $($GraphicalSettingsFileObject.Count) files.)"
         Write-Line $ErrorMessage -Type Error
         throw $ErrorMessage
     }
 
-    # EXECUTION - IMPORT
+    # EXECUTION - IMPORT THE GRAPHICAL SETTINGS
     # Import the graphical settings from the Graphics Settings file
     Write-Line 'Importing graphical settings...'
     [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFileObject.FullName
@@ -58,12 +58,27 @@ function Initialize-Graphics {
     Write-Line 'Loading assemblies...'
     $GraphicalSettings.Assemblies | ForEach-Object { Add-Type -AssemblyName $_ }
 
-    # EXECUTION - SET FONT
+    # EXECUTION - ADD FONT
     # Set the font
-    Write-Line 'Setting font...'
+    Write-Line 'Adding font...'
     [System.Drawing.Font]$MainFont = New-Object System.Drawing.Font($GraphicalSettings.MainFont.Name,$GraphicalSettings.MainFont.Size,[System.Drawing.FontStyle]::Bold)
     # Replace the MainFont in the GraphicalSettings hashtable with the actual Font object
     $GraphicalSettings.MainFont = $MainFont
+
+    # EXECUTION - MAIN ICON
+    # Get the full path to the main icon file
+    [System.String]$MainIconFileName = $GraphicalSettings.MainForm.IconFileName
+    [System.IO.FileInfo]$MainIconFileObject = Get-ChildItem -Path $FolderToSearch -File -Filter $MainIconFileName -Recurse
+    # Check if the main icon file was found
+    if ($MainIconFileObject.Count -ne 1) {
+        [System.String]$ErrorMessage = "The main icon file ($MainIconFileName) was not found in folder ($FolderToSearch) or its subfolders. (Found $($MainIconFileObject.Count) files.)"
+        Write-Line $ErrorMessage -Type Error
+        throw $ErrorMessage
+    }
+    # Replace the MainIcon in the GraphicalSettings hashtable with the actual Icon object
+    Write-Line 'Setting main icon...'
+    [System.Drawing.Icon]$MainIcon = New-Object System.Drawing.Icon($MainIconFileObject.FullName)
+    $GraphicalSettings.MainIcon = $MainIcon
 
     # EXECUTION - SET MAIN FORM PROPERTIES
     # Add the GraphicalSettings hashtable to the main object
