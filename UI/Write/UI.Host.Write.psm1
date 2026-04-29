@@ -91,15 +91,13 @@ function Write-Line {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Outputs a formatted message to the host with customizable colors for enhanced readability and status indication.
+    Writes a welcome message to the host, including copyright information and the application name and version.
 .DESCRIPTION
-    Provides a function for writing messages to the host in various colors, supporting multiple message types for deployment and automation scenarios.
+    This function is called at the start of the application to greet the user and provide basic information about the application.
 .EXAMPLE
-    Write-Line "Hello World!"
-.EXAMPLE
-    Write-Line "Deployment completed successfully." -Type Success
+    Write-WelcomeMessage
 .INPUTS
-    [System.String]
+    None
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
 .NOTES
@@ -113,7 +111,7 @@ function Write-Line {
 function Write-WelcomeMessage {
     # Write the copyright and welcome message
     Write-Line 'Copyright (C) Iotana. All rights reserved.'
-    Write-Line "Welcome to the $($Global:ApplicationObject.Name) version $($Global:ApplicationObject.Version)" -Type Info
+    Write-Line "Welcome to the $($Global:ApplicationObject.Name) $($Global:ApplicationObject.Version)" -Type Info
 }
 
 ### END OF FUNCTION
