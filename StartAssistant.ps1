@@ -26,8 +26,6 @@ param (
 )
 
 begin {
-    ####################################################################################################
-    ### MAIN OBJECT ###
     # Create the Global Application Object
     [PSCustomObject]$Global:ApplicationObject = @{
         # Application
@@ -35,33 +33,12 @@ begin {
         Version         = [System.Version]'6.0.0.0'
         # Folder Handlers
         RootFolder      = [System.String]$PSScriptRoot
-        # End Handlers
+        # Other Handlers
+        LoadTimer       = [System.Diagnostics.Stopwatch]::StartNew()
         LeaveHostOpen   = $false
     }
-
-    ####################################################################################################
-    ### SUPPORTING FUNCTION ###
-
-    # Start the application stopwatch
-    $Global:AppStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-
     # Import all the modules
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
-
-<#
-    function New-LogFolder { param([PSCustomObject]$Object = $Global:ApplicationObject)
-        # Create the LogFolder
-        if (-Not(Test-Path -Path $Object.LogFolder)) { New-Item -Path $Object.LogFolder -ItemType Directory -Force | Out-Null }
-    }
-
-    function Write-WelcomeMessage {
-        # Write the copyright and welcome message
-        Write-Line 'Copyright (C) Iotana. All rights reserved.'
-        Write-Host ('Welcome to the {0} version {1}!' -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version)
-    }
-#>
-
-    ####################################################################################################
 }
 
 process {
@@ -72,13 +49,14 @@ process {
         Invoke-MainForm
         # Stop the global timer and report elapsed time
         Stop-GlobalTimer
+        # Write the welcome message
+        Write-WelcomeMessage
         # Show the Main Form
         Invoke-MainForm -Show
     }
     catch {
         Write-Error "The Application Delivery Assistant encountered an error: $_"
     }
-
 }
 
 end {

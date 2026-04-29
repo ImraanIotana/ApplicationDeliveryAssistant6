@@ -93,18 +93,18 @@ function Get-TimeStamp {
 function Stop-GlobalTimer {
         
     # EXECUTION
-    # Stop the global timer and report elapsed time
-    if ($Global:AppStopwatch) {
+    # Stop the load timer and report elapsed time
+    if ($Global:ApplicationObject.LoadTimer) {
 
         # Stop the stopwatch and write the elapsed time
-        $Global:AppStopwatch.Stop()
-        $Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
+        $Global:ApplicationObject.LoadTimer.Stop()
+        $Seconds = $Global:ApplicationObject.LoadTimer.Elapsed.TotalSeconds
         $RoundedSeconds = $Seconds.ToString("F2")
         Write-Line "Loading time: $RoundedSeconds seconds"
 
     } else {
-        # Write a fail message if the global timer was not started
-        Write-Line "The Global timer was not started. The elapsed time cannot be determined." -Type Fail
+        # Write a fail message if the load timer was not started
+        Write-Line "The Load Timer was not started. The elapsed time cannot be determined." -Type Fail
     }
 }
 

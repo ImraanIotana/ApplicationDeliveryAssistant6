@@ -87,3 +87,34 @@ function Write-Line {
 ### END OF FUNCTION
 ####################################################################################################
 
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Outputs a formatted message to the host with customizable colors for enhanced readability and status indication.
+.DESCRIPTION
+    Provides a function for writing messages to the host in various colors, supporting multiple message types for deployment and automation scenarios.
+.EXAMPLE
+    Write-Line "Hello World!"
+.EXAMPLE
+    Write-Line "Deployment completed successfully." -Type Success
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : April 2026
+    Last Update     : April 2026
+#>
+####################################################################################################
+function Write-WelcomeMessage {
+    # Write the copyright and welcome message
+    Write-Line 'Copyright (C) Iotana. All rights reserved.'
+    Write-Line "Welcome to the $($Global:ApplicationObject.Name) version $($Global:ApplicationObject.Version)" -Type Info
+}
+
+### END OF FUNCTION
+####################################################################################################
