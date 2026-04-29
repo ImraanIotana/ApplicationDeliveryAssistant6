@@ -44,13 +44,13 @@ process {
         # Initialize the graphics by loading the settings and the assemblies
         Initialize-Graphics
         # Create the main form
-        Invoke-MainForm
+        Initialize-MainForm
         # Stop the load timer and report elapsed time
         Stop-LoadTimer
         # Write the welcome message
         Write-WelcomeMessage
         # Show the Main Form
-        Invoke-MainForm -Show
+        Show-MainForm
     }
     catch {
         Write-Error "The Application Delivery Assistant encountered an error: $_"

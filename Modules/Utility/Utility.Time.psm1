@@ -75,7 +75,7 @@ function Get-TimeStamp {
 .EXAMPLE
     Stop-LoadTimer
 .INPUTS
-    None
+    None.
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
 .NOTES

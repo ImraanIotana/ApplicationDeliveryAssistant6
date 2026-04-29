@@ -97,7 +97,7 @@ function Write-Line {
 .EXAMPLE
     Write-WelcomeMessage
 .INPUTS
-    None
+    None.
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
 .NOTES
