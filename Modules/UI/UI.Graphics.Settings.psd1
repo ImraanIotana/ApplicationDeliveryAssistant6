@@ -30,15 +30,15 @@
         Height          = 615       # Height of the Main Form
     }
 
-    <# MainTabControl settings
+    # MainTabControl settings
     MainTabControl      = @{
-        TopMargin       = 5         # Between the top of the Parent, and the top of the TabControl
-        LeftMargin      = 5         # Between the left of the Parent, and the left of the TabControl
-        BottomMargin    = 50        # Between the bottom of the Parent, and the bottom of the TabControl
-        RightMargin     = 25        # Between the right of the Parent, and the right of the TabControl
+        TopMargin       = 5         # Between the top of the Form, and the top of the TabControl
+        LeftMargin      = 5         # Between the left of the Form, and the left of the TabControl
+        BottomMargin    = 50        # Between the bottom of the Form, and the bottom of the TabControl
+        RightMargin     = 25        # Between the right of the Form, and the right of the TabControl
     }
 
-    # GroupBox settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)
+    <# GroupBox settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)
     GroupBox            = @{
         RowHeight       = 40        # Height of the rows inside the GroupBox
         RightMargin     = 15        # Between the right of the GroupBox Parent, and the right of the GroupBox
