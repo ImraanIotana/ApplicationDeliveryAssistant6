@@ -54,41 +54,6 @@ begin {
         if (-Not(Test-Path -Path $Object.LogFolder)) { New-Item -Path $Object.LogFolder -ItemType Directory -Force | Out-Null }
     }
 
-    function Add-SettingsToMainObject { param([PSCustomObject]$Object = $Global:ApplicationObject)
-        # Import the Settings
-        Write-Line 'Importing settings...'
-        [System.String]$SettingsFilePath = Join-Path -Path $Object.WorkFolders.Settings -ChildPath $Object.SettingsFileName
-        [System.Collections.Hashtable]$Settings = Import-PowerShellDataFile -Path $SettingsFilePath
-        # Import the Customer Settings
-        [System.String]$CustomerSettingsFilePath = Join-Path -Path $Object.WorkFolders.Settings -ChildPath $Object.CustomerSettingsFileName
-        [System.Collections.Hashtable]$CustomerSettings = Import-PowerShellDataFile -Path $CustomerSettingsFilePath
-        # Add the CustomerSettingsHashtable to the SettingsHashtable
-        $CustomerSettings.Keys | ForEach-Object { $Settings[$_] = $CustomerSettings[$_] }
-        # Add the Settings hashtable to the main object
-        $Object | Add-Member -NotePropertyName Settings -NotePropertyValue $Settings
-    }
-
-    function Add-GraphicalPrerequisites { param([PSCustomObject]$Object = $Global:ApplicationObject)
-        # Load the assemblies
-        Write-Line 'Loading graphical prerequisites...'
-        $Object.Settings.Assemblies | ForEach-Object { Add-Type -AssemblyName $_ }
-        # Add the fonts
-        [System.Drawing.Font]$MainFont = New-Object System.Drawing.Font($Object.Settings.MainFont.Name,$Object.Settings.MainFont.Size,[System.Drawing.FontStyle]::Bold)
-        Add-Member -InputObject $Object.Settings -NotePropertyName MainFont -NotePropertyValue $MainFont
-    }
-        
-    function Import-PAModules {
-        # Add the Module Directories to the Environment Variable
-        #$ENV:PSModulePath += ";$PSScriptRoot"
-        $ENV:PSModulePath += ";$($Global:ApplicationObject.WorkFolders.SharedModules);$($Global:ApplicationObject.WorkFolders.Modules);$($Global:ApplicationObject.WorkFolders.MainApplication)"
-        # Import the PA Modules
-        Import-Module -Name PASystemModule
-        Import-Module -Name PAWriteModule
-        Import-Module -Name PADSLManagementModule
-        Import-Module -Name PAOmnissaDEMModule
-        Import-Module -Name PAShortcutModule
-    }
-
     function Write-WelcomeMessage {
         # Write the copyright and welcome message
         Write-Line 'Copyright (C) Iotana. All rights reserved.'
