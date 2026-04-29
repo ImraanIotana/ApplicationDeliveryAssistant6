@@ -16,7 +16,7 @@
 .INPUTS
     [System.String]
 .OUTPUTS
-    This function returns no stream output. All output is written to the host.
+    No objects are returned to the pipeline. All output is written to the host.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -35,7 +35,7 @@ function Write-Line {
         [System.String]$Message,
 
         [Parameter(Mandatory=$false,HelpMessage='Type for deciding the colors.')]
-        [ValidateSet('Info','Busy','Success','Fail','Warning','Special','Debug')]
+        [ValidateSet('Info','Busy','Success','Fail','Error','Warning','Special','Debug')]
         [AllowNull()][AllowEmptyString()]
         [System.String]$Type
     )
@@ -57,20 +57,22 @@ function Write-Line {
     # PREPARATION - FOREGROUND COLOR SELECTION
     # Set the foreground color based on the MessageType
     [System.String]$ForegroundColor = switch ($MessageType) {
-        'Info'              { 'White' }
-        'Busy'              { 'Yellow' }
-        'Success'           { 'Green' }
-        'Fail'              { 'Red' }
-        'Warning'           { 'Yellow' }
-        'Special'           { 'Cyan' }
-        'Debug'             { 'Cyan' }
-        Default             { 'DarkGray' }
+        'Info'      { 'White' }
+        'Busy'      { 'Yellow' }
+        'Success'   { 'Green' }
+        'Fail'      { 'Red' }
+        'Error'     { 'Red' }
+        'Warning'   { 'Yellow' }
+        'Special'   { 'Cyan' }
+        'Debug'     { 'Cyan' }
+        Default     { 'DarkGray' }
     }
 
     # PREPARATION - BACKGROUND COLOR SELECTION
     # Set the background color based on the MessageType
     [System.String]$BackgroundColor = switch ($MessageType) {
-        Default             { '' }
+        'Error'     { 'White' }
+        Default     { '' }
     }
 
     # EXECUTION

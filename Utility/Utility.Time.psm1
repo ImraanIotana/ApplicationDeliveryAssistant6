@@ -17,7 +17,8 @@
     [System.Management.Automation.SwitchParameter]$ForHost
     A switch parameter that indicates whether the timestamp should be formatted for display in the host.
 .OUTPUTS
-    [System.String] The timestamp is returned as a string.
+    [System.String]
+    The timestamp is returned as a string.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -73,14 +74,14 @@ function Get-TimeStamp {
 .SYNOPSIS
     Stops the global timer and reports elapsed time.
 .DESCRIPTION
-    This function stops the global timer that was started by Start-GlobalTimer and reports the elapsed time of the Deployment Process.
-    It also logs the completion time of the Deployment Process to the host.
+    This function stops the global timer that was started at the beginning of the application and reports the elapsed time in seconds.
+    If the global timer was not started, a fail message is written to the host.
 .EXAMPLE
     Stop-GlobalTimer
 .INPUTS
     None
 .OUTPUTS
-    No objects are returned to the pipeline. All operational output is written to the host and logged to the deployment logfile.
+    No objects are returned to the pipeline. All output is written to the host.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0

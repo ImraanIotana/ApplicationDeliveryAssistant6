@@ -100,88 +100,20 @@ begin {
 }
 
 process {
-    # Initialize the graphics by loading the settings and the assemblies
-    Initialize-Graphics
-    # Create the main form
-    Invoke-MainForm
-
-    # Stop the stopwatch and write the elapsed time
-    Stop-GlobalTimer
-    #$Global:AppStopwatch.Stop()
-    #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
-    #$RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
-    #Write-Line "Loading time: $RoundedSeconds seconds"
-
-    # Show the Main Form
-    Invoke-MainForm -Show
-
-    <# Start the Initialization
-    Write-Host ('Loading the {0} version {1}...' -f $Global:ApplicationObject.Name,[System.String]$Global:ApplicationObject.Version) -ForegroundColor DarkGray
-    Add-WorkFoldersToMainObject
-
-
-    # CONTINUE THE INITIALIZATION
-    # After dotsourcing, all functions have become available.
-    New-LogFolder
-    Add-SettingsToMainObject
-    Add-GraphicalPrerequisites
-    Invoke-UserSettings -Initialize
-    
-    # Build the Form
     try {
-        # Build the Global Main Form (Name: $Global:MainForm)
+        # Initialize the graphics by loading the settings and the assemblies
+        Initialize-Graphics
+        # Create the main form
         Invoke-MainForm
-        # Add the dimensions of the graphical child objects to the Settings
-        Add-GraphicalDimensionsToSettings
-        Add-IconsToSettings
-        # Build the Global Main Tabcontrol (Name: $Global:MainTabControl)
-        Invoke-MainTabControl -ParentForm $Global:MainForm
-        # Build the Global Main Form (Name: $Global:MainForm)
-        #Invoke-MainForm
-
-        # Check if the machine is an SCCM server
-        [System.ComponentModel.Component[]]$SCCMServices = Get-Service | Where-Object { $_.Name.StartsWith('SMS') } -ErrorAction SilentlyContinue
-        [System.Boolean]$IsSCCMServer = if ($SCCMServices) { $true } else { $false }
-        Add-Member -InputObject $Global:ApplicationObject -NotePropertyName IsSCCMServer -NotePropertyValue $IsSCCMServer
-
-        # Load the SCCM/MECM module only on an SCCM server
-        if ($IsSCCMServer) {        
-            Import-Module -Name PASCCMModule
-            Import-ModuleSCCMApplication
-        }
-        # Import these modules, for all machines
-        Import-ModuleLauncher
-        # Hide these modules on an SCCM server
-        if (-Not($IsSCCMServer)) {
-            Import-ModuleApplicationIntake
-        }
-        # Import these modules, for all machines
-        Import-ModuleApplicationManagement
-        # Hide these modules on an SCCM server
-        if (-Not($IsSCCMServer)) {
-            Import-ModuleAppLocker
-            Import-ModuleOmnissaDEMManagement
-        }
-        # Import these modules, for all machines
-        Import-ModuleIntakeExtras
-        Import-ModuleSettings
-
-        # Stop the stopwatch and write the elapsed time
-        $Global:AppStopwatch.Stop()
-        #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
-        $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
-        Write-Line "Loading time: $RoundedSeconds seconds"
-
-        Write-Host "Aantal tabbladen: $($Global:MainTabControl.TabPages.Count)"
-        $Global:MainTabControl.TabPages | Select-Object Text | Out-Host
-        # Write the welcome message
-        Write-WelcomeMessage
+        # Stop the global timer and report elapsed time
+        Stop-GlobalTimer
         # Show the Main Form
-        Show-MainForm
+        Invoke-MainForm -Show
     }
     catch {
-        Write-FullError
-    }#>
+        Write-Error "The Application Delivery Assistant encountered an error: $_"
+    }
+
 }
 
 end {
