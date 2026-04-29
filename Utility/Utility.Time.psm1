@@ -19,11 +19,11 @@
 .OUTPUTS
     [System.String] The timestamp is returned as a string.
 .NOTES
-    This script is part of the Universal Deployment Framework. Copyright (C) Iotana. All rights reserved.
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
-    Creation Date   : February 2026
-    Last Update     : March 2026
+    Creation Date   : April 2026
+    Last Update     : April 2026
 #>
 ####################################################################################################
 function Get-TimeStamp {
@@ -62,6 +62,49 @@ function Get-TimeStamp {
 
     # Return the output
     $CTX.Output
+}
+
+# END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Stops the global timer and reports elapsed time.
+.DESCRIPTION
+    This function stops the global timer that was started by Start-GlobalTimer and reports the elapsed time of the Deployment Process.
+    It also logs the completion time of the Deployment Process to the host.
+.EXAMPLE
+    Stop-GlobalTimer
+.INPUTS
+    None
+.OUTPUTS
+    No objects are returned to the pipeline. All operational output is written to the host and logged to the deployment logfile.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : April 2026
+    Last Update     : April 2026
+#>
+####################################################################################################
+function Stop-GlobalTimer {
+        
+    # EXECUTION
+    # Stop the global timer and report elapsed time
+    if ($Global:AppStopwatch) {
+
+        # Stop the stopwatch and write the elapsed time
+        $Global:AppStopwatch.Stop()
+        $Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
+        $RoundedSeconds = $Seconds.ToString("F2")
+        Write-Line "Loading time: $RoundedSeconds seconds"
+
+    } else {
+        # Write a fail message if the global timer was not started
+        Write-Line "The Global timer was not started. The elapsed time cannot be determined." -Type Fail
+    }
 }
 
 # END OF FUNCTION

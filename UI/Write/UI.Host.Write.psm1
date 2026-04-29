@@ -43,13 +43,13 @@ function Write-Line {
 
     # PREPARATION - MAIN PROPERTIES
     # Set the main properties for the message
-    [System.String]$OriginalMessage         = $Message
-    [System.String]$MessageType             = $Type
+    [System.String]$OriginalMessage = $Message
+    [System.String]$MessageType     = $Type
 
 
     # PREPARATION - MESSAGE FORMATTING
     # Set the message based on the MessageType
-    [System.String]$FullMessage = switch ($MessageType) {
+    [System.String]$MessageToWrite = switch ($MessageType) {
         'Debug'             { [System.String]$TimeStamp = Get-TimeStamp -ForHost ; [System.String]$CallingFunction = (Get-PSCallStack)[1].Command ; "$TimeStamp [$CallingFunction] $OriginalMessage" }
         Default             { $OriginalMessage }
     }
@@ -74,21 +74,11 @@ function Write-Line {
     }
 
     # EXECUTION
+    # Set the parameters for Write-Host
+    [System.Collections.Hashtable]$WriteParameters = @{ ForegroundColor = $ForegroundColor }
+    if ($BackgroundColor) { $WriteParameters.BackgroundColor = $BackgroundColor }
     # Write the message
-    <#switch ([System.String]::IsNullOrEmpty($BackgroundColor)) {
-        $false  { Write-Host $FullMessage -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor }
-        $true   { Write-Host $FullMessage -ForegroundColor $ForegroundColor }
-    }#>
-
-    $params = @{
-        ForegroundColor = $ForegroundColor
-    }
-
-    if ($BackgroundColor) {
-        $params.BackgroundColor = $BackgroundColor
-    }
-
-    Write-Host $FullMessage @params
+    Write-Host $MessageToWrite @WriteParameters
 
 }
 

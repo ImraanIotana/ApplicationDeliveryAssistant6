@@ -32,7 +32,7 @@ begin {
     [PSCustomObject]$Global:ApplicationObject = @{
         # Application
         Name            = [System.String]'Application Delivery Assistant'
-        Version         = [System.Version]'6.0.0'
+        Version         = [System.Version]'6.0.0.0'
         # Folder Handlers
         RootFolder      = [System.String]$PSScriptRoot
         # End Handlers
@@ -106,10 +106,11 @@ process {
     Invoke-MainForm
 
     # Stop the stopwatch and write the elapsed time
-    $Global:AppStopwatch.Stop()
+    Stop-GlobalTimer
+    #$Global:AppStopwatch.Stop()
     #$Seconds = $Global:AppStopwatch.Elapsed.TotalSeconds
-    $RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
-    Write-Line "Loading time: $RoundedSeconds seconds"
+    #$RoundedSeconds = ($Global:AppStopwatch.Elapsed.TotalSeconds).ToString("F2")
+    #Write-Line "Loading time: $RoundedSeconds seconds"
 
     # Show the Main Form
     Invoke-MainForm -Show
