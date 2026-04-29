@@ -12,13 +12,9 @@
 .EXAMPLE
     Get-TimeStamp -ForFileName
 .INPUTS
-    [System.Management.Automation.SwitchParameter]$ForFileName
-    A switch parameter that indicates whether the timestamp should be formatted for use in filenames.
-    [System.Management.Automation.SwitchParameter]$ForHost
-    A switch parameter that indicates whether the timestamp should be formatted for display in the host.
+    [System.Management.Automation.SwitchParameter]
 .OUTPUTS
     [System.String]
-    The timestamp is returned as a string.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
