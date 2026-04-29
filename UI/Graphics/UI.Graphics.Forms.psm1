@@ -66,6 +66,9 @@ function Invoke-MainForm {
         # Set the Form Border Style
         $GMF.FormBorderStyle    = 'FixedSingle'
 
+        # Set the Main Icon
+        $GMF.Icon              = $Settings.MainIcon
+
     }
 }
 
