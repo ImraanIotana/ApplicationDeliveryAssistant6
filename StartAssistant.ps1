@@ -6,8 +6,6 @@
     This application performs tasks like creating an Application Intake, creating AppLocker files, exporting Shortcut information, etc.
 .EXAMPLE
     C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Executionpolicy Bypass -WindowStyle Normal -File "StartAssistant.ps1"
-.EXAMPLE
-    C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Executionpolicy Bypass -WindowStyle Normal -File "StartAssistant.ps1" -Verbose
 .INPUTS
     This script has no input parameters.
 .OUTPUTS
