@@ -96,10 +96,12 @@ function Stop-LoadTimer {
     # Stop the load timer and report elapsed time
     if ($Global:ApplicationObject.LoadTimer) {
 
-        # Stop the stopwatch and write the elapsed time
+        # Stop the stopwatch
         $Global:ApplicationObject.LoadTimer.Stop()
-        $Seconds = $Global:ApplicationObject.LoadTimer.Elapsed.TotalSeconds
-        $RoundedSeconds = $Seconds.ToString("F2")
+        # Get the elapsed time in seconds and round to 2 decimal places
+        [double]$Seconds = $Global:ApplicationObject.LoadTimer.Elapsed.TotalSeconds
+        [string]$RoundedSeconds = $Seconds.ToString("F2")
+        # Write the elapsed time to the host
         Write-Line "Loading time: $RoundedSeconds seconds"
 
     } else {
