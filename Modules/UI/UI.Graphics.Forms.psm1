@@ -6,9 +6,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    This function creates and manages the main form of the application.
+    This function creates the main form of the application.
 .DESCRIPTION
-    This function creates and manages the main form of the application. It sets the properties of the form, including size, position, and window buttons.
+    This function creates the main form of the application. It sets the properties of the form, including size, position, and window buttons.
 .EXAMPLE
     Initialize-MainForm
     Creates the main form of the application and sets its properties, but does not show it.
@@ -39,22 +39,21 @@ function Initialize-MainForm {
     # Create a new Form
     [System.Windows.Forms.Form]$NewForm = New-Object System.Windows.Forms.Form
 
-    # Set the properties of the Main Form
-    $NewForm.Text               = "$($InputObject.Name) - Version $($InputObject.Version)"
-    $NewForm.StartPosition      = 'CenterScreen'
-    $NewForm.Size               = New-Object System.Drawing.Size($Settings.MainForm.Width,$Settings.MainForm.Height)
+    # Set the properties of the new Form
+    [System.Collections.Hashtable]$FormProperties = @{
+        Text            = "$($InputObject.Name) - Version $($InputObject.Version)"
+        Size            = New-Object System.Drawing.Size($Settings.MainForm.Width,$Settings.MainForm.Height)
+        StartPosition   = 'CenterScreen'
+        MinimizeBox     = $true
+        MaximizeBox     = $false
+        FormBorderStyle = 'FixedSingle'
+        Icon            = $Settings.MainIcon
+    }
 
-    # Set the Window Buttons
-    $NewForm.MinimizeBox        = $true
-    $NewForm.MaximizeBox        = $false
+    # Apply the properties to the new Form
+    $FormProperties.GetEnumerator() | ForEach-Object { $NewForm.$($_.Key) = $_.Value }
 
-    # Set the Form Border Style
-    $NewForm.FormBorderStyle    = 'FixedSingle'
-
-    # Set the Main Icon
-    $NewForm.Icon               = $Settings.MainIcon
-
-    # Create the Global Main Form variable
+    # Create the Global Main Form variable and assign the new Form to it
     [System.Windows.Forms.Form]$Global:MainForm = $NewForm
 }
 
@@ -91,6 +90,7 @@ function Show-MainForm {
         [Parameter(Mandatory=$false,HelpMessage='The main form of the application.')]
         [System.Windows.Forms.Form]$FormToShow = $Global:MainForm
     )
+
     # Show the main form
     $null = $FormToShow.ShowDialog()
 }

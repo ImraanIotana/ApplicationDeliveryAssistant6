@@ -26,8 +26,8 @@
     # MainForm settings
     MainForm            = @{
         IconFileName    = 'KPN.ico' # The name of the icon file for the Main Form
-        Width           = 900       # Width of the Main Form
-        Height          = 615       # Height of the Main Form
+        Width           = 800       # Width of the Main Form
+        Height          = 600       # Height of the Main Form
     }
 
     # MainTabControl settings
