@@ -28,6 +28,7 @@
         IconFileName    = 'KPN.ico' # The name of the icon file for the Main Form
         Width           = 800       # Width of the Main Form
         Height          = 600       # Height of the Main Form
+        BaseHeight      = 150       # Base height of the Main Form, which is used to calculate the final height based on the font size
     }
 
     # MainTabControl settings

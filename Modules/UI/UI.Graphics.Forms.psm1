@@ -36,6 +36,11 @@ function Initialize-MainForm {
     # Get the graphical settings from the main object
     [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
 
+    # Set the height of the form based on the font size
+    #$Settings.MainForm.Height = $Settings.MainForm.BaseHeight + (($Settings.MainFont.Size + 3) * 10)
+
+    #Write-Host $Settings.MainFont.Size
+    #Write-Host $Settings.MainForm.Height
     # Create a new Form
     [System.Windows.Forms.Form]$NewForm = New-Object System.Windows.Forms.Form
 
