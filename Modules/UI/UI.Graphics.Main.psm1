@@ -14,6 +14,7 @@
     Initialize-Graphics
     Initializes the graphical settings for the application.
 .INPUTS
+    [PSCustomObject]
     [System.String]
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
@@ -22,19 +23,18 @@
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : April 2026
-    Last Update     : April 2026
+    Last Update     : May 2026
 #>
 ####################################################################################################
-
 function Initialize-Graphics {
     [CmdletBinding()]
     [OutputType([System.Void])]
     param (
-        [Parameter(Mandatory=$false,HelpMessage='The name of the graphical settings file.')]
-        [System.String]$GraphicalSettingsFileName = 'UI.Graphics.Settings.psd1',
-
         [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
-        [PSCustomObject]$InputObject = $Global:ApplicationObject
+        [PSCustomObject]$InputObject = $Global:ApplicationObject,
+
+        [Parameter(Mandatory=$false,HelpMessage='The name of the graphical settings file.')]
+        [System.String]$GraphicalSettingsFileName = 'UI.Graphics.Settings.psd1'
     )
 
     try {
