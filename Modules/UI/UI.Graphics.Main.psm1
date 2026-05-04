@@ -203,54 +203,6 @@ function Add-GraphicalDimensions {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Adds graphical dimensions to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins.
-.DESCRIPTION
-    This function adds graphical dimensions to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins.
-     It calculates the width and height of the MainTabControl based on the MainForm dimensions and the MainTabControl margins, and adds these dimensions to the MainTabControl settings in the GraphicalSettings hashtable of the main object.
-.EXAMPLE
-    Add-MainTabControlDimensions -InputObject $Global:ApplicationObject
-.INPUTS
-    [PSCustomObject]
-.OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : May 2026
-    Last Update     : May 2026
-#>
-####################################################################################################
-function Add-MainTabControlDimensions {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
-        [PSCustomObject]$InputObject
-    )
-
-    try {
-        # Get the MainForm settings
-        [System.Collections.Hashtable]$MainForm         = $InputObject.GraphicalSettings.MainForm
-        # Get the MainTabControl settings
-        [System.Collections.Hashtable]$MainTabControl   = $InputObject.GraphicalSettings.MainTabControl
-
-        # Add the MainTabControl Width to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins
-        $MainTabControl.Width   = $MainForm.Width - $MainTabControl.LeftMargin - $MainTabControl.RightMargin
-        # Add the MainTabControl Height to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins
-        $MainTabControl.Height  = $MainForm.Height - $MainTabControl.TopMargin - $MainTabControl.BottomMargin
-    }
-    catch {
-        Write-ErrorReport -ErrorRecord $_
-    }
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
     Adds font properties to the Global ApplicationObject.
 .DESCRIPTION
     This function adds font properties to the Global ApplicationObject based on the MainForm dimensions and the MainTabControl margins.
