@@ -26,55 +26,46 @@
 function Invoke-MainTabControl {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false,HelpMessage='The Global ApplicationObject containing the Settings.')]
-        [PSCustomObject]
-        $ApplicationObject = $Global:ApplicationObject,
+        [Parameter(Mandatory=$true,HelpMessage='The main object of the application, which contains all the properties and settings.')]
+        [PSCustomObject]$InputObject,
 
         [Parameter(Mandatory=$true,HelpMessage='The Parent object to which this tabcontrol will be added.')]
         [System.Windows.Forms.Form]
         $ParentForm
     )
 
-    begin {
-        ####################################################################################################
-        ### MAIN PROPERTIES ###
+    ####################################################################################################
+    ### MAIN PROPERTIES ###
 
-        # Input
-        [System.Collections.Hashtable]$Settings = $ApplicationObject.Settings
+    # Input
+    [System.Collections.Hashtable]$Settings = $InputObject.Settings
 
-        # Create the MainTabControl
-        [System.Windows.Forms.TabControl]$Global:MainTabControl = $NewTabControl = New-Object System.Windows.Forms.TabControl
+    # Create the MainTabControl
+    [System.Windows.Forms.TabControl]$Global:MainTabControl = $NewTabControl = New-Object System.Windows.Forms.TabControl
 
-        Enable-TabControlSelectedColor -TabControl $NewTabControl
 
-        ####################################################################################################
-    }
-    
-    process {
-        try {
-            # Set the Location property
-            [System.Int32[]]$Location   = @($Settings.MainTabControl.TopLeftX, $Settings.MainTabControl.TopLeftY)
-            $NewTabControl.Location     = New-Object System.Drawing.Point($Location)
+    ####################################################################################################
 
-            # Set the Size property
-            [System.Int32[]]$Size       = @($Settings.MainTabControl.Width, $Settings.MainTabControl.Height)
-            $NewTabControl.Size         = New-Object System.Drawing.Size($Size)
+    try {
+        # Set the Location property
+        [System.Int32[]]$Location   = @($Settings.MainTabControl.TopLeftX, $Settings.MainTabControl.TopLeftY)
+        $NewTabControl.Location     = New-Object System.Drawing.Point($Location)
 
-            $NewTabControl.Dock = 'Fill'
+        # Set the Size property
+        [System.Int32[]]$Size       = @($Settings.MainTabControl.Width, $Settings.MainTabControl.Height)
+        $NewTabControl.Size         = New-Object System.Drawing.Size($Size)
 
-            # Add the TabControl to the ParentForm
-            $ParentForm.Controls.Add($NewTabControl)
-            if ($ParentForm.MainMenuStrip) {
-                # Ensure dock order keeps the menubar above the tab headers
-                $ParentForm.Controls.SetChildIndex($NewTabControl, 0)
-            }
-        }
-        catch {
-            Write-FullError
+        $NewTabControl.Dock         = 'Fill'
+
+        # Add the TabControl to the ParentForm
+        $ParentForm.Controls.Add($NewTabControl)
+        if ($ParentForm.MainMenuStrip) {
+            # Ensure dock order keeps the menubar above the tab headers
+            $ParentForm.Controls.SetChildIndex($NewTabControl, 0)
         }
     }
-
-    end {
+    catch {
+        Write-FullError -ErrorRecord $_
     }
 }
 

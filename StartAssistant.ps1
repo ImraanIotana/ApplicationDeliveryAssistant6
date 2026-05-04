@@ -41,7 +41,7 @@ begin {
 
 process {
     try {
-        # Initialize the graphics by loading the settings and the assemblies
+        # Initialize the graphics
         Initialize-Graphics
         # Show the Main Form
         Show-MainForm
