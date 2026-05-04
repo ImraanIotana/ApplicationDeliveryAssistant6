@@ -84,6 +84,12 @@ function Initialize-Graphics {
     # Add the GraphicalSettings hashtable to the main object
     $Global:ApplicationObject | Add-Member -NotePropertyName GraphicalSettings -NotePropertyValue $GraphicalSettings
 
+    # EXECUTION - ADD GRAPHICAL DIMENSIONS OF OTHER CONTROLS
+    # Add the graphical dimensions of the other controls to the GraphicalSettings hashtable
+    Add-GraphicalDimensions -InputObject $Global:ApplicationObject
+
+    # test output
+    $Global:ApplicationObject.GraphicalSettings.MainTabControl | Format-List | Out-Host
 }
 
 ### END OF FUNCTION
@@ -93,49 +99,74 @@ function Initialize-Graphics {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Initializes the graphical settings for the application by importing settings from a specified file and loading necessary assemblies.
+    Adds graphical dimensions to the Global ApplicationObject.
 .DESCRIPTION
-    This function initializes the graphical settings for the application by importing settings from a specified file and loading necessary assemblies.
-    It sets the properties of the main form, including size, position, and window buttons.
+    This function adds graphical dimensions to the Global ApplicationObject based on the MainForm dimensions and the MainTabControl margins.
 .EXAMPLE
-    Initialize-Graphics
-    Initializes the graphical settings for the application.
+    Add-GraphicalDimensions
 .INPUTS
-    [System.String]
+    [PSCustomObject]
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
-    Creation Date   : April 2026
-    Last Update     : April 2026
+    Creation Date   : May 2026
+    Last Update     : May 2026
 #>
 ####################################################################################################
 function Add-GraphicalDimensions {
     [CmdletBinding()]
     param (
-        [System.Collections.Hashtable]$GraphicalSettings
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
     )
-    
-    begin {
-        # Set the output
-        [System.Collections.Hashtable]$UpdatedGraphicalSettings = $GraphicalSettings
-    }
-    
-    process {
-        # Get the MainTabControl dimensions
-        $MainTabControlDimensions = @{
-            Width = $GraphicalSettings.MainForm.Width - 20
-            Height = $GraphicalSettings.MainForm.Height - 60
-        }
-        $UpdatedGraphicalSettings.MainTabControlDimensions = $MainTabControlDimensions
-    }
-    
-    end {
-        # Return the updated graphical settings
-        return $UpdatedGraphicalSettings
-    }
+
+    Add-MainTabControlDimensions -InputObject $InputObject
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Adds graphical dimensions to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins.
+.DESCRIPTION
+    This function adds graphical dimensions to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins.
+     It calculates the width and height of the MainTabControl based on the MainForm dimensions and the MainTabControl margins, and adds these dimensions to the MainTabControl settings in the GraphicalSettings hashtable of the main object.
+.EXAMPLE
+    Add-MainTabControlDimensions
+.INPUTS
+    [PSCustomObject]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Add-MainTabControlDimensions {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
+    )
+
+    # Get the MainForm settings
+    [System.Collections.Hashtable]$MainForm         = $InputObject.GraphicalSettings.MainForm
+    # Get the MainTabControl settings
+    [System.Collections.Hashtable]$MainTabControl   = $InputObject.GraphicalSettings.MainTabControl
+
+    # Add the MainTabControl Width to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins
+    $MainTabControl.Width   = $MainForm.Width - $MainTabControl.LeftMargin - $MainTabControl.RightMargin
+    # Add the MainTabControl Height to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins
+    $MainTabControl.Height  = $MainForm.Height - $MainTabControl.TopMargin - $MainTabControl.BottomMargin
 }
 
 ### END OF FUNCTION
