@@ -6,34 +6,77 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Initializes the graphical settings for the application by importing settings from a specified file and loading necessary assemblies.
+    This function creates the MainTabControl.
 .DESCRIPTION
-    This function initializes the graphical settings for the application by importing settings from a specified file and loading necessary assemblies.
-    It sets the properties of the main form, including size, position, and window buttons.
+    This function is part of the Packaging Assistant. It contains functions and variables that are in other files.
 .EXAMPLE
-    Invoke-MainTabControl
-    Initializes the graphical settings for the application.
+    Invoke-MainTabControl -ParentForm $Global:MainForm -ApplicationObject $Global:ApplicationObject
 .INPUTS
-    [System.String]
+    [System.Windows.Forms.Form]
+    [PSCustomObject]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    This function returns no stream output.
 .NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
-    Creation Date   : April 2026
-    Last Update     : April 2026
+    Creation Date   : May 2026
+    Last Update     : May 2026
 #>
 ####################################################################################################
-
 function Invoke-MainTabControl {
     [CmdletBinding()]
-    [OutputType([System.Void])]
     param (
+        [Parameter(Mandatory=$false,HelpMessage='The Global ApplicationObject containing the Settings.')]
+        [PSCustomObject]
+        $ApplicationObject = $Global:ApplicationObject,
+
+        [Parameter(Mandatory=$true,HelpMessage='The Parent object to which this tabcontrol will be added.')]
+        [System.Windows.Forms.Form]
+        $ParentForm
     )
 
+    begin {
+        ####################################################################################################
+        ### MAIN PROPERTIES ###
 
+        # Input
+        [System.Collections.Hashtable]$Settings = $ApplicationObject.Settings
+
+        # Create the MainTabControl
+        [System.Windows.Forms.TabControl]$Global:MainTabControl = $NewTabControl = New-Object System.Windows.Forms.TabControl
+
+        Enable-TabControlSelectedColor -TabControl $NewTabControl
+
+        ####################################################################################################
+    }
+    
+    process {
+        try {
+            # Set the Location property
+            [System.Int32[]]$Location   = @($Settings.MainTabControl.TopLeftX, $Settings.MainTabControl.TopLeftY)
+            $NewTabControl.Location     = New-Object System.Drawing.Point($Location)
+
+            # Set the Size property
+            [System.Int32[]]$Size       = @($Settings.MainTabControl.Width, $Settings.MainTabControl.Height)
+            $NewTabControl.Size         = New-Object System.Drawing.Size($Size)
+
+            $NewTabControl.Dock = 'Fill'
+
+            # Add the TabControl to the ParentForm
+            $ParentForm.Controls.Add($NewTabControl)
+            if ($ParentForm.MainMenuStrip) {
+                # Ensure dock order keeps the menubar above the tab headers
+                $ParentForm.Controls.SetChildIndex($NewTabControl, 0)
+            }
+        }
+        catch {
+            Write-FullError
+        }
+    }
+
+    end {
+    }
 }
 
-### END OF FUNCTION
+### END OF SCRIPT
 ####################################################################################################

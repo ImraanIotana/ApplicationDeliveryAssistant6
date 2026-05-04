@@ -31,7 +31,59 @@ function Initialize-Graphics {
     [OutputType([System.Void])]
     param (
         [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
-        [PSCustomObject]$InputObject = $Global:ApplicationObject,
+        [PSCustomObject]$InputObject = $Global:ApplicationObject
+    )
+
+    try {
+        # EXECUTION
+        # Import the graphical settings from the Graphics Settings file
+        Import-GraphicalSettings -InputObject $InputObject        
+        # Load the assemblies
+        Add-Assemblies -InputObject $InputObject
+        # Add the main icon to the GraphicalSettings hashtable
+        Add-MainIconProperties -InputObject $InputObject
+        # Add the font properties
+        Add-FontProperties -InputObject $InputObject
+        # Add the graphical dimensions of the other controls to the GraphicalSettings hashtable
+        Add-GraphicalDimensions -InputObject $InputObject
+        # Create the main form
+        Initialize-MainForm -InputObject $InputObject
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Imports the graphical settings from a specified file and adds them to the main application object.
+.DESCRIPTION
+    This function imports the graphical settings from a specified file and adds them to the main application object. It searches for the graphical settings file in the specified root folder and its subfolders, imports the settings from the file, and adds them to the main application object under the GraphicalSettings property.
+.EXAMPLE
+    Import-GraphicalSettings -InputObject $Global:ApplicationObject
+.INPUTS
+    [PSCustomObject]
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Import-GraphicalSettings {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject,
 
         [Parameter(Mandatory=$false,HelpMessage='The name of the graphical settings file.')]
         [System.String]$GraphicalSettingsFileName = 'UI.Graphics.Settings.psd1'
@@ -56,15 +108,6 @@ function Initialize-Graphics {
         [System.Collections.Hashtable]$GraphicalSettings = Import-PowerShellDataFile -Path $GraphicalSettingsFileObject.FullName
         # Add the GraphicalSettings hashtable to the main object
         $InputObject | Add-Member -NotePropertyName GraphicalSettings -NotePropertyValue $GraphicalSettings
-        
-        # Load the assemblies
-        Add-Assemblies -InputObject $InputObject
-        # Add the main icon to the GraphicalSettings hashtable
-        Add-MainIconProperties -InputObject $InputObject
-        # Add the font properties
-        Add-FontProperties -InputObject $InputObject
-        # Add the graphical dimensions of the other controls to the GraphicalSettings hashtable
-        Add-GraphicalDimensions -InputObject $InputObject
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -144,8 +187,13 @@ function Add-GraphicalDimensions {
         [PSCustomObject]$InputObject
     )
 
-    # Add the graphical dimensions of the MainTabControl
-    Add-MainTabControlDimensions -InputObject $InputObject
+    try {
+        # Add the graphical dimensions of the MainTabControl
+        Add-MainTabControlDimensions -InputObject $InputObject
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
 }
 
 ### END OF FUNCTION
