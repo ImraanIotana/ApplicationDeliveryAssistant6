@@ -34,8 +34,8 @@
     MainTabControl      = @{
         TopMargin       = 5         # Between the top of the Form, and the top of the TabControl
         LeftMargin      = 5         # Between the left of the Form, and the left of the TabControl
-        BottomMargin    = 50        # Between the bottom of the Form, and the bottom of the TabControl
-        RightMargin     = 25        # Between the right of the Form, and the right of the TabControl
+        BottomMargin    = 45        # Between the bottom of the Form, and the bottom of the TabControl
+        RightMargin     = 20        # Between the right of the Form, and the right of the TabControl
     }
 
     <# GroupBox settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)

@@ -34,13 +34,14 @@ function Initialize-MainForm {
 
     try {
         # PREPARATION
+        # Create a new Form Object
+        [System.Windows.Forms.Form]$NewForm     = New-Object System.Windows.Forms.Form
         # Get the graphical settings from the main object
         [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
-        # Set the form properties
-        [System.String]$FormTitle           = "$($InputObject.Name) - Version $($InputObject.Version)"
-        [System.Drawing.Size]$FormSize      = New-Object System.Drawing.Size($Settings.MainForm.Width, $Settings.MainForm.Height)
-        # Create a new Form Object
-        [System.Windows.Forms.Form]$NewForm = New-Object System.Windows.Forms.Form
+        # Set the form title
+        [System.String]$FormTitle               = "$($InputObject.Name) - Version $($InputObject.Version)"
+        # Set the form size based
+        [System.Drawing.Size]$FormSize          = New-Object System.Drawing.Size($Settings.MainForm.Width, $Settings.MainForm.Height)
         # Set the properties of the new Form
         [System.Collections.Hashtable]$FormProperties = @{
             Text            = $FormTitle

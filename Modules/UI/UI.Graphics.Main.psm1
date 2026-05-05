@@ -48,6 +48,8 @@ function Initialize-Graphics {
         Add-GraphicalDimensions -InputObject $InputObject
         # Create the main form
         Initialize-MainForm -InputObject $InputObject
+        # Add the main tab control to the main form
+        Add-MainTabControl -InputObject $InputObject -ParentForm $Global:MainForm
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
