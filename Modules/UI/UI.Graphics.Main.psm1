@@ -35,9 +35,11 @@ function Initialize-Graphics {
     )
 
     try {
-        # EXECUTION
+        # PREPARATION - IMPORT SETTINGS
         # Import the graphical settings from the Graphics Settings file
-        Import-GraphicalSettings -InputObject $InputObject        
+        Import-GraphicalSettings -InputObject $InputObject
+
+        # PREPARATION - ADD PROPERTIES TO THE MAIN OBJECT
         # Load the assemblies
         Add-Assemblies -InputObject $InputObject
         # Add the main icon to the GraphicalSettings hashtable
@@ -46,10 +48,17 @@ function Initialize-Graphics {
         Add-FontProperties -InputObject $InputObject
         # Add the graphical dimensions of the other controls to the GraphicalSettings hashtable
         Add-GraphicalDimensions -InputObject $InputObject
+
+
+        # EXECUTION - INITIALIZE THE MAIN FORM
         # Create the main form
         Initialize-MainForm -InputObject $InputObject
         # Add the main tab control to the main form
         Add-MainTabControl -InputObject $InputObject -ParentForm $Global:MainForm
+
+        # EXECUTION - ADD MODULES
+        # Import the modules
+        Import-ModuleLauncher
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
