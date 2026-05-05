@@ -56,9 +56,9 @@ function Initialize-Graphics {
         # Add the main tab control to the main form
         Add-MainTabControl -InputObject $InputObject -ParentForm $Global:MainForm
 
-        # EXECUTION - ADD MODULES
-        # Import the modules
-        Import-ModuleLauncher
+        # EXECUTION - ADD TABS
+        # Import the tabs
+        Import-TabLauncher -InputObject $InputObject -ParentTabControl $Global:MainTabControl
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -152,7 +152,7 @@ function Import-GraphicalSettings {
 function Add-Assemblies {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject
     )
 
@@ -194,13 +194,15 @@ function Add-Assemblies {
 function Add-GraphicalDimensions {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject
     )
 
     try {
         # Add the graphical dimensions of the MainTabControl
         Add-MainTabControlDimensions -InputObject $InputObject
+        # Add the graphical dimensions of the GroupBoxes
+        Add-GroupBoxDimensions -InputObject $InputObject
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -234,7 +236,7 @@ function Add-GraphicalDimensions {
 function Add-FontProperties {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject
     )
 
@@ -286,7 +288,7 @@ function Add-FontProperties {
 function Add-MainIconProperties {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject
     )
 

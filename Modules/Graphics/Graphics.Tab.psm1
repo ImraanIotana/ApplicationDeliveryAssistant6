@@ -120,7 +120,7 @@ function Add-MainTabControl {
 .SYNOPSIS
     This function creates a new TabPage.
 .DESCRIPTION
-    This function is part of the Packaging Assistant. It contains functions and variables that are in other files.
+    This function creates a new TabPage based on the provided parameters, and adds it to the specified parent TabControl.
 .EXAMPLE
     New-TabPage -ParentTabControl $MyTabControl -Title 'Administration' -BackGroundColor 'Green'
 .INPUTS
@@ -129,10 +129,10 @@ function Add-MainTabControl {
 .OUTPUTS
     [System.Windows.Forms.TabPage]
 .NOTES
-    Version         : 5.7.1
+    Version         : 6.0.0.0
     Author          : Imraan Iotana
-    Creation Date   : May 2023
-    Last Update     : February 2026
+    Creation Date   : May 2026
+    Last Update     : May 2026
 #>
 ####################################################################################################
 function New-TabPage {
@@ -141,43 +141,41 @@ function New-TabPage {
         [Parameter(Mandatory=$true,HelpMessage='The Parent TabControl to which this TabPage will be added.')]
         [System.Windows.Forms.TabControl]$ParentTabControl,
 
-        [Parameter(Mandatory=$false,HelpMessage='The title of the TabPage.')]
-        [System.String]$Title = 'Default Tab Title',
+        [Parameter(Mandatory=$true,HelpMessage='The title of the TabPage.')]
+        [System.String]$Title,
 
-        [Parameter(Mandatory=$false,HelpMessage='The version of the Module.')]
+        [Parameter(Mandatory=$true,HelpMessage='The version of the TabPage.')]
         [System.String]$Version,
 
         [Parameter(Mandatory=$false,HelpMessage='The color of the TabPage.')]
         [System.String]$BackGroundColor
     )
 
-    begin {
-        ####################################################################################################
-        ### MAIN PROPERTIES ###
+    try {
+        # PREPARATION
+        # Write the message
+        if ($Version) { Write-Line "Importing Tab $Title $Version" }
 
-        # Output
+        # EXECUTION - CREATE THE TABPAGE
+        # Create a new TabPage
         [System.Windows.Forms.TabPage]$NewTabPage = New-Object System.Windows.Forms.TabPage
 
-        ####################################################################################################
-    } 
-    
-    process {
-        # Write the message
-        if ($Version) { Write-Line "Importing Module $Title $Version" }
-
+        # EXECUTION - SET PROPERTIES
         # Set the Title of the TabPage
         $NewTabPage.Text = $Title
-
         # Set the BackGroundColor if provided
         if ($BackGroundColor) { $NewTabPage.BackColor = $BackGroundColor }
 
+        # EXECUTION - ADD THE TABPAGE TO THE PARENT TABCONTROL
         # Add the TabPage to the Parent TabControl
         $ParentTabControl.Controls.Add($NewTabPage)
-    }
 
-    end {
+        # EXECUTION - RETURN THE NEW TABPAGE
         # Return the output
         $NewTabPage
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
     }
 }
 
