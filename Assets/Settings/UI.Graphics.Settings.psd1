@@ -41,7 +41,7 @@
     # GroupBox settings
     GroupBox            = @{
         RowHeight       = 40        # Height of the rows inside the GroupBox
-        RightMargin     = 15        # Between the right of the GroupBox Parent, and the right of the GroupBox
+        RightMargin     = 18        # Between the right of the GroupBox Parent, and the right of the GroupBox
         SubTabMargin    = 3         # If the GroupBox is placed in a SubTab, then this value is added to the RightMargin
         BetweenMargin   = 4         # Between two GroupBoxes on top of each other
         OneRowMargin    = 7         # Extra margin if a GroupBox has only 1 row

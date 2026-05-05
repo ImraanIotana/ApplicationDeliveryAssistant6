@@ -32,7 +32,6 @@ function Add-GroupBoxDimensions {
     )
 
     try {
-        Write-Line "Adding GroupBox dimensions to the settings..." -Type Special
         # PREPARATION - GET SETTINGS
         # Get the MainTabControl settings
         [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
@@ -40,10 +39,6 @@ function Add-GroupBoxDimensions {
         # GROUPBOX WIDTH
         # Add the Width of the GroupBox
         $Settings.GroupBox.Width = ($Settings.MainTabControl.Width - $Settings.GroupBox.RightMargin)
-
-        # test
-        $Settings.MainTabControl | Out-Host
-        $Settings.GroupBox | Out-Host
 
         # GROUPBOX HEIGHT
         # Create the GroupboxHeightTable
@@ -60,24 +55,6 @@ function Add-GroupBoxDimensions {
         }
         # Add the GroupboxHeightTable
         $Settings.GroupBox.HeightTable = $GroupboxHeightTable
-
-        #$Settings.GroupBox.HeightTable | Out-Host
-        <# Get the MainForm settings
-        [System.Collections.Hashtable]$MainForm         = $InputObject.GraphicalSettings.MainForm
-        # Get the MainTabControl settings
-        [System.Collections.Hashtable]$MainTabControl   = $InputObject.GraphicalSettings.MainTabControl
-
-        # EXECUTION - ADD LOCATION
-        # Add the MainTabControl Location
-        $MainTabControl.TopLeftX    = $MainTabControl.LeftMargin
-        $MainTabControl.TopLeftY    = $MainTabControl.TopMargin
-        $MainTabControl.Location    = New-Object System.Drawing.Point($MainTabControl.TopLeftX, $MainTabControl.TopLeftY)
-
-        # EXECUTION - ADD SIZE
-        # Add the MainTabControl Size to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins
-        $MainTabControl.Width       = $MainForm.Width - $MainTabControl.LeftMargin - $MainTabControl.RightMargin
-        $MainTabControl.Height      = $MainForm.Height - $MainTabControl.TopMargin - $MainTabControl.BottomMargin
-        $MainTabControl.Size        = New-Object System.Drawing.Size($MainTabControl.Width, $MainTabControl.Height)#>
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
