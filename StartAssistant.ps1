@@ -50,7 +50,5 @@ finally {
     if ($Global:ApplicationObject.LeaveHostOpen) { Read-Host -Prompt 'Press Enter to close this window...' }
 }
 
-
-
 ### END OF SCRIPT
 ####################################################################################################
