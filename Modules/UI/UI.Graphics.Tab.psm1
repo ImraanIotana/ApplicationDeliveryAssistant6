@@ -135,7 +135,6 @@ function Add-MainTabControl {
     Last Update     : February 2026
 #>
 ####################################################################################################
-
 function New-TabPage {
     [CmdletBinding()]
     param (
