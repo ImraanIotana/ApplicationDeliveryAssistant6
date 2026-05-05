@@ -1,5 +1,5 @@
 #
-# Module 'UI.Graphics.Tab.psm1'
+# Module 'Graphics.Tab.psm1'
 # Last Update: May 2026
 #
 

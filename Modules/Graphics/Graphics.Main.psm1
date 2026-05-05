@@ -1,6 +1,6 @@
 #
-# Module 'UI.Graphics.Main.psm1'
-# Last Update: April 2026
+# Module 'Graphics.Main.psm1'
+# Last Update: May 2026
 #
 
 ####################################################################################################
