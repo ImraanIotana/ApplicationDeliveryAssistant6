@@ -23,7 +23,7 @@
 param (
 )
 
-begin {
+try {
     # Create the Global Application Object
     [PSCustomObject]$Global:ApplicationObject = @{
         # Application
@@ -35,26 +35,22 @@ begin {
         LoadTimer       = [System.Diagnostics.Stopwatch]::StartNew()
         LeaveHostOpen   = [System.Boolean]$false
     }
-    # Import all the modules
+    # Import the modules
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
+    # Initialize the graphics
+    Initialize-Graphics
+    # Show the Main Form
+    Show-MainForm
 }
-
-process {
-    try {
-        # Initialize the graphics
-        Initialize-Graphics
-        # Show the Main Form
-        Show-MainForm
-    }
-    catch {
-        Write-Error "The Application Delivery Assistant encountered an error: $_"
-    }
+catch {
+    Write-Error "The Application Delivery Assistant encountered an error: $_"
 }
-
-end {
+finally {
     # If LeaveHostOpen is set to true, leave the host open
     if ($Global:ApplicationObject.LeaveHostOpen) { Read-Host -Prompt 'Press Enter to close this window...' }
 }
+
+
 
 ### END OF SCRIPT
 ####################################################################################################

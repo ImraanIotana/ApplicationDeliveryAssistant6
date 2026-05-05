@@ -38,7 +38,7 @@
         RightMargin     = 20        # Between the right of the Form, and the right of the TabControl
     }
 
-    <# GroupBox settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)
+    # GroupBox settings
     GroupBox            = @{
         RowHeight       = 40        # Height of the rows inside the GroupBox
         RightMargin     = 15        # Between the right of the GroupBox Parent, and the right of the GroupBox
@@ -47,7 +47,7 @@
         OneRowMargin    = 7         # Extra margin if a GroupBox has only 1 row
     }
 
-    # TextBox settings
+    <# TextBox settings
     TextBox             = @{
         Height          = 30        # Height of the TextBoxes and ComboBoxes
         TopMargin       = 13
