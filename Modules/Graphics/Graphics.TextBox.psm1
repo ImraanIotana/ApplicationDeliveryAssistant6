@@ -24,7 +24,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Add-GroupBoxDimensions {
+function Add-TextBoxDimensions {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
@@ -36,25 +36,25 @@ function Add-GroupBoxDimensions {
         # Get the GraphicalSettings settings
         [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
 
-        # GROUPBOX WIDTH
-        # Add the Width of the GroupBox
-        $Settings.GroupBox.Width = ($Settings.MainTabControl.Width - $Settings.GroupBox.RightMargin)
+        # TEXTBOX WIDTH
+        # Add the Width of the TextBox
+        $Settings.TextBox.Width = ($Settings.MainTabControl.Width - $Settings.TextBox.RightMargin)
 
-        # GROUPBOX HEIGHT
-        # Create the GroupboxHeightTable
-        [System.Collections.Hashtable]$GroupboxHeightTable =@{}
-        # Add the Heights of the GroupBox to the GroupboxHeightTable
+        # TEXTBOX HEIGHT
+        # Create the TextBoxHeightTable
+        [System.Collections.Hashtable]$TextBoxHeightTable =@{}
+        # Add the Heights of the TextBox to the TextBoxHeightTable
         [System.Int32[]]$NumberOfRowsArray = @(1..20)
         foreach ($NumberOfRows in $NumberOfRowsArray) {
-            [System.Int32]$GroupboxHeight = if ($NumberOfRows -eq 1) {
-                ($NumberOfRows * $Settings.GroupBox.RowHeight) + $Settings.GroupBox.OneRowMargin
+            [System.Int32]$TextBoxHeight = if ($NumberOfRows -eq 1) {
+                ($NumberOfRows * $Settings.TextBox.RowHeight) + $Settings.TextBox.OneRowMargin
             } else {
-                $NumberOfRows * $Settings.GroupBox.RowHeight
+                $NumberOfRows * $Settings.TextBox.RowHeight
             }
-            $GroupboxHeightTable.Add($NumberOfRows,$GroupboxHeight)
+            $TextBoxHeightTable.Add($NumberOfRows,$TextBoxHeight)
         }
-        # Add the GroupboxHeightTable
-        $Settings.GroupBox.HeightTable = $GroupboxHeightTable
+        # Add the TextBoxHeightTable
+        $Settings.TextBox.HeightTable = $TextBoxHeightTable
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

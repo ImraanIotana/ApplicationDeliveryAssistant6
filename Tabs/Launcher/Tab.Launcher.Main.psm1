@@ -95,12 +95,14 @@ function Import-FeatureSystemFolderLauncher {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'SYSTEM FOLDERS'
-            Color           = 'DarkBlue'
+            Color           = 'White'
             NumberOfRows    = 2
         }
 
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$SystemFolderGroupBox = New-GroupBox @FeatureProperties
+
+        New-Label -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox -Text "System Folders" -RowNumber 1
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

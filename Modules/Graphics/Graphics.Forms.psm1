@@ -20,7 +20,7 @@
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
-    Creation Date   : April 2026
+    Creation Date   : May 2026
     Last Update     : May 2026
 #>
 ####################################################################################################
@@ -28,7 +28,7 @@ function Initialize-MainForm {
     [CmdletBinding()]
     [OutputType([System.Void])]
     param (
-        [Parameter(Mandatory=$true,HelpMessage='The main object of the application, which contains all the properties and settings.')]
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject
     )
 

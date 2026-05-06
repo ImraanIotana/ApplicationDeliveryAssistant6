@@ -47,7 +47,7 @@
         OneRowMargin    = 7         # Extra margin if a GroupBox has only 1 row
     }
 
-    <# TextBox settings
+    # TextBox settings
     TextBox             = @{
         Height          = 30        # Height of the TextBoxes and ComboBoxes
         TopMargin       = 13
@@ -60,7 +60,7 @@
         LeftMargin      = 5         # Between the left of the Parent, and the left of the Label
     }
 
-    # Button settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)
+    <# Button settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)
     Button              = @{
     }
 
