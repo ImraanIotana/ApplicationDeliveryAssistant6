@@ -205,6 +205,8 @@ function Add-GraphicalDimensions {
         Add-GroupBoxDimensions -InputObject $InputObject
         # Add the graphical dimensions of the TextBoxes and ComboBoxes
         Add-TextBoxDimensions -InputObject $InputObject
+        # Add the graphical dimensions of the Buttons
+        Add-ButtonDimensions -InputObject $InputObject
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
