@@ -134,7 +134,7 @@ function New-TextBox {
         ####################################################################################################
         ### NATIVE PROPERTIES ###
         # test
-        $Settings.TextBox | Out-Host
+        $Settings | Out-Host
 
         # LOCATION
         # Set the location
