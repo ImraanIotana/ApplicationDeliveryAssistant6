@@ -102,7 +102,8 @@ function Import-FeatureSystemFolderLauncher {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$SystemFolderGroupBox = New-GroupBox @FeatureProperties
 
-        New-Label -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox -Text "System Folders" -RowNumber 1
+
+        $TestTextbox = New-TextBox -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox -Label "Test TextBox" -RowNumber 1
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

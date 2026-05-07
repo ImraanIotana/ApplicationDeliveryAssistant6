@@ -37,24 +37,13 @@ function Add-TextBoxDimensions {
         [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
 
         # TEXTBOX WIDTH
-        # Add the Width of the TextBox
-        $Settings.TextBox.Width = ($Settings.MainTabControl.Width - $Settings.TextBox.RightMargin)
-
-        # TEXTBOX HEIGHT
-        # Create the TextBoxHeightTable
-        [System.Collections.Hashtable]$TextBoxHeightTable =@{}
-        # Add the Heights of the TextBox to the TextBoxHeightTable
-        [System.Int32[]]$NumberOfRowsArray = @(1..20)
-        foreach ($NumberOfRows in $NumberOfRowsArray) {
-            [System.Int32]$TextBoxHeight = if ($NumberOfRows -eq 1) {
-                ($NumberOfRows * $Settings.TextBox.RowHeight) + $Settings.TextBox.OneRowMargin
-            } else {
-                $NumberOfRows * $Settings.TextBox.RowHeight
-            }
-            $TextBoxHeightTable.Add($NumberOfRows,$TextBoxHeight)
-        }
-        # Add the TextBoxHeightTable
-        $Settings.TextBox.HeightTable = $TextBoxHeightTable
+        # Add the width of the Large textbox
+        [System.Int32]$TextBoxLargeWidth = $Settings.GroupBox.Width - $Settings.TextBox.LeftMargin - $Settings.TextBox.RightMargin
+        $Settings.TextBox.LargeWidth = $TextBoxLargeWidth
+        # Add the width of the Medium textbox
+        $Settings.TextBox.MediumWidth = (($TextBoxLargeWidth * 0.8) - 3)
+        # Add the width of the Small textbox
+        $Settings.TextBox.SmallWidth = (($TextBoxLargeWidth * 0.6) - 3)
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -92,8 +81,8 @@ function Add-TextBoxDimensions {
 function New-TextBox {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the Settings.')]
-        [PSCustomObject]$ApplicationObject = $Global:ApplicationObject,
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject,
 
         [Parameter(Mandatory=$true,HelpMessage='The Parent GroupBox to which this TextBox will be added.')]
         [System.Windows.Forms.GroupBox]$ParentGroupBox,
@@ -133,7 +122,7 @@ function New-TextBox {
         ### MAIN PROPERTIES ###
 
         # Input
-        [System.Collections.Hashtable]$Settings     = $ApplicationObject.Settings
+        [System.Collections.Hashtable]$Settings     = $InputObject.Settings
 
         # Create a new TextBox as the Output
         [System.Windows.Forms.TextBox]$NewTextBox   = New-Object System.Windows.Forms.TextBox
@@ -144,6 +133,8 @@ function New-TextBox {
     process {
         ####################################################################################################
         ### NATIVE PROPERTIES ###
+        # test
+        $Settings.TextBox | Out-Host
 
         # LOCATION
         # Set the location
@@ -184,14 +175,14 @@ function New-TextBox {
         ####################################################################################################
         ### CUSTOM PROPERTIES ###
 
-        # TAG
+        <# TAG
         # Create the Tag property
         $NewTextBox.Tag = [PSCustomObject]@{}
 
         # LABEL
         # Create the label and add it to the Tag property
         if ($Label) {
-            New-Label -InputObject $ApplicationObject -ParentGroupBox $ParentGroupBox -Text $Label -RowNumber $RowNumber
+            New-Label -InputObject $InputObject -ParentGroupBox $ParentGroupBox -Text $Label -RowNumber $RowNumber
             $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name Label -Value $Label
         }
 
@@ -256,7 +247,7 @@ function New-TextBox {
         if ($ToolTip) {
             [System.Windows.Forms.ToolTip]$TextBoxToolTip = New-Object System.Windows.Forms.ToolTip
             $TextBoxToolTip.SetToolTip($NewTextBox, $ToolTip)
-        }
+        }#>
 
         # ADD TO PARENT
         # Add the new textbox to the parent
