@@ -60,7 +60,7 @@
         LeftMargin      = 5         # Between the left of the Parent, and the left of the Label
     }
 
-    <# Button settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)
+    # Button settings (# This will be filled by the function Add-ButtonDimensions)
     Button              = @{
     }
 
