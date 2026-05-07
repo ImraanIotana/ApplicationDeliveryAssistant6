@@ -122,7 +122,7 @@ function New-TextBox {
         ### MAIN PROPERTIES ###
 
         # Input
-        [System.Collections.Hashtable]$Settings     = $InputObject.Settings
+        [System.Collections.Hashtable]$Settings     = $InputObject.GraphicalSettings
 
         # Create a new TextBox as the Output
         [System.Windows.Forms.TextBox]$NewTextBox   = New-Object System.Windows.Forms.TextBox
@@ -133,8 +133,6 @@ function New-TextBox {
     process {
         ####################################################################################################
         ### NATIVE PROPERTIES ###
-        # test
-        $Settings | Out-Host
 
         # LOCATION
         # Set the location
