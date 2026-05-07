@@ -87,3 +87,167 @@ function Add-ButtonDimensions {
 
 ### END OF FUNCTION
 ####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    This function creates a new Button.
+.DESCRIPTION
+    This function creates a new TabPage based on the provided parameters, and adds it to the specified parent TabControl.
+.EXAMPLE
+    New-TabPage -ParentTabControl $MyTabControl -Title 'Administration' -BackGroundColor 'Green'
+.INPUTS
+    [System.Windows.Forms.TabControl]
+    [System.String]
+.OUTPUTS
+    [System.Windows.Forms.TabPage]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Invoke-Button {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject,
+
+        [Parameter(Mandatory=$true,HelpMessage='The Parent GroupBox to which this button will be added.')]
+        [System.Windows.Forms.GroupBox]$ParentGroupBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='The text of the button.')]
+        [System.String]$Text,
+
+        [Parameter(Mandatory=$false,HelpMessage='The color of the text.')]
+        [AllowEmptyString()]
+        [System.String]$TextColor,
+
+        [Parameter(Mandatory = $false,HelpMessage='The path of the image file in png format.')]
+        [AllowEmptyString()]
+        [System.String]$PNGImagePath,
+
+        [Parameter(Mandatory = $false,HelpMessage='The name of the Default Icon.')]
+        [System.String]$DefaultIcon,
+
+        [Parameter(Mandatory=$false,HelpMessage='The location of the button expressed in rownumber.')]
+        [System.Int32]$RowNumber = 1,
+
+        [Parameter(Mandatory=$false,HelpMessage='The location of the button expressed in columnnumber.')]
+        [System.Int32]$ColumnNumber = 1,
+
+        [Parameter(Mandatory=$false,HelpMessage='The size type of the button (Small, Medium or Large).')]
+        [ValidateSet('Small','Medium','Large')]
+        [System.String]$SizeType = 'Medium',
+
+        [Parameter(Mandatory = $false,HelpMessage='The function to be invoked when the button is clicked.')]
+        [System.EventHandler]$Function,
+
+        [Parameter(Mandatory = $false,HelpMessage='The ToolTip of the button.')]
+        [System.String]$ToolTip
+    )
+
+    begin {
+        ####################################################################################################
+        ### MAIN PROPERTIES ###
+
+        # Input
+        [System.Collections.Hashtable]$Settings = $InputObject.Settings
+
+        # Create a New Button
+        [System.Windows.Forms.Button]$NewButton = New-Object System.Windows.Forms.Button
+
+        ####################################################################################################
+    }
+    
+    process {
+        try {
+            # COORDINATES
+            # Set the Location
+            [System.Int32]$ButtonTopLeftX   = $Settings.ColumnNumber.($ColumnNumber)
+            [System.Int32]$ButtonTopLeftY   = $Settings.TextBox.TopMargin + (($RowNumber - 1) * $Settings.TextBox.Height)
+            $NewButton.Location             = New-Object System.Drawing.Point($ButtonTopLeftX, $ButtonTopLeftY)
+            
+            # SIZE
+            # Set the Size
+            [System.Int32[]]$ButtonSize = switch ($SizeType) {
+                'Large'     { @($Settings.Button.LargeWidth,    $Settings.Button.LargeHeight) }
+                'Medium'    { @($Settings.Button.MediumWidth,   $Settings.Button.MediumHeight) }
+                'Small'     { @($Settings.Button.SmallWidth,    $Settings.Button.SmallHeight) }
+            }
+            $NewButton.Size = New-Object System.Drawing.Point($ButtonSize)
+    
+            # TOOLTIP
+            # Check if the button has a default Text/Tooltip
+            [System.Collections.Hashtable]$DefaultToolTips = @{
+                'Copy'      = 'Copy the content of the box to your clipboard'
+                'Paste'     = 'Paste the content of your clipboard to the box'
+                'Clear'     = 'Clear the content of the box'
+                'Default'   = 'Reset the box to the default value'
+            }
+            if (-not $ToolTip -and $DefaultToolTips.ContainsKey($Text)) { $ToolTip = $DefaultToolTips[$Text] }
+    
+            # Add the ToolTip
+            if ($ToolTip) {
+                [System.Windows.Forms.ToolTip]$NewToolTipObject = New-Object System.Windows.Forms.ToolTip
+                $NewToolTipObject.SetToolTip($NewButton,$ToolTip)
+                # Add the ToolTip object to the Mouse Over action
+                $NewButton.Add_MouseEnter({ $NewToolTipObject })
+            }
+
+            
+            # IMAGE
+            # If the DefaultIcon is not specified, then use the Text to determine the DefaultIcon
+            if (-not $DefaultIcon) { $DefaultIcon = $Text }
+
+            # If the DefaultIcon exists in the Settings Icons
+            if ($Settings.Icons.ContainsKey($DefaultIcon)) {
+                # Set the Image from the Settings
+                $NewButton.Image = $Settings.Icons[$DefaultIcon]
+            } else {
+                # Add the PNG Image
+                if ($PNGImagePath) {
+                    $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath)
+                }
+            }
+
+            # IMAGE AND TEXT RELATION
+            # Set TextImageRelation for all cases with images
+            if ($NewButton.Image) {
+                # Set the TextImageRelation
+                $NewButton.TextImageRelation = 'ImageBeforeText'
+                # If both an image and text are passed thru, add a space before the text for better spacing, except for Small buttons
+                if (($Text) -and (-Not($SizeType -eq 'Small')))  { $Text = " $Text" }
+            }
+    
+            # TEXT
+            # If the Size is not Small, then add the Text
+            if (($Text) -and (-Not($SizeType -eq 'Small'))) { $NewButton.Text = $Text }
+            # Add the Text Color
+            if ($TextColor) { $NewButton.ForeColor = $TextColor }
+    
+            # CURSOR
+            # Add the Cursor
+            $NewButton.Cursor = [System.Windows.Forms.Cursors]::Hand
+    
+            # FUNCTION
+            # Add the Function
+            if ($Function) { $NewButton.Add_Click($Function) }
+    
+            # ADD BUTTON TO PARENT
+            $ParentGroupbox.Controls.Add($NewButton)
+        }
+        catch {
+            Write-ErrorReport -ErrorRecord $_
+        }
+    }
+
+    end {
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################

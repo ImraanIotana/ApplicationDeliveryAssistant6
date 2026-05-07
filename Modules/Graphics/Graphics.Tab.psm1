@@ -72,6 +72,7 @@ function Add-MainTabControlDimensions {
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
 .NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
@@ -129,6 +130,7 @@ function Add-MainTabControl {
 .OUTPUTS
     [System.Windows.Forms.TabPage]
 .NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
