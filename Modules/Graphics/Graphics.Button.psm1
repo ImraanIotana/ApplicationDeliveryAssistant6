@@ -34,7 +34,7 @@ function Add-ButtonDimensions {
     try {
         # PREPARATION - GET SETTINGS
         # Get the MainForm settings
-        [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings.MainForm
+        [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
 
         # EXECUTION - ADD BUTTON WIDTH
         # Add the width of the Large Button
