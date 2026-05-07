@@ -103,8 +103,7 @@ function Import-FeatureSystemFolderLauncher {
         [System.Windows.Forms.GroupBox]$SystemFolderGroupBox = New-GroupBox @FeatureProperties
 
 
-        Invoke-Button -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox -Text 'Open System32 Folder' -RowNumber 1 -TextColor 'Black'
-        Invoke-Button -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox -Text 'Open SysWOW64 Folder' -RowNumber 2 -TextColor 'Black'
+        Invoke-Button -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
