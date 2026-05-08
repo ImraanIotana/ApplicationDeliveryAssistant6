@@ -200,7 +200,7 @@ function Invoke-Button {
 
             
             # IMAGE
-            # If the DefaultIcon is not specified, then use the Text to determine the DefaultIcon
+            <# If the DefaultIcon is not specified, then use the Text to determine the DefaultIcon
             if (-not $DefaultIcon) { $DefaultIcon = $Text }
 
             # If the DefaultIcon exists in the Settings Icons
@@ -212,7 +212,7 @@ function Invoke-Button {
                 if ($PNGImagePath) {
                     $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath)
                 }
-            }
+            }#>
 
             # IMAGE AND TEXT RELATION
             # Set TextImageRelation for all cases with images
