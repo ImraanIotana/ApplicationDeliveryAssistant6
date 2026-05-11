@@ -102,8 +102,8 @@ function Import-FeatureSystemFolderLauncher {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$SystemFolderGroupBox = New-GroupBox @FeatureProperties
 
-
-        Invoke-Button -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox
+        # Add the Buttons
+        Invoke-Button -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox -SizeType Large -Text 'Program Files (64bit)'
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

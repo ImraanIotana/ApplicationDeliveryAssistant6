@@ -78,7 +78,7 @@ function Add-ButtonDimensions {
         @(0..7) | ForEach-Object { $Settings.ColumnNumber.Add( $_ , $ColumnNumbersLocationXArray[$_]) }
 
         # test
-        $Settings.ColumnNumber | Out-Host
+        #$Settings.ColumnNumber | Out-Host
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -155,7 +155,7 @@ function Invoke-Button {
         ### MAIN PROPERTIES ###
 
         # Input
-        [System.Collections.Hashtable]$Settings = $InputObject.Settings
+        [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
 
         # Create a New Button
         [System.Windows.Forms.Button]$NewButton = New-Object System.Windows.Forms.Button
@@ -239,6 +239,9 @@ function Invoke-Button {
     
             # ADD BUTTON TO PARENT
             $ParentGroupbox.Controls.Add($NewButton)
+
+            # test
+            $NewButton | Out-Host
         }
         catch {
             Write-ErrorReport -ErrorRecord $_
