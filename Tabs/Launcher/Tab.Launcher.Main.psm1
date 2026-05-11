@@ -110,6 +110,7 @@ function Import-FeatureSystemFolderLauncher {
                 Text            = 'Program Files (32bit)'
                 PNGFileName     = '32_bit.png'
                 ColumnNumber    = 1
+                Function        = { Invoke-Item -Path 'C:\Program Files (x86)' }
             },
             @{
                 ParentGroupBox  = $SystemFolderGroupBox
@@ -117,6 +118,7 @@ function Import-FeatureSystemFolderLauncher {
                 Text            = 'Program Files (64bit)'
                 PNGFileName     = '64_bit.png'
                 ColumnNumber    = 2
+                Function        = { Invoke-Item -Path 'C:\Program Files' }
             }
         )
 
