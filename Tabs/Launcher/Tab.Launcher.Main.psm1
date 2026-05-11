@@ -102,8 +102,28 @@ function Import-FeatureSystemFolderLauncher {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$SystemFolderGroupBox = New-GroupBox @FeatureProperties
 
+        # Set the Button properties
+        [System.Collections.Hashtable[]]$ButtonProperties = @(
+            @{
+                ParentGroupBox  = $SystemFolderGroupBox
+                SizeType        = 'Large'
+                Text            = 'Program Files (32bit)'
+                PNGFileName     = '32_bit.png'
+                ColumnNumber    = 1
+            },
+            @{
+                ParentGroupBox  = $SystemFolderGroupBox
+                SizeType        = 'Large'
+                Text            = 'Program Files (64bit)'
+                PNGFileName     = '64_bit.png'
+                ColumnNumber    = 2
+            }
+        )
+
         # Add the Buttons
-        Invoke-Button -InputObject $InputObject -ParentGroupBox $SystemFolderGroupBox -SizeType Large -Text 'Program Files (64bit)'
+        foreach ($Button in $ButtonProperties) {
+            Invoke-Button -InputObject $InputObject @Button
+        }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

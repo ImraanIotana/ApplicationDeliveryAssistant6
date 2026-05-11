@@ -204,7 +204,13 @@ function Invoke-Button {
 
             
             # IMAGE
-            # If the DefaultIcon is not specified, then use the Text to determine the DefaultIcon
+            # If a PNG file name is provided, search for the file and add the image to the button
+            if ($PNGFileName) {
+                $PNGImagePath = Get-ChildItem -Path $InputObject.RootFolder -Filter $PNGFileName -File -Recurse | Select-Object -First 1 -ExpandProperty FullName
+                if ($PNGImagePath) { $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath) }
+            }
+            
+            <# If the DefaultIcon is not specified, then use the Text to determine the DefaultIcon
             if (-not $DefaultIcon) { $DefaultIcon = $Text }
 
             # If the DefaultIcon exists in the Settings Icons
@@ -216,11 +222,7 @@ function Invoke-Button {
                 if ($PNGImagePath) {
                     $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath)
                 }
-                elseif ($PNGFileName) {
-                    $PNGImagePath = Get-ChildItem -Path $InputObject.RootFolder -Filter $PNGFileName -File -Recurse | Select-Object -First 1 -ExpandProperty FullName
-                    if ($PNGImagePath) { $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath) }
-                }
-            }
+            }#>
 
             # IMAGE AND TEXT RELATION
             # Set TextImageRelation for all cases with images
@@ -249,7 +251,7 @@ function Invoke-Button {
             $ParentGroupbox.Controls.Add($NewButton)
 
             # test
-            $NewButton | Out-Host
+            #$NewButton | Out-Host
         }
         catch {
             Write-ErrorReport -ErrorRecord $_
