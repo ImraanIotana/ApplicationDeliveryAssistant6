@@ -47,6 +47,7 @@ function Import-TabLauncher {
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
         # Import the Features
+        Import-FeatureAppLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
         Import-FeatureSystemFolderLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
     }
     catch {

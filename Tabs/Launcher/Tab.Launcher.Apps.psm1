@@ -1,16 +1,16 @@
 #
-# Module 'Tab.Launcher.SystemFolder.psm1'
+# Module 'Tab.Launcher.Apps.psm1'
 # Last Update: May 2026
 #
 
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the System Folder feature into the Launcher tab.
+    Imports the Application Launcher feature into the Launcher tab.
 .DESCRIPTION
-    This function imports the System Folder feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Application Launcher feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureSystemFolderLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureAppLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
@@ -24,7 +24,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-FeatureSystemFolderLauncher {
+function Import-FeatureAppLauncher {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -39,22 +39,22 @@ function Import-FeatureSystemFolderLauncher {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'SYSTEM FOLDERS'
+            Title           = 'APPLICATION LAUNCHER'
             Color           = 'White'
             NumberOfRows    = 4
         }
 
         # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$SystemFolderLauncherGroupBox = New-GroupBox @FeatureProperties
+        [System.Windows.Forms.GroupBox]$Global:AppLauncherGroupBox = New-GroupBox @FeatureProperties
 
         # Set the Button properties
         [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
             @{
                 ColumnNumber    = 1
-                Text            = 'Program Files (64bit)'
-                PNGFileName     = '64_bit.png'
+                Text            = 'Add/Remove Programs'
+                PNGFileName     = 'application_view_list.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Program Files' }
+                Function        = { Start-Process control.exe appwiz.cpl }
             },
             @{
                 ColumnNumber    = 2
@@ -105,8 +105,8 @@ function Import-FeatureSystemFolderLauncher {
         )
 
         # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $SystemFolderLauncherGroupBox -RowNumber 1
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray2 -ParentGroupBox $SystemFolderLauncherGroupBox -RowNumber 3
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $Global:AppLauncherGroupBox -RowNumber 1
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray2 -ParentGroupBox $Global:AppLauncherGroupBox -RowNumber 3
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
