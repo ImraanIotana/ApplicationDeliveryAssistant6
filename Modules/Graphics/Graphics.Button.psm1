@@ -94,14 +94,16 @@ function Add-ButtonDimensions {
 .SYNOPSIS
     This function creates a new Button.
 .DESCRIPTION
-    This function creates a new TabPage based on the provided parameters, and adds it to the specified parent TabControl.
+    This function creates a new Button based on the provided properties and adds it to the specified Parent GroupBox.
 .EXAMPLE
-    New-TabPage -ParentTabControl $MyTabControl -Title 'Administration' -BackGroundColor 'Green'
+    New-Button -InputObject $MyAppObject -ParentGroupBox $MyGroupBox -Text 'Click Me' -RowNumber 1 -ColumnNumber 1 -SizeType 'Medium' -Function { Write-Host 'Button Clicked' }
 .INPUTS
-    [System.Windows.Forms.TabControl]
+    [PSCustomObject]
+    [System.Windows.Forms.GroupBox]
     [System.String]
+    [System.EventHandler]
 .OUTPUTS
-    [System.Windows.Forms.TabPage]
+    No objects are returned to the pipeline. All output is written to the host.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -110,7 +112,7 @@ function Add-ButtonDimensions {
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Invoke-Button {
+function New-Button {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
@@ -154,112 +156,102 @@ function Invoke-Button {
         [System.String]$ToolTip
     )
 
-    begin {
-        ####################################################################################################
-        ### MAIN PROPERTIES ###
+    # Input
+    [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
 
-        # Input
-        [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
+    # Create a New Button
+    [System.Windows.Forms.Button]$NewButton = New-Object System.Windows.Forms.Button
 
-        # Create a New Button
-        [System.Windows.Forms.Button]$NewButton = New-Object System.Windows.Forms.Button
 
-        ####################################################################################################
-    }
-    
-    process {
-        try {
-            # COORDINATES
-            # Set the Location
-            [System.Int32]$ButtonTopLeftX   = $Settings.ColumnNumber.($ColumnNumber)
-            [System.Int32]$ButtonTopLeftY   = $Settings.TextBox.TopMargin + (($RowNumber - 1) * $Settings.TextBox.Height)
-            $NewButton.Location             = New-Object System.Drawing.Point($ButtonTopLeftX, $ButtonTopLeftY)
-            
-            # SIZE
-            # Set the Size
-            [System.Int32[]]$ButtonSize = switch ($SizeType) {
-                'Large'     { @($Settings.Button.LargeWidth,    $Settings.Button.LargeHeight) }
-                'Medium'    { @($Settings.Button.MediumWidth,   $Settings.Button.MediumHeight) }
-                'Small'     { @($Settings.Button.SmallWidth,    $Settings.Button.SmallHeight) }
-            }
-            $NewButton.Size = New-Object System.Drawing.Point($ButtonSize)
-    
-            # TOOLTIP
-            # Check if the button has a default Text/Tooltip
-            [System.Collections.Hashtable]$DefaultToolTips = @{
-                'Copy'      = 'Copy the content of the box to your clipboard'
-                'Paste'     = 'Paste the content of your clipboard to the box'
-                'Clear'     = 'Clear the content of the box'
-                'Default'   = 'Reset the box to the default value'
-            }
-            if (-not $ToolTip -and $DefaultToolTips.ContainsKey($Text)) { $ToolTip = $DefaultToolTips[$Text] }
-    
-            # Add the ToolTip
-            if ($ToolTip) {
-                [System.Windows.Forms.ToolTip]$NewToolTipObject = New-Object System.Windows.Forms.ToolTip
-                $NewToolTipObject.SetToolTip($NewButton,$ToolTip)
-                # Add the ToolTip object to the Mouse Over action
-                $NewButton.Add_MouseEnter({ $NewToolTipObject })
-            }
-
-            
-            # IMAGE
-            # If a PNG file name is provided, search for the file and add the image to the button
-            if ($PNGFileName) {
-                $PNGImagePath = Get-ChildItem -Path $InputObject.RootFolder -Filter $PNGFileName -File -Recurse | Select-Object -First 1 -ExpandProperty FullName
-                if ($PNGImagePath) { $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath) }
-            }
-            
-            <# If the DefaultIcon is not specified, then use the Text to determine the DefaultIcon
-            if (-not $DefaultIcon) { $DefaultIcon = $Text }
-
-            # If the DefaultIcon exists in the Settings Icons
-            if ($Settings.Icons.ContainsKey($DefaultIcon)) {
-                # Set the Image from the Settings
-                $NewButton.Image = $Settings.Icons[$DefaultIcon]
-            } else {
-                # Add the PNG Image
-                if ($PNGImagePath) {
-                    $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath)
-                }
-            }#>
-
-            # IMAGE AND TEXT RELATION
-            # Set TextImageRelation for all cases with images
-            if ($NewButton.Image) {
-                # Set the TextImageRelation
-                $NewButton.TextImageRelation = 'ImageBeforeText'
-                # If both an image and text are passed thru, add a space before the text for better spacing, except for Small buttons
-                if (($Text) -and (-Not($SizeType -eq 'Small')))  { $Text = " $Text" }
-            }
-    
-            # TEXT
-            # If the Size is not Small, then add the Text
-            if (($Text) -and (-Not($SizeType -eq 'Small'))) { $NewButton.Text = $Text }
-            # Add the Text Color
-            if ($TextColor) { $NewButton.ForeColor = $TextColor }
-    
-            # CURSOR
-            # Add the Cursor
-            $NewButton.Cursor = [System.Windows.Forms.Cursors]::Hand
-    
-            # FUNCTION
-            # Add the Function
-            if ($Function) { $NewButton.Add_Click($Function) }
-    
-            # ADD BUTTON TO PARENT
-            $ParentGroupbox.Controls.Add($NewButton)
-
-            # test
-            #$NewButton | Out-Host
+    try {
+        # COORDINATES
+        # Set the Location
+        [System.Int32]$ButtonTopLeftX   = $Settings.ColumnNumber.($ColumnNumber)
+        [System.Int32]$ButtonTopLeftY   = $Settings.TextBox.TopMargin + (($RowNumber - 1) * $Settings.TextBox.Height)
+        $NewButton.Location             = New-Object System.Drawing.Point($ButtonTopLeftX, $ButtonTopLeftY)
+        
+        # SIZE
+        # Set the Size
+        [System.Int32[]]$ButtonSize = switch ($SizeType) {
+            'Large'     { @($Settings.Button.LargeWidth,    $Settings.Button.LargeHeight) }
+            'Medium'    { @($Settings.Button.MediumWidth,   $Settings.Button.MediumHeight) }
+            'Small'     { @($Settings.Button.SmallWidth,    $Settings.Button.SmallHeight) }
         }
-        catch {
-            Write-ErrorReport -ErrorRecord $_
+        $NewButton.Size = New-Object System.Drawing.Point($ButtonSize)
+
+        # TOOLTIP
+        # Check if the button has a default Text/Tooltip
+        [System.Collections.Hashtable]$DefaultToolTips = @{
+            'Copy'      = 'Copy the content of the box to your clipboard'
+            'Paste'     = 'Paste the content of your clipboard to the box'
+            'Clear'     = 'Clear the content of the box'
+            'Default'   = 'Reset the box to the default value'
         }
+        if (-not $ToolTip -and $DefaultToolTips.ContainsKey($Text)) { $ToolTip = $DefaultToolTips[$Text] }
+
+        # Add the ToolTip
+        if ($ToolTip) {
+            [System.Windows.Forms.ToolTip]$NewToolTipObject = New-Object System.Windows.Forms.ToolTip
+            $NewToolTipObject.SetToolTip($NewButton,$ToolTip)
+            # Add the ToolTip object to the Mouse Over action
+            $NewButton.Add_MouseEnter({ $NewToolTipObject })
+        }
+
+        
+        # IMAGE
+        # If a PNG file name is provided, search for the file and add the image to the button
+        if ($PNGFileName) {
+            $PNGImagePath = Get-ChildItem -Path $InputObject.RootFolder -Filter $PNGFileName -File -Recurse | Select-Object -First 1 -ExpandProperty FullName
+            if ($PNGImagePath) { $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath) }
+        }
+        
+        <# If the DefaultIcon is not specified, then use the Text to determine the DefaultIcon
+        if (-not $DefaultIcon) { $DefaultIcon = $Text }
+
+        # If the DefaultIcon exists in the Settings Icons
+        if ($Settings.Icons.ContainsKey($DefaultIcon)) {
+            # Set the Image from the Settings
+            $NewButton.Image = $Settings.Icons[$DefaultIcon]
+        } else {
+            # Add the PNG Image
+            if ($PNGImagePath) {
+                $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath)
+            }
+        }#>
+
+        # IMAGE AND TEXT RELATION
+        # Set TextImageRelation for all cases with images
+        if ($NewButton.Image) {
+            # Set the TextImageRelation
+            $NewButton.TextImageRelation = 'ImageBeforeText'
+            # If both an image and text are passed thru, add a space before the text for better spacing, except for Small buttons
+            if (($Text) -and (-Not($SizeType -eq 'Small')))  { $Text = " $Text" }
+        }
+
+        # TEXT
+        # If the Size is not Small, then add the Text
+        if (($Text) -and (-Not($SizeType -eq 'Small'))) { $NewButton.Text = $Text }
+        # Add the Text Color
+        if ($TextColor) { $NewButton.ForeColor = $TextColor }
+
+        # CURSOR
+        # Add the Cursor
+        $NewButton.Cursor = [System.Windows.Forms.Cursors]::Hand
+
+        # FUNCTION
+        # Add the Function
+        if ($Function) { $NewButton.Add_Click($Function) }
+
+        # ADD BUTTON TO PARENT
+        $ParentGroupbox.Controls.Add($NewButton)
+
+        # test
+        #$NewButton | Out-Host
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
     }
 
-    end {
-    }
 }
 
 ### END OF FUNCTION
@@ -276,8 +268,9 @@ function Invoke-Button {
     New-ButtonLine -InputObject $Global:ApplicationObject -ButtonPropertiesArray $ButtonPropertiesArray -ParentGroupBox $GroupBox -RowNumber 2
 .INPUTS
     [PSCustomObject]
-    [System.Collections.IEnumerable]
+    [System.Collections.Hashtable[]]
     [System.Windows.Forms.GroupBox]
+    [System.Int32]
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
 .NOTES
@@ -295,30 +288,32 @@ function New-ButtonLine {
         [PSCustomObject]$InputObject,
 
         [Parameter(Mandatory=$true,HelpMessage='The array of button property hashtables.')]
-        [System.Collections.IEnumerable]$ButtonPropertiesArray,
+        [System.Collections.Hashtable[]]$ButtonPropertiesArray,
 
         [Parameter(Mandatory=$true,HelpMessage='The Parent GroupBox to which these buttons will be added.')]
         [System.Windows.Forms.GroupBox]$ParentGroupBox,
 
-        [Parameter(Mandatory=$false,HelpMessage='The row number to use for buttons that do not define one explicitly.')]
-        [System.Int32]$RowNumber = 1
+        [Parameter(Mandatory=$true,ParameterSetName='RowNumber',HelpMessage='The row number to use for buttons that do not define one explicitly.')]
+        [System.Int32]$RowNumber = 1,
+
+        [Parameter(Mandatory=$true,ParameterSetName='ColumnNumber',HelpMessage='The column number to use for buttons that do not define one explicitly.')]
+        [System.Int32]$ColumnNumber = 1
     )
 
     try {
-        foreach ($Button in $ButtonPropertiesArray) {
-            [System.Collections.Hashtable]$ButtonProperties = @{}
-            if ($Button -is [System.Collections.IDictionary]) {
-                foreach ($Key in $Button.Keys) {
-                    $ButtonProperties[$Key] = $Button[$Key]
+        # EXECUTION - CREATE BUTTONS
+        # Switch on the ParameterSetName
+        switch ($PSCmdlet.ParameterSetName) {
+            'RowNumber' {
+                foreach ($ButtonPropertiesHashtable in $ButtonPropertiesArray) {
+                    New-Button @ButtonPropertiesHashtable -InputObject $InputObject -ParentGroupBox $ParentGroupBox -RowNumber $RowNumber
                 }
             }
-
-            $ButtonProperties['ParentGroupBox'] = $ParentGroupBox
-            if (-not $ButtonProperties.ContainsKey('RowNumber')) {
-                $ButtonProperties['RowNumber'] = $RowNumber
+            'ColumnNumber' {
+                foreach ($ButtonPropertiesHashtable in $ButtonPropertiesArray) {
+                    New-Button @ButtonPropertiesHashtable -InputObject $InputObject -ParentGroupBox $ParentGroupBox -ColumnNumber $ColumnNumber
+                }
             }
-
-            Invoke-Button -InputObject $InputObject @ButtonProperties
         }
     }
     catch {

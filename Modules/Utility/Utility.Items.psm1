@@ -57,7 +57,7 @@ function Open-Folder {
             # Validate the string
             if (Test-String -IsEmpty $FolderToOpen) { Write-Line "The Path string is empty." -Type Fail ; Return }
             # Validate the path
-            if (-Not(Test-Path -Path $FolderToOpen)) { Write-Line "The Folder could not be reached. ($FolderToOpen)" -Type Fail ; Return }
+            if (-Not(Test-Path -Path $FolderToOpen)) { Write-Line "The folder does not exist, or could not be reached. ($FolderToOpen)" -Type Fail ; Return }
         }
         'HighlightTheItem' {
             # Validate the string
