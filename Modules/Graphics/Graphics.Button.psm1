@@ -264,3 +264,67 @@ function Invoke-Button {
 
 ### END OF FUNCTION
 ####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    This function creates a horizontal line of buttons.
+.DESCRIPTION
+    This function applies shared button-line properties and invokes Invoke-Button for each button definition.
+.EXAMPLE
+    New-ButtonLine -InputObject $Global:ApplicationObject -ButtonPropertiesArray $ButtonPropertiesArray -ParentGroupBox $GroupBox -RowNumber 2
+.INPUTS
+    [PSCustomObject]
+    [System.Collections.IEnumerable]
+    [System.Windows.Forms.GroupBox]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function New-ButtonLine {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject,
+
+        [Parameter(Mandatory=$true,HelpMessage='The array of button property hashtables.')]
+        [System.Collections.IEnumerable]$ButtonPropertiesArray,
+
+        [Parameter(Mandatory=$true,HelpMessage='The Parent GroupBox to which these buttons will be added.')]
+        [System.Windows.Forms.GroupBox]$ParentGroupBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='The row number to use for buttons that do not define one explicitly.')]
+        [System.Int32]$RowNumber = 1
+    )
+
+    try {
+        foreach ($Button in $ButtonPropertiesArray) {
+            [System.Collections.Hashtable]$ButtonProperties = @{}
+            if ($Button -is [System.Collections.IDictionary]) {
+                foreach ($Key in $Button.Keys) {
+                    $ButtonProperties[$Key] = $Button[$Key]
+                }
+            }
+
+            $ButtonProperties['ParentGroupBox'] = $ParentGroupBox
+            if (-not $ButtonProperties.ContainsKey('RowNumber')) {
+                $ButtonProperties['RowNumber'] = $RowNumber
+            }
+
+            Invoke-Button -InputObject $InputObject @ButtonProperties
+        }
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################

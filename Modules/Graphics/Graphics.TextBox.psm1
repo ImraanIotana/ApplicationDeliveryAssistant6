@@ -233,7 +233,7 @@ function New-TextBox {
                     $NewTextBox.Tag.ButtonPropertiesArray += $ButtonHashtable
                 }
                 # Create the buttons
-                Invoke-ButtonLine -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
+                Invoke-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
             }
             catch {
                 Write-FullError

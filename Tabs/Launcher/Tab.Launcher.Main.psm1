@@ -96,7 +96,7 @@ function Import-FeatureSystemFolderLauncher {
             ParentTabPage   = $ParentTabPage
             Title           = 'SYSTEM FOLDERS'
             Color           = 'White'
-            NumberOfRows    = 2
+            NumberOfRows    = 4
         }
 
         # Create the GroupBox
@@ -107,18 +107,34 @@ function Import-FeatureSystemFolderLauncher {
             @{
                 ParentGroupBox  = $SystemFolderGroupBox
                 SizeType        = 'Large'
-                Text            = 'Program Files (32bit)'
-                PNGFileName     = '32_bit.png'
+                Text            = 'Program Files (64bit)'
+                PNGFileName     = '64_bit.png'
                 ColumnNumber    = 1
-                Function        = { Invoke-Item -Path 'C:\Program Files (x86)' }
+                Function        = { Open-Folder -Path 'C:\Program Files' }
             },
             @{
                 ParentGroupBox  = $SystemFolderGroupBox
                 SizeType        = 'Large'
-                Text            = 'Program Files (64bit)'
-                PNGFileName     = '64_bit.png'
+                Text            = 'Program Files (32bit)'
+                PNGFileName     = '32_bit.png'
                 ColumnNumber    = 2
-                Function        = { Invoke-Item -Path 'C:\Program Files' }
+                Function        = { Open-Folder -Path 'C:\Program Files (x86)' }
+            },
+            @{
+                ParentGroupBox  = $SystemFolderGroupBox
+                SizeType        = 'Large'
+                Text            = 'ProgramData'
+                PNGFileName     = 'folder_page.png'
+                ColumnNumber    = 3
+                Function        = { Open-Folder -Path 'C:\ProgramData' }
+            },
+            @{
+                ParentGroupBox  = $SystemFolderGroupBox
+                SizeType        = 'Large'
+                Text            = 'Windows'
+                PNGFileName     = 'folder_wrench.png'
+                ColumnNumber    = 4
+                Function        = { Open-Folder -Path 'C:\Windows' }
             }
         )
 
