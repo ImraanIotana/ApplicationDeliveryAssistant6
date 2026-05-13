@@ -31,7 +31,10 @@ function Import-FeatureAppLauncher {
         [PSCustomObject]$InputObject,
 
         [Parameter(Mandatory=$true,HelpMessage='The Parent TabPage to which this Feature will be added.')]
-        [System.Windows.Forms.TabPage]$ParentTabPage
+        [System.Windows.Forms.TabPage]$ParentTabPage,
+
+        [Parameter(Mandatory=$false,HelpMessage='The GroupBox above which this Feature will be added.')]
+        [System.Windows.Forms.GroupBox]$GroupBoxAbove
     )
 
     try {
@@ -43,9 +46,11 @@ function Import-FeatureAppLauncher {
             Color           = 'Yellow'
             NumberOfRows    = 4
         }
+        # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
+        if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
 
         # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$Global:AppLauncherGroupBox = New-GroupBox @FeatureProperties
+        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
 
         # Set the Button properties
         [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
@@ -126,8 +131,11 @@ function Import-FeatureAppLauncher {
         )
 
         # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $Global:AppLauncherGroupBox -RowNumber 1
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray2 -ParentGroupBox $Global:AppLauncherGroupBox -RowNumber 3
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray2 -ParentGroupBox $FeatureGroupBox -RowNumber 3
+
+        # Return the GroupBox object
+        $FeatureGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

@@ -47,9 +47,10 @@ function Import-TabLauncher {
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
         # Import the Features
-        Import-FeatureAppLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
-        Import-FeatureUserFolderLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
-        Import-FeatureSystemFolderLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
+        $AppLauncherGroupBox        = Import-FeatureAppLauncher         -InputObject $InputObject -ParentTabPage $ParentTabPage
+        $RegistryLauncherGroupBox   = Import-FeatureRegistryLauncher    -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $AppLauncherGroupBox
+        #Import-FeatureUserFolderLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
+        #Import-FeatureSystemFolderLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

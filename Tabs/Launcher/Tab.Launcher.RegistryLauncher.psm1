@@ -24,7 +24,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-FeatureUserFolderLauncher {
+function Import-FeatureRegistryLauncher {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -42,14 +42,14 @@ function Import-FeatureUserFolderLauncher {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'USER FOLDERS'
-            Color           = 'LimeGreen'
+            Title           = 'REGISTRY'
+            Color           = 'Cyan'
             NumberOfRows    = 2
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
 
-        # Create the GroupBox
+        # Create the Feature GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
 
         # Set the Button properties
