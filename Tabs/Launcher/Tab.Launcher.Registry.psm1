@@ -1,16 +1,11 @@
-#
-# Module 'Tab.Launcher.UserFolders.psm1'
-# Last Update: May 2026
-#
-
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the User Folder feature into the Launcher tab.
+    Imports the Registry feature into the Launcher tab.
 .DESCRIPTION
-    This function imports the User Folder feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Registry feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureUserFolderLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureRegistryLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
