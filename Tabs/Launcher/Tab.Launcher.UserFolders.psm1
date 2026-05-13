@@ -1,16 +1,16 @@
 #
-# Module 'Tab.Launcher.SystemFolder.psm1'
+# Module 'Tab.Launcher.UserFolders.psm1'
 # Last Update: May 2026
 #
 
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the System Folder feature into the Launcher tab.
+    Imports the User Folder feature into the Launcher tab.
 .DESCRIPTION
-    This function imports the System Folder feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the User Folder feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureSystemFolderLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureUserFolderLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
@@ -24,7 +24,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-FeatureSystemFolderLauncher {
+function Import-FeatureUserFolderLauncher {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -39,14 +39,14 @@ function Import-FeatureSystemFolderLauncher {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'SYSTEM FOLDERS'
-            Color           = 'White'
+            Title           = 'USER FOLDERS'
+            Color           = 'LimeGreen'
             NumberOfRows    = 4
-            GroupBoxAbove   = $Global:UserFolderLauncherGroupBox
+            GroupBoxAbove   = $Global:AppLauncherGroupBox
         }
 
         # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$SystemFolderLauncherGroupBox = New-GroupBox @FeatureProperties
+        [System.Windows.Forms.GroupBox]$Global:UserFolderLauncherGroupBox = New-GroupBox @FeatureProperties
 
         # Set the Button properties
         [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
@@ -106,8 +106,8 @@ function Import-FeatureSystemFolderLauncher {
         )
 
         # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $SystemFolderLauncherGroupBox -RowNumber 1
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray2 -ParentGroupBox $SystemFolderLauncherGroupBox -RowNumber 3
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $UserFolderLauncherGroupBox -RowNumber 1
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray2 -ParentGroupBox $UserFolderLauncherGroupBox -RowNumber 3
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

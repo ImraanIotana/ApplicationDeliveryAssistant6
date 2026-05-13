@@ -48,6 +48,7 @@ function Import-TabLauncher {
 
         # Import the Features
         Import-FeatureAppLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
+        Import-FeatureUserFolderLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
         Import-FeatureSystemFolderLauncher -InputObject $InputObject -ParentTabPage $ParentTabPage
     }
     catch {
