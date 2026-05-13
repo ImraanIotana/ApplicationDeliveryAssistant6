@@ -40,7 +40,7 @@ function Import-FeatureAppLauncher {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION LAUNCHER'
-            Color           = 'White'
+            Color           = 'Yellow'
             NumberOfRows    = 4
         }
 
@@ -58,49 +58,70 @@ function Import-FeatureAppLauncher {
             },
             @{
                 ColumnNumber    = 2
-                Text            = 'Program Files (32bit)'
-                PNGFileName     = '32_bit.png'
+                Text            = 'Services'
+                PNGFileName     = 'cog.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Program Files (x86)' }
+                Function        = { Start-Process mmc.exe services.msc }
             },
             @{
                 ColumnNumber    = 3
-                Text            = 'ProgramData'
-                PNGFileName     = 'folder_page.png'
+                Text            = 'Cmd'
+                PNGFileName     = 'application_xp_terminal.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\ProgramData' }
+                Function        = { Start-Process cmd.exe }
             },
             @{
                 ColumnNumber    = 4
-                Text            = 'Windows'
-                PNGFileName     = 'folder_wrench.png'
+                Text            = 'PowerShell'
+                PNGFileName     = 'PowerShell.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows' }
+                Function        = { Start-Process powershell.exe }
             },
             @{
                 ColumnNumber    = 5
-                Text            = 'SCCM Cache'
-                PNGFileName     = 'package_link.png'
+                Text            = 'PowerShell ISE'
+                PNGFileName     = 'PowerShell.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\ccmcache' }
+                Function        = { Start-Process powershell_ise.exe }
             }
         )
 
         # Set the Button properties
         [System.Collections.Hashtable[]]$ButtonPropertiesArray2 = @(
             @{
-                ColumnNumber    = 4
-                Text            = 'Fonts'
-                PNGFileName     = 'font.png'
+                ColumnNumber    = 1
+                Text            = 'Task Manager'
+                PNGFileName     = 'system_monitor.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\Fonts' }
+                Function        = { Start-Process taskmgr.exe }
+            },
+            @{
+                ColumnNumber    = 2
+                Text            = 'Event Viewer'
+                PNGFileName     = 'book.png'
+                SizeType        = 'Large'
+                Function        = { Start-Process mmc.exe eventvwr.msc }
+            },
+            @{
+                ColumnNumber    = 3
+                Text            = 'Cmd (Admin)'
+                PNGFileName     = 'application_xp_terminal.png'
+                SizeType        = 'Large'
+                Function        = { Start-Process cmd.exe -Verb RunAs }
+            },
+            @{
+                ColumnNumber    = 4
+                Text            = 'PowerShell (Admin)'
+                PNGFileName     = 'PowerShell.png'
+                SizeType        = 'Large'
+                Function        = { Start-Process powershell.exe -Verb RunAs }
             },
             @{
                 ColumnNumber    = 5
-                Text            = 'Drivers'
-                PNGFileName     = 'printer.png'
+                Text            = 'PowerShell ISE (Admin)'
+                PNGFileName     = 'PowerShell.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\System32\DriverStore\FileRepository' }
+                Function        = { Start-Process powershell_ise.exe -Verb RunAs }
             }
         )
 
