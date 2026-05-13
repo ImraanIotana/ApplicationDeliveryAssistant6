@@ -43,7 +43,7 @@ function Import-FeatureUserFolderLauncher {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'USER FOLDERS'
-            Color           = 'LimeGreen'
+            Color           = 'Lime'
             NumberOfRows    = 2
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
@@ -56,38 +56,38 @@ function Import-FeatureUserFolderLauncher {
         [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
             @{
                 ColumnNumber    = 1
-                Text            = 'Program Files (64bit)'
-                PNGFileName     = '64_bit.png'
+                Text            = 'Roaming Profile'
+                PNGFileName     = 'folder_user.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Program Files' }
+                Function        = { Open-Folder -Path $ENV:APPDATA }
             },
             @{
                 ColumnNumber    = 2
-                Text            = 'Program Files (32bit)'
-                PNGFileName     = '32_bit.png'
+                Text            = 'Local Profile'
+                PNGFileName     = 'folder_table.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Program Files (x86)' }
+                Function        = { Open-Folder -Path $ENV:LOCALAPPDATA }
             },
             @{
                 ColumnNumber    = 3
                 Text            = 'ProgramData'
                 PNGFileName     = 'folder_page.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\ProgramData' }
+                Function        = { Open-Folder -Path $ENV:PROGRAMDATA }
             },
             @{
                 ColumnNumber    = 4
-                Text            = 'Windows'
-                PNGFileName     = 'folder_wrench.png'
+                Text            = 'Downloads'
+                PNGFileName     = 'download.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows' }
+                Function        = { Open-Folder -Path "$ENV:USERPROFILE\Downloads" }
             },
             @{
                 ColumnNumber    = 5
-                Text            = 'SCCM Cache'
-                PNGFileName     = 'package_link.png'
+                Text            = 'Temp'
+                PNGFileName     = 'folder_torn.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\ccmcache' }
+                Function        = { Open-Folder -Path $ENV:TEMP }
             }
         )
 

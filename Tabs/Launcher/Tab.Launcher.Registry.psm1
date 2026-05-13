@@ -77,7 +77,7 @@ function Import-FeatureRegistryLauncher {
             },
             @{
                 ColumnNumber    = 5
-                Text            = 'Last Opened Key'
+                Text            = 'Last Opened Key Setting'
                 PNGFileName     = 'regedit.png'
                 SizeType        = 'Large'
                 Function        = { Start-RegistryEditor -LastOpenedSettingKey }
@@ -124,7 +124,7 @@ function Import-FeatureRegistryLauncher {
 #>
 ####################################################################################################
 function Start-RegistryEditor {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='None')]
     param (
         [Parameter(Mandatory=$false,ParameterSetName='UninstallKey64bit',HelpMessage='Open the 64-bit Uninstall key.')]
         [System.Management.Automation.SwitchParameter]$UninstallKey64bit,
@@ -139,21 +139,17 @@ function Start-RegistryEditor {
         [System.Management.Automation.SwitchParameter]$ApplicationSettingsKey
     )
 
-    ####################################################################################################
-    ### MAIN PROPERTIES ###
-
-    # Set the Last Opened Key
-    [System.String]$KeyContainingLastOpenedKey  = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
-
-    # Set the selectable Registry Keys
-    [System.String]$RegKeyUninstall32bit        = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
-    [System.String]$RegKeyUninstall64bit        = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
-    [System.String]$RegKeyApplicationSettings   = 'Computer\HKEY_CURRENT_USER\Software\Packaging Assistant'
-    [System.String]$RegKeyLastOpenedSettingKey  = 'Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
-
-
     try {
-        # PREPARATION
+        # PREPARATION - DEFINE VARIABLES
+        # Set the Last Opened Key
+        [System.String]$KeyContainingLastOpenedKey  = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
+        # Set the selectable Registry Keys
+        [System.String]$RegKeyUninstall32bit        = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+        [System.String]$RegKeyUninstall64bit        = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+        [System.String]$RegKeyApplicationSettings   = 'Computer\HKEY_CURRENT_USER\Software\Packaging Assistant'
+        [System.String]$RegKeyLastOpenedSettingKey  = 'Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
+
+        # PREPARATION - DETERMINE LAST OPENED KEY
         # Determine which key to open
         [System.String]$LastKeyValue = switch ($PSCmdlet.ParameterSetName) {
             'UninstallKey32bit'         { $RegKeyUninstall32bit }
@@ -162,16 +158,8 @@ function Start-RegistryEditor {
             'LastOpenedSettingKey'      { $RegKeyLastOpenedSettingKey }
             Default                     { [System.String]::Empty }
         }
-        <#[System.String]$LastKeyValue = [System.String]::Empty
-        if ($UninstallKey32bit) {
-            $LastKeyValue = $RegKeyUninstall32bit
-        } elseif ($UninstallKey64bit) {
-            $LastKeyValue = $RegKeyUninstall64bit
-        } elseif ($ApplicationSettingsKey) {
-            $LastKeyValue = $RegKeyApplicationSettings
-        } elseif ($LastOpenedSettingKey) {
-            $LastKeyValue = $RegKeyLastOpenedSettingKey
-        }#>
+
+        # PREPARATION - SET LAST OPENED KEY
         # If a specific key is requested, set it as the last opened key in regedit
             if (Test-String -IsPopulated $LastKeyValue) {
             Set-ItemProperty -Path $KeyContainingLastOpenedKey -Name 'LastKey' -Value $LastKeyValue -Force

@@ -59,35 +59,35 @@ function Import-FeatureSystemFolderLauncher {
                 Text            = 'Program Files (64bit)'
                 PNGFileName     = '64_bit.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Program Files' }
+                Function        = { Open-Folder -Path $ENV:ProgramW6432 }
             },
             @{
                 ColumnNumber    = 2
                 Text            = 'Program Files (32bit)'
                 PNGFileName     = '32_bit.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Program Files (x86)' }
+                Function        = { Open-Folder -Path ${ENV:ProgramFiles(x86)} }
             },
             @{
                 ColumnNumber    = 3
                 Text            = 'ProgramData'
                 PNGFileName     = 'folder_page.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\ProgramData' }
+                Function        = { Open-Folder -Path $ENV:PROGRAMDATA }
             },
             @{
                 ColumnNumber    = 4
                 Text            = 'Windows'
                 PNGFileName     = 'folder_wrench.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows' }
+                Function        = { Open-Folder -Path $ENV:WINDIR }
             },
             @{
                 ColumnNumber    = 5
                 Text            = 'SCCM Cache'
                 PNGFileName     = 'package_link.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\ccmcache' }
+                Function        = { Open-Folder -Path "$ENV:WINDIR\ccmcache" }
             }
         )
 
@@ -98,14 +98,14 @@ function Import-FeatureSystemFolderLauncher {
                 Text            = 'Fonts'
                 PNGFileName     = 'font.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\Fonts' }
+                Function        = { Open-Folder -Path "$ENV:WINDIR\Fonts" }
             },
             @{
                 ColumnNumber    = 5
                 Text            = 'Drivers'
                 PNGFileName     = 'printer.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\System32\DriverStore\FileRepository' }
+                Function        = { Open-Folder -Path "$ENV:WINDIR\System32\DriverStore\FileRepository" }
             }
         )
 
