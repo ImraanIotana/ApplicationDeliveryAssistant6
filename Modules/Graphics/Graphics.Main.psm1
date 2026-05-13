@@ -208,7 +208,7 @@ function Add-GraphicalDimensions {
         # Add the graphical dimensions of the Buttons
         Add-ButtonDimensions -InputObject $InputObject
         # Add the Button Icons as images to the ImageList
-        Add-ButtonIconsToImageList -InputObject $InputObject
+        #Add-ButtonIconsToImageList -InputObject $InputObject
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -254,9 +254,10 @@ function Add-ButtonIconsToImageList {
         [System.Int32]$ImageSize = $InputObject.GraphicalSettings.Button.ImageSize
         # Set the ImageSize property of the ImageList to a square size based on the Button ImageSize
         $ImageList.ImageSize = New-Object System.Drawing.Size($ImageSize,$ImageSize)
+        $imageList.ColorDepth = [System.Windows.Forms.ColorDepth]::Depth32Bit
 
         # PREPARATION - CREATE THE IMAGE LIST        
-        Get-ChildItem $InputObject.RootFolder -Filter *.png | ForEach-Object {
+        Get-ChildItem $InputObject.RootFolder -Filter *.png -Recurse | ForEach-Object {
             # Use the base name of the image file as the key in the ImageList, and load the image from the file
             [System.String]$ImageKeyName        = $_.BaseName
             [System.Drawing.Image]$ImageObject  = [System.Drawing.Image]::FromFile($_.FullName)

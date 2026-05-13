@@ -52,9 +52,9 @@ function Import-FeatureAppLauncher {
             @{
                 ColumnNumber    = 1
                 Text            = 'Add/Remove Programs'
-                PNGFileName     = 'application_view_list.png'
-                ImageKeyName    = 'application_view_icons'
+                PNGFileName     = 'application_view_icons.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the Add/Remove Programs window to add or remove programs from your computer'
                 Function        = { Start-Process control.exe appwiz.cpl }
             },
             @{
@@ -62,6 +62,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'Services'
                 PNGFileName     = 'cog.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the Services window to manage system services'
                 Function        = { Start-Process mmc.exe services.msc }
             },
             @{
@@ -69,6 +70,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'Cmd'
                 PNGFileName     = 'application_xp_terminal.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the Command Prompt window'
                 Function        = { Start-Process cmd.exe }
             },
             @{
@@ -76,6 +78,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'PowerShell'
                 PNGFileName     = 'PowerShell.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the PowerShell window'
                 Function        = { Start-Process powershell.exe }
             },
             @{
@@ -83,6 +86,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'PowerShell ISE'
                 PNGFileName     = 'PowerShell.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the PowerShell ISE window'
                 Function        = { Start-Process powershell_ise.exe }
             }
         )
@@ -94,6 +98,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'Task Manager'
                 PNGFileName     = 'system_monitor.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the Task Manager window'
                 Function        = { Start-Process taskmgr.exe }
             },
             @{
@@ -101,6 +106,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'Event Viewer'
                 PNGFileName     = 'book.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the Event Viewer window'
                 Function        = { Start-Process mmc.exe eventvwr.msc }
             },
             @{
@@ -108,6 +114,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'Cmd (Admin)'
                 PNGFileName     = 'application_xp_terminal.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the Command Prompt window as Administrator'
                 Function        = { Start-Process cmd.exe -Verb RunAs }
             },
             @{
@@ -115,6 +122,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'PowerShell (Admin)'
                 PNGFileName     = 'PowerShell.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the PowerShell window as Administrator'
                 Function        = { Start-Process powershell.exe -Verb RunAs }
             },
             @{
@@ -122,6 +130,7 @@ function Import-FeatureAppLauncher {
                 Text            = 'PowerShell ISE (Admin)'
                 PNGFileName     = 'PowerShell.png'
                 SizeType        = 'Large'
+                ToolTip         = 'Open the PowerShell ISE window as Administrator'
                 Function        = { Start-Process powershell_ise.exe -Verb RunAs }
             }
         )

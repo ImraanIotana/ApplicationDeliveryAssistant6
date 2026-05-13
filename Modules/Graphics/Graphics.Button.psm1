@@ -200,14 +200,15 @@ function New-Button {
             # Add the ToolTip object to the Mouse Over action
             $NewButton.Add_MouseEnter({ $NewToolTipObject })
         }
-
-        # test
-        if ($ImageKeyName) { Write-Host "ImageKeyName: $ImageKeyName" }
         
         # IMAGE
         # If a PNG file name is provided, search for the file and add the image to the button
         if ($PNGFileName) {
+            # If the PNG filename does not end with .png, then add the extension
+            if (-not $PNGFileName.EndsWith('.png')) { $PNGFileName += '.png' }
+            # Search for the PNG file
             $PNGImagePath = Get-ChildItem -Path $InputObject.RootFolder -Filter $PNGFileName -File -Recurse | Select-Object -First 1 -ExpandProperty FullName
+            # Add the PNG Image
             if ($PNGImagePath) { $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath) }
         }
         
