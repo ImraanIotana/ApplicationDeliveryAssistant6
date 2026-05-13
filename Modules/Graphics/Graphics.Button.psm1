@@ -308,10 +308,10 @@ function New-ButtonLine {
         [Parameter(Mandatory=$true,HelpMessage='The Parent GroupBox to which these buttons will be added.')]
         [System.Windows.Forms.GroupBox]$ParentGroupBox,
 
-        [Parameter(Mandatory=$true,ParameterSetName='RowNumber',HelpMessage='The row number to use for buttons that do not define one explicitly.')]
+        [Parameter(Mandatory=$false,ParameterSetName='RowNumber',HelpMessage='The row number to use for buttons that do not define one explicitly.')]
         [System.Int32]$RowNumber = 1,
 
-        [Parameter(Mandatory=$true,ParameterSetName='ColumnNumber',HelpMessage='The column number to use for buttons that do not define one explicitly.')]
+        [Parameter(Mandatory=$false,ParameterSetName='ColumnNumber',HelpMessage='The column number to use for buttons that do not define one explicitly.')]
         [System.Int32]$ColumnNumber = 1
     )
 
