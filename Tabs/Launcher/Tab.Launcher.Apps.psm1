@@ -59,11 +59,11 @@ function Import-FeatureAppLauncher {
             },
             @{
                 ColumnNumber    = 2
-                Text            = 'Services'
-                PNGFileName     = 'cog.png'
+                Text            = 'Task Manager'
+                PNGFileName     = 'system_monitor'
                 SizeType        = 'Large'
-                ToolTip         = 'Open the Services window to manage system services'
-                Function        = { Start-Process mmc.exe services.msc }
+                ToolTip         = 'Open the Task Manager window'
+                Function        = { Start-Process taskmgr.exe }
             },
             @{
                 ColumnNumber    = 3
@@ -76,7 +76,7 @@ function Import-FeatureAppLauncher {
             @{
                 ColumnNumber    = 4
                 Text            = 'PowerShell'
-                PNGFileName     = 'PowerShell.png'
+                PNGFileName     = 'powershell'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the PowerShell window'
                 Function        = { Start-Process powershell.exe }
@@ -84,7 +84,7 @@ function Import-FeatureAppLauncher {
             @{
                 ColumnNumber    = 5
                 Text            = 'PowerShell ISE'
-                PNGFileName     = 'PowerShell.png'
+                PNGFileName     = 'powershell'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the PowerShell ISE window'
                 Function        = { Start-Process powershell_ise.exe }
@@ -95,24 +95,24 @@ function Import-FeatureAppLauncher {
         [System.Collections.Hashtable[]]$ButtonPropertiesArray2 = @(
             @{
                 ColumnNumber    = 1
-                Text            = 'Task Manager'
-                PNGFileName     = 'system_monitor.png'
-                SizeType        = 'Large'
-                ToolTip         = 'Open the Task Manager window'
-                Function        = { Start-Process taskmgr.exe }
-            },
-            @{
-                ColumnNumber    = 2
                 Text            = 'Event Viewer'
-                PNGFileName     = 'book.png'
+                PNGFileName     = 'book'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the Event Viewer window'
                 Function        = { Start-Process mmc.exe eventvwr.msc }
             },
             @{
+                ColumnNumber    = 2
+                Text            = 'Services'
+                PNGFileName     = 'cog.png'
+                SizeType        = 'Large'
+                ToolTip         = 'Open the Services window to manage system services'
+                Function        = { Start-Process mmc.exe services.msc }
+            },
+            @{
                 ColumnNumber    = 3
                 Text            = 'Cmd (Admin)'
-                PNGFileName     = 'application_xp_terminal.png'
+                PNGFileName     = 'application_xp_terminal'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the Command Prompt window as Administrator'
                 Function        = { Start-Process cmd.exe -Verb RunAs }
@@ -120,7 +120,7 @@ function Import-FeatureAppLauncher {
             @{
                 ColumnNumber    = 4
                 Text            = 'PowerShell (Admin)'
-                PNGFileName     = 'PowerShell.png'
+                PNGFileName     = 'powershell'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the PowerShell window as Administrator'
                 Function        = { Start-Process powershell.exe -Verb RunAs }
@@ -128,7 +128,7 @@ function Import-FeatureAppLauncher {
             @{
                 ColumnNumber    = 5
                 Text            = 'PowerShell ISE (Admin)'
-                PNGFileName     = 'PowerShell.png'
+                PNGFileName     = 'powershell'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the PowerShell ISE window as Administrator'
                 Function        = { Start-Process powershell_ise.exe -Verb RunAs }

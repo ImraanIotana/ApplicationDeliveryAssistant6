@@ -1,8 +1,3 @@
-#
-# Module 'Graphics.TextBox.psm1'
-# Last Update: May 2026
-#
-
 ####################################################################################################
 <#
 .SYNOPSIS
@@ -36,14 +31,19 @@ function Add-TextBoxDimensions {
         # Get the GraphicalSettings settings
         [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
 
+        # PREPARATION
+        # Set the ratios for the Medium and Small TextBox sizes based on the Large TextBox size
+        [System.Double]$MediumRatio = 0.8
+        [System.Double]$SmallRatio  = 0.6
+
         # TEXTBOX WIDTH
         # Add the width of the Large textbox
         [System.Int32]$TextBoxLargeWidth = $Settings.GroupBox.Width - $Settings.TextBox.LeftMargin - $Settings.TextBox.RightMargin
         $Settings.TextBox.LargeWidth = $TextBoxLargeWidth
         # Add the width of the Medium textbox
-        $Settings.TextBox.MediumWidth = (($TextBoxLargeWidth * 0.8) - 3)
+        $Settings.TextBox.MediumWidth = (($TextBoxLargeWidth * $MediumRatio) - 3)
         # Add the width of the Small textbox
-        $Settings.TextBox.SmallWidth = (($TextBoxLargeWidth * 0.6) - 3)
+        $Settings.TextBox.SmallWidth = (($TextBoxLargeWidth * $SmallRatio) - 3)
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

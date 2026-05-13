@@ -33,23 +33,33 @@ function Add-ButtonDimensions {
 
     try {
         # PREPARATION - GET SETTINGS
-        # Get the MainForm settings
+        # Get the settings
         [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
+        # Get the TextBox properties to use as a basis for the Button dimensions
+        [System.Int32]$TextBoxHeight            = $Settings.TextBox.Height
+        [System.Int32]$TextBoxLargeWidth        = $Settings.TextBox.LargeWidth
+
+        # PREPARATION - RATIOS
+        # Set the ratios for the Large Button size based on the TextBox size
+        [System.Double]$LargeButtonWidthRatio   = 0.2
+        [System.Double]$LargeButtonHeightRatio  = 2
+
+        # EXECUTION - ADD THE LARGE BUTTON DIMENSIONS
+        # Add the width of the Large Button
+        #[System.Int32]$ButtonLargeWidth         = $TextBoxLargeWidth * $LargeButtonWidthRatio
+        $Settings.Button.LargeWidth             = $TextBoxLargeWidth * $LargeButtonWidthRatio
+        # Add the height of the Large Button
+        $Settings.Button.LargeHeight            = $TextBoxHeight * $LargeButtonHeightRatio
+
+        # EXECUTION - ADD THE MEDIUM BUTTON DIMENSIONS
+        # Add the width of the Medium Button (same as Large)
+        $Settings.Button.MediumWidth        = $Settings.Button.LargeWidth
 
         # EXECUTION - ADD BUTTON WIDTH
-        # Add the width of the Large Button
-        [System.Int32]$ButtonLargeWidth     = $Settings.TextBox.LargeWidth / 5
-        $Settings.Button.LargeWidth         = $ButtonLargeWidth
-        # Add the width of the Medium Button (same as Large)
-        $Settings.Button.MediumWidth        = $ButtonLargeWidth
         # Add the width of the Small Button
-        $Settings.Button.SmallWidth         = ($ButtonLargeWidth / 3)
+        $Settings.Button.SmallWidth         = ($Settings.Button.LargeWidth / 3)
 
         # EXECUTION - ADD BUTTON HEIGHT
-        # Add the height of the Large Button
-        [System.Int32]$TextBoxHeight        = $Settings.TextBox.Height
-        [System.Int32]$ButtonLargeHeight    = $TextBoxHeight * 2
-        $Settings.Button.LargeHeight        = $ButtonLargeHeight
         # Add the height of the Medium Button
         [System.Int32]$ButtonMediumHeight   = $TextBoxHeight - 3
         $Settings.Button.MediumHeight       = $ButtonMediumHeight
@@ -168,31 +178,39 @@ function New-Button {
 
 
     try {
-        # COORDINATES
+        # COORDINATES - PREPARATION
         # Set the Location
         [System.Int32]$ButtonTopLeftX   = $Settings.ColumnNumber.($ColumnNumber)
         [System.Int32]$ButtonTopLeftY   = $Settings.TextBox.TopMargin + (($RowNumber - 1) * $Settings.TextBox.Height)
+
+        # COORDINATES - EXECUTION
+        # Set the Location of the Button using the calculated coordinates
         $NewButton.Location             = New-Object System.Drawing.Point($ButtonTopLeftX, $ButtonTopLeftY)
         
-        # SIZE
+        # SIZE - PREPARATION
         # Set the Size
         [System.Int32[]]$ButtonSize = switch ($SizeType) {
             'Large'     { @($Settings.Button.LargeWidth,    $Settings.Button.LargeHeight) }
             'Medium'    { @($Settings.Button.MediumWidth,   $Settings.Button.MediumHeight) }
             'Small'     { @($Settings.Button.SmallWidth,    $Settings.Button.SmallHeight) }
         }
+
+        # SIZE - EXECUTION
+        # Set the Size of the Button using the calculated size
         $NewButton.Size = New-Object System.Drawing.Point($ButtonSize)
 
-        # TOOLTIP
-        # Check if the button has a default Text/Tooltip
+        # TOOLTIP - PREPARATION
+        # Set the default ToolTips based on the Text of the button, if no ToolTip is provided
         [System.Collections.Hashtable]$DefaultToolTips = @{
             'Copy'      = 'Copy the content of the box to your clipboard'
             'Paste'     = 'Paste the content of your clipboard to the box'
             'Clear'     = 'Clear the content of the box'
             'Default'   = 'Reset the box to the default value'
         }
+        # If no ToolTip is provided, but the Text matches a default Text, then use the corresponding default ToolTip
         if (-not $ToolTip -and $DefaultToolTips.ContainsKey($Text)) { $ToolTip = $DefaultToolTips[$Text] }
 
+        # TOOLTIP - EXECUTION
         # Add the ToolTip
         if ($ToolTip) {
             [System.Windows.Forms.ToolTip]$NewToolTipObject = New-Object System.Windows.Forms.ToolTip
