@@ -40,31 +40,26 @@ function Add-ButtonDimensions {
         [System.Int32]$TextBoxLargeWidth        = $Settings.TextBox.LargeWidth
 
         # PREPARATION - RATIOS
-        # Set the ratios for the Large Button size based on the TextBox size
+        # Set the ratios and margins for the Buttons based on the TextBox size
         [System.Double]$LargeButtonWidthRatio   = 0.2
         [System.Double]$LargeButtonHeightRatio  = 2
+        [System.Int32]$MediumButtonHeightMargin = 3
+        [System.Double]$SmallButtonWidthRatio   = 3
 
         # EXECUTION - ADD THE LARGE BUTTON DIMENSIONS
-        # Add the width of the Large Button
-        #[System.Int32]$ButtonLargeWidth         = $TextBoxLargeWidth * $LargeButtonWidthRatio
+        # Add the dimensions of the Large Button
         $Settings.Button.LargeWidth             = $TextBoxLargeWidth * $LargeButtonWidthRatio
-        # Add the height of the Large Button
         $Settings.Button.LargeHeight            = $TextBoxHeight * $LargeButtonHeightRatio
 
         # EXECUTION - ADD THE MEDIUM BUTTON DIMENSIONS
-        # Add the width of the Medium Button (same as Large)
-        $Settings.Button.MediumWidth        = $Settings.Button.LargeWidth
+        # Add the dimensions of the Medium Button
+        $Settings.Button.MediumWidth            = $Settings.Button.LargeWidth
+        $Settings.Button.MediumHeight           = $TextBoxHeight - $MediumButtonHeightMargin
 
-        # EXECUTION - ADD BUTTON WIDTH
-        # Add the width of the Small Button
-        $Settings.Button.SmallWidth         = ($Settings.Button.LargeWidth / 3)
-
-        # EXECUTION - ADD BUTTON HEIGHT
-        # Add the height of the Medium Button
-        [System.Int32]$ButtonMediumHeight   = $TextBoxHeight - 3
-        $Settings.Button.MediumHeight       = $ButtonMediumHeight
-        # Add the height of the Small Button (same as Medium)
-        $Settings.Button.SmallHeight        = $ButtonMediumHeight
+        # EXECUTION - ADD THE SMALL BUTTON DIMENSIONS
+        # Add the dimensions of the Small Button
+        $Settings.Button.SmallWidth             = $Settings.Button.MediumWidth / $SmallButtonWidthRatio
+        $Settings.Button.SmallHeight            = $Settings.Button.MediumHeight
         
         # Get the values
         [System.Int32]$MainTabControlLocationX  = $Settings.MainTabControl.Location.X
@@ -81,9 +76,9 @@ function Add-ButtonDimensions {
         # Columns 2-5 are the following locations underneath the TextBox
         @(1..4) | ForEach-Object { [void]$ColumnNumbersLocationXArray.Add($ColumnNumbersLocationXArray[$_] + $ButtonMediumWidth) } # Column and Index 2-5
         # Column 6 is only used for the small buttons
-        [void]$ColumnNumbersLocationXArray.Add($ColumnNumbersLocationXArray[5] + ($ButtonMediumWidth * 1/3 )) # Column and Index 6
-        [void]$ColumnNumbersLocationXArray.Add($ColumnNumbersLocationXArray[6] + ($ButtonMediumWidth * 1/3 )) # Column and Index 7
-        [void]$ColumnNumbersLocationXArray.Add($ColumnNumbersLocationXArray[7] + ($ButtonMediumWidth * 1/3 )) # Column and Index 8
+        [void]$ColumnNumbersLocationXArray.Add($ColumnNumbersLocationXArray[5] + ($ButtonMediumWidth / $SmallButtonWidthRatio )) # Column and Index 6
+        [void]$ColumnNumbersLocationXArray.Add($ColumnNumbersLocationXArray[6] + ($ButtonMediumWidth / $SmallButtonWidthRatio )) # Column and Index 7
+        [void]$ColumnNumbersLocationXArray.Add($ColumnNumbersLocationXArray[7] + ($ButtonMediumWidth / $SmallButtonWidthRatio )) # Column and Index 8
         # Add the results to the Global Settings
         @(0..7) | ForEach-Object { $Settings.ColumnNumber.Add( $_ , $ColumnNumbersLocationXArray[$_]) }
 
