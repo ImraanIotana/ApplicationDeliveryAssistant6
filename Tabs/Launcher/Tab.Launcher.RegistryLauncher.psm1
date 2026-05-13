@@ -56,10 +56,10 @@ function Import-FeatureRegistryLauncher {
         [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
             @{
                 ColumnNumber    = 1
-                Text            = 'Program Files (64bit)'
-                PNGFileName     = '64_bit.png'
+                Text            = 'Registry Editor'
+                PNGFileName     = 'regedit.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Program Files' }
+                Function        = { Start-Process regedit.exe }
             },
             @{
                 ColumnNumber    = 2
@@ -99,6 +99,85 @@ function Import-FeatureRegistryLauncher {
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    This function opens the Registry Editor.
+.DESCRIPTION
+    This function starts the Registry Editor (regedit.exe) with elevated privileges. Optionally, it can open directly to the 32-bit or 64-bit Uninstall keys.
+.EXAMPLE
+    Start-RegistryEditor
+.EXAMPLE
+    Start-RegistryEditor -UninstallKey32bit
+.EXAMPLE
+    Start-RegistryEditor -UninstallKey64bit
+.INPUTS
+    [System.Management.Automation.SwitchParameter]
+.OUTPUTS
+    This function returns no stream output.
+.NOTES
+    This function is part of the Packaging Assistant. It contains functions and variables that are in other files.
+    Version         : 5.7.2
+    Author          : Imraan Iotana
+    Creation Date   : February 2026
+    Last Update     : February 2026
+#>
+####################################################################################################
+
+function Start-RegistryEditor {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false, HelpMessage='Open the 32-bit Uninstall key.')]
+        [System.Management.Automation.SwitchParameter]$UninstallKey32bit,
+
+        [Parameter(Mandatory=$false, HelpMessage='Open the 64-bit Uninstall key.')]
+        [System.Management.Automation.SwitchParameter]$UninstallKey64bit,
+
+        [Parameter(Mandatory=$false, HelpMessage='Open the Settings of this application in the registry.')]
+        [System.Management.Automation.SwitchParameter]$ApplicationSettingsKey
+    )
+
+    ####################################################################################################
+    ### MAIN PROPERTIES ###
+
+    # Set the Last Opened Key
+    [System.String]$KeyContainingLastOpenedKey  = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
+
+    # Set the selectable Registry Keys
+    [System.String]$RegKeyUninstall32bit        = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    [System.String]$RegKeyUninstall64bit        = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+    [System.String]$RegKeyApplicationSettings   = 'Computer\HKEY_CURRENT_USER\Software\Packaging Assistant'
+
+
+    try {
+        # PREPARATION
+        # Determine which key to open
+        [System.String]$LastKeyValue = [System.String]::Empty
+        if ($UninstallKey32bit) {
+            $LastKeyValue = $RegKeyUninstall32bit
+        } elseif ($UninstallKey64bit) {
+            $LastKeyValue = $RegKeyUninstall64bit
+        } elseif ($ApplicationSettingsKey) {
+            $LastKeyValue = $RegKeyApplicationSettings
+        }
+        # If a specific key is requested, set it as the last opened key in regedit
+            if (Test-String -IsPopulated $LastKeyValue) {
+            Set-ItemProperty -Path $KeyContainingLastOpenedKey -Name 'LastKey' -Value $LastKeyValue -Force
+        }
+
+        # EXECUTION
+        # Start the Registry Editor
+        Start-ApplicationAsAdmin -Name 'RegistryEditor'
+    }
+    catch {
+        Write-FullError
     }
 }
 
