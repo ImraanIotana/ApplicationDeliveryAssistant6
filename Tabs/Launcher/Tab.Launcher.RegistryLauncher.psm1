@@ -59,35 +59,28 @@ function Import-FeatureRegistryLauncher {
                 Text            = 'Registry Editor'
                 PNGFileName     = 'regedit.png'
                 SizeType        = 'Large'
-                Function        = { Start-Process regedit.exe }
+                Function        = { Start-RegistryEditor }
             },
             @{
                 ColumnNumber    = 2
-                Text            = 'Program Files (32bit)'
-                PNGFileName     = '32_bit.png'
+                Text            = '64-bit Uninstall Key'
+                PNGFileName     = 'regedit.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Program Files (x86)' }
+                Function        = { Start-RegistryEditor -UninstallKey64bit }
             },
             @{
                 ColumnNumber    = 3
-                Text            = 'ProgramData'
-                PNGFileName     = 'folder_page.png'
+                Text            = '32-bit Uninstall Key'
+                PNGFileName     = 'regedit.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\ProgramData' }
-            },
-            @{
-                ColumnNumber    = 4
-                Text            = 'Windows'
-                PNGFileName     = 'folder_wrench.png'
-                SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows' }
+                Function        = { Start-RegistryEditor -UninstallKey32bit }
             },
             @{
                 ColumnNumber    = 5
-                Text            = 'SCCM Cache'
-                PNGFileName     = 'package_link.png'
+                Text            = 'Last Opened Key'
+                PNGFileName     = 'regedit.png'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\ccmcache' }
+                Function        = { Start-RegistryEditor -LastOpenedSettingKey }
             }
         )
 
@@ -121,26 +114,28 @@ function Import-FeatureRegistryLauncher {
 .INPUTS
     [System.Management.Automation.SwitchParameter]
 .OUTPUTS
-    This function returns no stream output.
+    No objects are returned to the pipeline. All output is written to the host.
 .NOTES
-    This function is part of the Packaging Assistant. It contains functions and variables that are in other files.
-    Version         : 5.7.2
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : February 2026
-    Last Update     : February 2026
+    Last Update     : May 2026
 #>
 ####################################################################################################
-
 function Start-RegistryEditor {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$false, HelpMessage='Open the 32-bit Uninstall key.')]
-        [System.Management.Automation.SwitchParameter]$UninstallKey32bit,
-
-        [Parameter(Mandatory=$false, HelpMessage='Open the 64-bit Uninstall key.')]
+        [Parameter(Mandatory=$false,ParameterSetName='UninstallKey64bit',HelpMessage='Open the 64-bit Uninstall key.')]
         [System.Management.Automation.SwitchParameter]$UninstallKey64bit,
 
-        [Parameter(Mandatory=$false, HelpMessage='Open the Settings of this application in the registry.')]
+        [Parameter(Mandatory=$false,ParameterSetName='UninstallKey32bit',HelpMessage='Open the 32-bit Uninstall key.')]
+        [System.Management.Automation.SwitchParameter]$UninstallKey32bit,
+
+        [Parameter(Mandatory=$false,ParameterSetName='LastOpenedSettingKey',HelpMessage='Open the last-opened-setting key.')]
+        [System.Management.Automation.SwitchParameter]$LastOpenedSettingKey,
+
+        [Parameter(Mandatory=$false,ParameterSetName='ApplicationSettingsKey',HelpMessage='Open the Settings of this application in the registry.')]
         [System.Management.Automation.SwitchParameter]$ApplicationSettingsKey
     )
 
@@ -154,19 +149,29 @@ function Start-RegistryEditor {
     [System.String]$RegKeyUninstall32bit        = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
     [System.String]$RegKeyUninstall64bit        = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
     [System.String]$RegKeyApplicationSettings   = 'Computer\HKEY_CURRENT_USER\Software\Packaging Assistant'
+    [System.String]$RegKeyLastOpenedSettingKey  = 'Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
 
 
     try {
         # PREPARATION
         # Determine which key to open
-        [System.String]$LastKeyValue = [System.String]::Empty
+        [System.String]$LastKeyValue = switch ($PSCmdlet.ParameterSetName) {
+            'UninstallKey32bit'         { $RegKeyUninstall32bit }
+            'UninstallKey64bit'         { $RegKeyUninstall64bit }
+            'ApplicationSettingsKey'    { $RegKeyApplicationSettings }
+            'LastOpenedSettingKey'      { $RegKeyLastOpenedSettingKey }
+            Default                     { [System.String]::Empty }
+        }
+        <#[System.String]$LastKeyValue = [System.String]::Empty
         if ($UninstallKey32bit) {
             $LastKeyValue = $RegKeyUninstall32bit
         } elseif ($UninstallKey64bit) {
             $LastKeyValue = $RegKeyUninstall64bit
         } elseif ($ApplicationSettingsKey) {
             $LastKeyValue = $RegKeyApplicationSettings
-        }
+        } elseif ($LastOpenedSettingKey) {
+            $LastKeyValue = $RegKeyLastOpenedSettingKey
+        }#>
         # If a specific key is requested, set it as the last opened key in regedit
             if (Test-String -IsPopulated $LastKeyValue) {
             Set-ItemProperty -Path $KeyContainingLastOpenedKey -Name 'LastKey' -Value $LastKeyValue -Force
@@ -174,10 +179,10 @@ function Start-RegistryEditor {
 
         # EXECUTION
         # Start the Registry Editor
-        Start-ApplicationAsAdmin -Name 'RegistryEditor'
+        Start-Process regedit.exe
     }
     catch {
-        Write-FullError
+        Write-ErrorReport -ErrorRecord $_
     }
 }
 
