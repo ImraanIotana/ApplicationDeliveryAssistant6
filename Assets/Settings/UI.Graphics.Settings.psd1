@@ -62,6 +62,7 @@
 
     # Button settings (# This will be filled by the function Add-ButtonDimensions)
     Button              = @{
+        ImageSize       = 16        # Size of the image on the button
     }
 
     # ColumnNumber settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)

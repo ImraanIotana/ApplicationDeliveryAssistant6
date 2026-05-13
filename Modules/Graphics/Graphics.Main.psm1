@@ -207,6 +207,66 @@ function Add-GraphicalDimensions {
         Add-TextBoxDimensions -InputObject $InputObject
         # Add the graphical dimensions of the Buttons
         Add-ButtonDimensions -InputObject $InputObject
+        # Add the Button Icons as images to the ImageList
+        Add-ButtonIconsToImageList -InputObject $InputObject
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Adds an ImageList to the Global ApplicationObject.
+.DESCRIPTION
+    This function adds an ImageList to the Global ApplicationObject based on the ButtonDimensions in the GraphicalSettings.
+.EXAMPLE
+    Add-ImageList -InputObject $Global:ApplicationObject
+.INPUTS
+    [PSCustomObject]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Add-ButtonIconsToImageList {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
+    )
+
+    try {
+        # PREPARATION
+        # Create an ImageList object
+        [System.Windows.Forms.ImageList]$ImageList = New-Object System.Windows.Forms.ImageList
+        # Set the ImageSize property of the ImageList based on the ButtonDimensions in the GraphicalSettings
+        [System.Int32]$ImageSize = $InputObject.GraphicalSettings.Button.ImageSize
+        # Set the ImageSize property of the ImageList to a square size based on the Button ImageSize
+        $ImageList.ImageSize = New-Object System.Drawing.Size($ImageSize,$ImageSize)
+
+        # PREPARATION - CREATE THE IMAGE LIST        
+        Get-ChildItem $InputObject.RootFolder -Filter *.png | ForEach-Object {
+            # Use the base name of the image file as the key in the ImageList, and load the image from the file
+            [System.String]$ImageKeyName        = $_.BaseName
+            [System.Drawing.Image]$ImageObject  = [System.Drawing.Image]::FromFile($_.FullName)
+            # Add the image to the ImageList with the key name
+            $ImageList.Images.Add($ImageKeyName, $ImageObject)
+        }
+
+        # EXECUTION - ADD THE IMAGE LIST TO THE GRAPHICAL SETTINGS
+        # Set the ImageList in the GraphicalSettings hashtable
+        $InputObject.GraphicalSettings.ImageList = $ImageList
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

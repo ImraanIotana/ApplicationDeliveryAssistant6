@@ -1,8 +1,3 @@
-#
-# Module 'Tab.Launcher.Main.psm1'
-# Last Update: May 2026
-#
-
 ####################################################################################################
 <#
 .SYNOPSIS
@@ -49,8 +44,8 @@ function Import-TabLauncher {
         # Import the Features
         $AppLauncherGroupBox            = Import-FeatureAppLauncher             -InputObject $InputObject -ParentTabPage $ParentTabPage
         $RegistryLauncherGroupBox       = Import-FeatureRegistryLauncher        -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $AppLauncherGroupBox
-        $SystemFolderLauncherGroupBox   = Import-FeatureSystemFolderLauncher    -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $RegistryLauncherGroupBox
-        $null                           = Import-FeatureUserFolderLauncher      -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $SystemFolderLauncherGroupBox
+        $UserFolderLauncherGroupBox     = Import-FeatureUserFolderLauncher      -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $RegistryLauncherGroupBox
+        $SystemFolderLauncherGroupBox   = Import-FeatureSystemFolderLauncher    -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $UserFolderLauncherGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

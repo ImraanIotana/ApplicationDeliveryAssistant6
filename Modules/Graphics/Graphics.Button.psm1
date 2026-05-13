@@ -130,6 +130,10 @@ function New-Button {
 
         [Parameter(Mandatory = $false,HelpMessage='The name of the image file in png format.')]
         [AllowEmptyString()]
+        [System.String]$ImageKeyName,
+
+        [Parameter(Mandatory = $false,HelpMessage='The name of the image file in png format.')]
+        [AllowEmptyString()]
         [System.String]$PNGFileName,
 
         [Parameter(Mandatory = $false,HelpMessage='The path of the image file in png format.')]
@@ -197,6 +201,8 @@ function New-Button {
             $NewButton.Add_MouseEnter({ $NewToolTipObject })
         }
 
+        # test
+        if ($ImageKeyName) { Write-Host "ImageKeyName: $ImageKeyName" }
         
         # IMAGE
         # If a PNG file name is provided, search for the file and add the image to the button

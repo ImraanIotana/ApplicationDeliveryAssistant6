@@ -1,8 +1,3 @@
-#
-# Module 'Tab.Launcher.Apps.psm1'
-# Last Update: May 2026
-#
-
 ####################################################################################################
 <#
 .SYNOPSIS
@@ -58,6 +53,7 @@ function Import-FeatureAppLauncher {
                 ColumnNumber    = 1
                 Text            = 'Add/Remove Programs'
                 PNGFileName     = 'application_view_list.png'
+                ImageKeyName    = 'application_view_icons'
                 SizeType        = 'Large'
                 Function        = { Start-Process control.exe appwiz.cpl }
             },
