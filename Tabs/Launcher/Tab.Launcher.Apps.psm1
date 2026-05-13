@@ -39,7 +39,7 @@ function Import-FeatureAppLauncher {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'APPLICATION LAUNCHER'
+            Title           = 'APP LAUNCHER'
             Color           = 'Yellow'
             NumberOfRows    = 4
         }

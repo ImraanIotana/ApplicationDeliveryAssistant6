@@ -41,7 +41,7 @@ function Import-FeatureUserFolderLauncher {
             ParentTabPage   = $ParentTabPage
             Title           = 'USER FOLDERS'
             Color           = 'LimeGreen'
-            NumberOfRows    = 4
+            NumberOfRows    = 2
             GroupBoxAbove   = $Global:AppLauncherGroupBox
         }
 
@@ -87,27 +87,8 @@ function Import-FeatureUserFolderLauncher {
             }
         )
 
-        # Set the Button properties
-        [System.Collections.Hashtable[]]$ButtonPropertiesArray2 = @(
-            @{
-                ColumnNumber    = 4
-                Text            = 'Fonts'
-                PNGFileName     = 'font.png'
-                SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\Fonts' }
-            },
-            @{
-                ColumnNumber    = 5
-                Text            = 'Drivers'
-                PNGFileName     = 'printer.png'
-                SizeType        = 'Large'
-                Function        = { Open-Folder -Path 'C:\Windows\System32\DriverStore\FileRepository' }
-            }
-        )
-
         # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $UserFolderLauncherGroupBox -RowNumber 1
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray2 -ParentGroupBox $UserFolderLauncherGroupBox -RowNumber 3
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $Global:UserFolderLauncherGroupBox -RowNumber 1
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
