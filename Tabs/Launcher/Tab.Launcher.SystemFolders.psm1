@@ -73,14 +73,14 @@ function Import-FeatureSystemFolderLauncher {
             @{
                 ColumnNumber    = 4
                 Text            = 'Windows'
-                PNGFileName     = 'folder_wrench.png'
+                PNGFileName     = 'folder_table.png'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path $ENV:WINDIR }
             },
             @{
                 ColumnNumber    = 5
                 Text            = 'SCCM Cache'
-                PNGFileName     = 'package_link.png'
+                PNGFileName     = 'folder_brick.png'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path "$ENV:WINDIR\ccmcache" }
             }
