@@ -20,7 +20,6 @@
     Last Update     : April 2026
 #>
 ####################################################################################################
-
 function Write-Line {
     [CmdletBinding()]
     [OutputType([System.Void])]
@@ -35,12 +34,10 @@ function Write-Line {
         [System.String]$Type
     )
 
-
     # PREPARATION - MAIN PROPERTIES
     # Set the main properties for the message
     [System.String]$OriginalMessage = $Message
     [System.String]$MessageType     = $Type
-
 
     # PREPARATION - MESSAGE FORMATTING
     # Set the message based on the MessageType
@@ -105,7 +102,6 @@ function Write-Line {
     Last Update     : February 2026
 #>
 ####################################################################################################
-
 function Write-ErrorReport {
     [CmdletBinding()]
     [OutputType([System.Void])]
@@ -113,49 +109,40 @@ function Write-ErrorReport {
         [Parameter(Mandatory=$true,Position=0,HelpMessage='The error record of which the details will be written.')]
         [System.Management.Automation.ErrorRecord]$ErrorRecord
     )
-    
-    begin {
-        # PREPARATION
-        # Set the context
-        [System.Collections.Hashtable]$CTX = @{
-            ErrorRecord     = $ErrorRecord
-            ErrorFullName   = $ErrorRecord.Exception.GetType().FullName
-            StackTrace      = $ErrorRecord.ScriptStackTrace
-            CallingFunction  = (Get-PSCallStack)[1].Command
-        }
+
+    # PREPARATION
+    # Set the context
+    [System.Collections.Hashtable]$CTX = @{
+        ErrorRecord     = $ErrorRecord
+        ErrorFullName   = $ErrorRecord.Exception.GetType().FullName
+        StackTrace      = $ErrorRecord.ScriptStackTrace
+        CallingFunction  = (Get-PSCallStack)[1].Command
     }
-    
-    process {
-        # Write the error message and details to the host
-        #Write-Line -Type ErrorSeparator
-        Write-Line "ERRORMESSAGE: [$($CTX.CallingFunction)] has encountered an error." -Type Special
-        # Write the original error message (colored)
-        [System.String]$ErrorText = ($ErrorRecord | Out-String).Trim()
-        Write-Line $ErrorText -Type Warning
-        # Write the details to the host
-        Write-Line "Please use the following StackTrace of Calling Functions to pinpoint the issue:" -Type Special
-        Write-Line "Exception Type: $($CTX.ErrorFullName)"
-        # Write the stack trace
-        [System.String[]]$TraceLines = $CTX.StackTrace -split "`n"
-        # Remove the last 2 lines of the stack trace as they are not relevant (they only contain the line where the error was caught and the line where Write-ErrorReport was called)
-        $TraceLines = $TraceLines[0..($TraceLines.Length - 3)]
-        # Write the remaining stack trace lines to the host in dark gray color
-        foreach ($TraceLine in $TraceLines) {
-            if ($TraceLine.TrimStart().StartsWith('at ')) {
-                # Remove the "at " from the beginning of the line
-                [System.String]$ShortTraceLine = $TraceLine.TrimStart().Substring(3)
-                # Split the line into the function part and the file part
-                [System.String[]]$Parts = $ShortTraceLine -split ',\s*'
-                # Add labels to the parts for better readability
-                [System.String[]]$PartsWithLabel = @(("Function`t: " +  $Parts[0]),("In File`t: " +  $Parts[1]))
-            }
-            $PartsWithLabel | ForEach-Object { Write-Line $_ }
+
+    # Write the error message and details to the host
+    #Write-Line -Type ErrorSeparator
+    Write-Line "ERRORMESSAGE: [$($CTX.CallingFunction)] has encountered an error." -Type Special
+    # Write the original error message (colored)
+    [System.String]$ErrorText = ($ErrorRecord | Out-String).Trim()
+    Write-Line $ErrorText -Type Warning
+    # Write the details to the host
+    Write-Line "Please use the following StackTrace of Calling Functions to pinpoint the issue:" -Type Special
+    Write-Line "Exception Type: $($CTX.ErrorFullName)"
+    # Write the stack trace
+    [System.String[]]$TraceLines = $CTX.StackTrace -split "`n"
+    # Remove the last 2 lines of the stack trace as they are not relevant (they only contain the line where the error was caught and the line where Write-ErrorReport was called)
+    $TraceLines = $TraceLines[0..($TraceLines.Length - 3)]
+    # Write the remaining stack trace lines to the host in dark gray color
+    foreach ($TraceLine in $TraceLines) {
+        if ($TraceLine.TrimStart().StartsWith('at ')) {
+            # Remove the "at " from the beginning of the line
+            [System.String]$ShortTraceLine = $TraceLine.TrimStart().Substring(3)
+            # Split the line into the function part and the file part
+            [System.String[]]$Parts = $ShortTraceLine -split ',\s*'
+            # Add labels to the parts for better readability
+            [System.String[]]$PartsWithLabel = @(("Function`t: " +  $Parts[0]),("In File`t: " +  $Parts[1]))
         }
-        # Write a separator line
-        #Write-Line -Type ErrorSeparator
-    }
-    
-    end {
+        $PartsWithLabel | ForEach-Object { Write-Line $_ }
     }
 }
 
