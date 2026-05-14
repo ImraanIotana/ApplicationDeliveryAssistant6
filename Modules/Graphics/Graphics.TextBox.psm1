@@ -189,8 +189,14 @@ function New-TextBox {
         if ($PropertyName) {
             $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name PropertyName -Value $PropertyName
             # Make it interact with the registry
-            $NewTextBox.Text = Invoke-RegistrySettings -Read -PropertyName $NewTextBox.Tag.PropertyName
-            $NewTextBox.Add_TextChanged([System.EventHandler]{ param($TextBoxInternal=$NewTextBox) Invoke-RegistrySettings -Write -PropertyName $TextBoxInternal.Tag.PropertyName -PropertyValue $TextBoxInternal.Text })
+            $NewTextBox.Text = Get-UserSetting -InputObject $InputObject -PropertyName $NewTextBox.Tag.PropertyName
+            # test
+            #Write-Line "The TextBox with the label ($($NewTextBox.Tag.Label)) is linked to the User Setting ($($NewTextBox.Tag.PropertyName)). Its current value is: ($($NewTextBox.Text))"
+            [PSCustomObject]$AppInputObject = $InputObject
+            $NewTextBox.Add_TextChanged([System.EventHandler]{
+                param($Sender, $EventArgs)
+                Set-UserSetting -InputObject $AppInputObject -PropertyName $Sender.Tag.PropertyName -PropertyValue $Sender.Text
+            }.GetNewClosure())
         }
 
         <# DEFAULTVALUE
