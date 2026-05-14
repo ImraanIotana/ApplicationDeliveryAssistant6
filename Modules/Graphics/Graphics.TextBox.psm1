@@ -173,7 +173,7 @@ function New-TextBox {
         ####################################################################################################
         ### CUSTOM PROPERTIES ###
 
-        <# TAG
+        # TAG
         # Create the Tag property
         $NewTextBox.Tag = [PSCustomObject]@{}
 
@@ -193,7 +193,7 @@ function New-TextBox {
             $NewTextBox.Add_TextChanged([System.EventHandler]{ param($TextBoxInternal=$NewTextBox) Invoke-RegistrySettings -Write -PropertyName $TextBoxInternal.Tag.PropertyName -PropertyValue $TextBoxInternal.Text })
         }
 
-        # DEFAULTVALUE
+        <# DEFAULTVALUE
         # Add the DefaultValue
         if ($DefaultValue) {
             # Add the DefaultValue to the Tag property

@@ -7,6 +7,7 @@
 .EXAMPLE
     Import-TabApplicationSettings -ParentTabControl $Global:MainTabControl
 .INPUTS
+    [PSCustomObject]
     [System.Windows.Forms.TabControl]
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
@@ -28,7 +29,6 @@ function Import-TabApplicationSettings {
         [System.Windows.Forms.TabControl]$ParentTabControl
     )
 
-
     try {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
@@ -44,11 +44,8 @@ function Import-TabApplicationSettings {
         # Create the SubTabControl and add it to the TabPage
         [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
 
-        # Import the Features
-        #$AppLauncherGroupBox            = Import-FeatureAppLauncher             -InputObject $InputObject -ParentTabPage $ParentTabPage
-        #$RegistryLauncherGroupBox       = Import-FeatureRegistryLauncher        -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $AppLauncherGroupBox
-        #$UserFolderLauncherGroupBox     = Import-FeatureUserFolderLauncher      -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $RegistryLauncherGroupBox
-        #$null                           = Import-FeatureSystemFolderLauncher    -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $UserFolderLauncherGroupBox
+        # Import the SubTabs
+        Import-SubTabGeneralSettings -InputObject $InputObject -ParentTabControl $SubTabControl
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

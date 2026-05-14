@@ -1,12 +1,13 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Settings tab into the main application.
+    Imports the General Settings sub-tab into the Application Settings tab.
 .DESCRIPTION
-    This function imports the Application Settings tab into the main application by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the General Settings sub-tab into the Application Settings tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-TabApplicationSettings -ParentTabControl $Global:MainTabControl
+    Import-SubTabGeneralSettings -ParentTabControl $MySubTabControl
 .INPUTS
+    [PSCustomObject]
     [System.Windows.Forms.TabControl]
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
@@ -18,7 +19,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-SubTabFolderSettings {
+function Import-SubTabGeneralSettings {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -28,12 +29,11 @@ function Import-SubTabFolderSettings {
         [System.Windows.Forms.TabControl]$ParentTabControl
     )
 
-
     try {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'SETTINGS'
+            Title               = 'GENERAL SETTINGS'
             Version             = '6.0.0.0'
             BackGroundColor     = 'Cornsilk'
         }
@@ -41,10 +41,9 @@ function Import-SubTabFolderSettings {
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
-        # Create the SubTabControl and add it to the TabPage
-        [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
 
         # Import the Features
+        $UserFoldersGroupBox = Import-FeatureUserFolders -InputObject $InputObject -ParentTabPage $ParentTabPage
         #$AppLauncherGroupBox            = Import-FeatureAppLauncher             -InputObject $InputObject -ParentTabPage $ParentTabPage
         #$RegistryLauncherGroupBox       = Import-FeatureRegistryLauncher        -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $AppLauncherGroupBox
         #$UserFolderLauncherGroupBox     = Import-FeatureUserFolderLauncher      -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $RegistryLauncherGroupBox
