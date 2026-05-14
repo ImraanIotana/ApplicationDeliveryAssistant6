@@ -18,7 +18,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-TabApplicationSettings {
+function Import-SubTabFolderSettings {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
