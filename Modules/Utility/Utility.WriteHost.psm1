@@ -171,9 +171,15 @@ function Write-ErrorReport {
 #>
 ####################################################################################################
 function Write-WelcomeMessage {
+    [CmdletBinding()]
+    [OutputType([System.Void])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
+    )
     # Write the copyright and welcome message
     Write-Line 'Copyright (C) Iotana. All rights reserved.'
-    Write-Line "Welcome to the $($Global:ApplicationObject.Name) $($Global:ApplicationObject.Version)" -Type Info
+    Write-Line "Welcome to the $($InputObject.Name) $($InputObject.Version)" -Type Info
 }
 
 ### END OF FUNCTION

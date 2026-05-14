@@ -25,8 +25,8 @@ function Initialize-Graphics {
     [CmdletBinding()]
     [OutputType([System.Void])]
     param (
-        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
-        [PSCustomObject]$InputObject = $Global:ApplicationObject
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
     )
 
     try {
@@ -43,7 +43,6 @@ function Initialize-Graphics {
         Add-FontProperties -InputObject $InputObject
         # Add the graphical dimensions of the other controls to the GraphicalSettings hashtable
         Add-GraphicalDimensions -InputObject $InputObject
-
 
         # EXECUTION - INITIALIZE THE MAIN FORM
         # Create the main form
@@ -73,7 +72,7 @@ function Initialize-Graphics {
 .DESCRIPTION
     This function imports the graphical settings from a specified file and adds them to the main application object. It searches for the graphical settings file in the specified root folder and its subfolders, imports the settings from the file, and adds them to the main application object under the GraphicalSettings property.
 .EXAMPLE
-    Import-GraphicalSettings -InputObject $Global:ApplicationObject
+    Import-GraphicalSettings -InputObject $MyApplicationObject
 .INPUTS
     [PSCustomObject]
     [System.String]
@@ -131,7 +130,7 @@ function Import-GraphicalSettings {
 .DESCRIPTION
     This function adds the necessary assemblies for the graphical interface to the application by loading them based on the configuration in the GraphicalSettings of the main object.
 .EXAMPLE
-    Add-Assemblies -InputObject $Global:ApplicationObject
+    Add-Assemblies -InputObject $MyApplicationObject
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
@@ -173,7 +172,7 @@ function Add-Assemblies {
 .DESCRIPTION
     This function adds graphical dimensions to the Global ApplicationObject based on the MainForm dimensions and the MainTabControl margins.
 .EXAMPLE
-    Add-GraphicalDimensions -InputObject $Global:ApplicationObject
+    Add-GraphicalDimensions -InputObject $MyApplicationObject
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
@@ -219,7 +218,7 @@ function Add-GraphicalDimensions {
 .DESCRIPTION
     This function adds font properties to the Global ApplicationObject based on the MainForm dimensions and the MainTabControl margins.
 .EXAMPLE
-    Add-FontProperties -InputObject $Global:ApplicationObject
+    Add-FontProperties -InputObject $MyApplicationObject
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
@@ -271,7 +270,7 @@ function Add-FontProperties {
 .DESCRIPTION
     This function finds the main icon file from the configured icon file name and stores it as a System.Drawing.Icon object in GraphicalSettings.
 .EXAMPLE
-    Add-MainIconProperties -InputObject $Global:ApplicationObject
+    Add-MainIconProperties -InputObject $MyApplicationObject
 .INPUTS
     [PSCustomObject]
 .OUTPUTS

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This function imports the Application Launcher feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureAppLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureAppLauncher -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]

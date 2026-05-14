@@ -6,7 +6,7 @@
     This function adds graphical dimensions to the MainTabControl settings based on the MainForm dimensions and the MainTabControl margins.
      It calculates the width and height of the MainTabControl based on the MainForm dimensions and the MainTabControl margins, and adds these dimensions to the MainTabControl settings in the GraphicalSettings hashtable of the main object.
 .EXAMPLE
-    Add-MainTabControlDimensions -InputObject $Global:ApplicationObject
+    Add-MainTabControlDimensions -InputObject $MyApplicationObject
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
@@ -60,7 +60,7 @@ function Add-MainTabControlDimensions {
 .DESCRIPTION
     This function creates the MainTabControl based on the settings in the GraphicalSettings hashtable of the main object, and adds it to the MainForm.
 .EXAMPLE
-    Add-MainTabControl -InputObject $Global:ApplicationObject -ParentForm $Global:MainForm
+    Add-MainTabControl -InputObject $MyApplicationObject -ParentForm $Global:MainForm
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.Form]

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This function imports the System Folder feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureSystemFolderLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureSystemFolderLauncher -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]

@@ -82,15 +82,20 @@ function Get-TimeStamp {
 #>
 ####################################################################################################
 function Stop-LoadTimer {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
+    )
         
     # EXECUTION
     # Stop the load timer and report elapsed time
-    if ($Global:ApplicationObject.LoadTimer) {
+    if ($InputObject.LoadTimer) {
 
         # Stop the stopwatch
-        $Global:ApplicationObject.LoadTimer.Stop()
+        $InputObject.LoadTimer.Stop()
         # Get the elapsed time in seconds and round to 2 decimal places
-        [double]$Seconds = $Global:ApplicationObject.LoadTimer.Elapsed.TotalSeconds
+        [double]$Seconds = $InputObject.LoadTimer.Elapsed.TotalSeconds
         [string]$RoundedSeconds = $Seconds.ToString("F2")
         # Write the elapsed time to the host
         Write-Line "Loading time: $RoundedSeconds seconds"

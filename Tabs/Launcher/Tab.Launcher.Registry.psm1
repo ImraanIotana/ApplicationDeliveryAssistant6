@@ -5,7 +5,7 @@
 .DESCRIPTION
     This function imports the Registry feature into the Launcher tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureRegistryLauncher -InputObject $Global:ApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureRegistryLauncher -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]

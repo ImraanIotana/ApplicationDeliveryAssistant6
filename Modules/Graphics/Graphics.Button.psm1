@@ -6,7 +6,7 @@
     This function adds graphical dimensions to the Button settings based on the MainForm dimensions and the Button margins.
      It calculates the width and height of the Button based on the MainForm dimensions and the Button margins, and adds these dimensions to the Button settings in the GraphicalSettings hashtable of the main object.
 .EXAMPLE
-    Add-ButtonDimensions -InputObject $Global:ApplicationObject
+    Add-ButtonDimensions -InputObject $MyApplicationObject
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
@@ -280,7 +280,7 @@ function New-Button {
 .DESCRIPTION
     This function applies shared button-line properties and invokes Invoke-Button for each button definition.
 .EXAMPLE
-    New-ButtonLine -InputObject $Global:ApplicationObject -ButtonPropertiesArray $ButtonPropertiesArray -ParentGroupBox $GroupBox -RowNumber 2
+    New-ButtonLine -InputObject $MyApplicationObject -ButtonPropertiesArray $ButtonPropertiesArray -ParentGroupBox $GroupBox -RowNumber 2
 .INPUTS
     [PSCustomObject]
     [System.Collections.Hashtable[]]

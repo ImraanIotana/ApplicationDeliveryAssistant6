@@ -93,6 +93,9 @@ function Show-MainForm {
     [CmdletBinding()]
     [OutputType([System.Void])]
     param (
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject,
+        
         [Parameter(Mandatory=$false,HelpMessage='The main form of the application.')]
         [System.Windows.Forms.Form]$FormToShow = $Global:MainForm
     )
@@ -100,9 +103,9 @@ function Show-MainForm {
     try {
         # PREPARATION
         # Stop the load timer and report elapsed time
-        Stop-LoadTimer
+        Stop-LoadTimer -InputObject $InputObject
         # Write the welcome message
-        Write-WelcomeMessage
+        Write-WelcomeMessage -InputObject $InputObject
 
         # EXECUTION - SHOW THE MAIN FORM
         # Show the main form
