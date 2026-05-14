@@ -34,19 +34,17 @@ function Open-Folder {
         [System.String]$HighlightItem
     )
 
-
-    # Function
-    [System.String]$ParameterSetName    = [System.String]$PSCmdlet.ParameterSetName
-    
+    # PREPARATION
     # Input
+    [System.String]$ParameterSetName    = [System.String]$PSCmdlet.ParameterSetName
     [System.String]$FolderToOpen        = $Path
     [System.String]$ItemToHighlight     = $HighlightItem
-
     # Handlers
-    [System.String]$HighlightPrefix    = '/select,"{0}"'
+    [System.String]$HighlightPrefix     = '/select,"{0}"'
 
 
     # VALIDATION
+    # Validate the input based on the parameter set
     switch ($ParameterSetName) {
         'OpenTheFolder'    {
             # Validate the string
@@ -56,7 +54,7 @@ function Open-Folder {
         }
         'HighlightTheItem' {
             # Validate the string
-            if (Test-String -IsEmpty $ItemToHighlight) { Write-Line "The SelectItem string is empty." -Type Fail ; Return }
+            if (Test-String -IsEmpty $ItemToHighlight) { Write-Line "The HighlightItem string is empty." -Type Fail ; Return }
             # Validate the path
             if (-Not(Test-Path -Path $ItemToHighlight)) {
                 Write-Line "The selected item could not be reached. ($ItemToHighlight)" -Type Fail
@@ -74,7 +72,7 @@ function Open-Folder {
                 Invoke-Item -Path $FolderToOpen
             }
             catch {
-                Write-FullError
+                Write-ErrorReport -ErrorRecord $_
             }
         }
         'HighlightTheItem' {
@@ -84,13 +82,12 @@ function Open-Folder {
                 Start-Process explorer.exe -ArgumentList ($HighlightPrefix -f $ItemToHighlight)
             }
             catch {
-                Write-FullError
+                Write-ErrorReport -ErrorRecord $_
             }
         }
     }
 
 }
 
-### END OF SCRIPT
+### END OF FUNCTION
 ####################################################################################################
-
