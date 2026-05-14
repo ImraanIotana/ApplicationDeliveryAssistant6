@@ -49,8 +49,9 @@ function Import-FeatureUserFolders {
         # Set the TextBox properties
         [System.Collections.Hashtable[]]$TextBoxPropertiesArray = @(
             @{
-                RowNumber   = 1
-                Label       = 'My Output Folder:'
+                RowNumber       = 1
+                Label           = 'My Output Folder:'
+                PropertyName    = 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
             }
         )
 

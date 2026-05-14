@@ -94,7 +94,7 @@ function Import-GraphicalSettings {
         [PSCustomObject]$InputObject,
 
         [Parameter(Mandatory=$false,HelpMessage='The name of the graphical settings file.')]
-        [System.String]$GraphicalSettingsFileName = 'Graphics.Settings.psd1'
+        [System.String]$GraphicalSettingsFileName = 'Settings.Graphics.psd1'
     )
 
     try {

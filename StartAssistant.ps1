@@ -37,10 +37,8 @@ try {
     }
     # Import the modules
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
-    # Initialize the graphics
-    Initialize-Graphics
-    # Show the Main Form
-    Show-MainForm
+    # Start the application
+    Start-Application
 }
 catch {
     Write-Error "The Application Delivery Assistant encountered an error: $_"
