@@ -79,10 +79,10 @@ function Import-FeatureRegistryLauncher {
             }
             @{
                 ColumnNumber    = 5
-                Text            = 'Last Opened Key Setting'
+                Text            = 'Application Settings Key'
                 PNGFileName     = 'regedit.png'
                 SizeType        = 'Large'
-                Function        = { Start-RegistryEditor -LastOpenedSettingKey }
+                Function        = { Start-RegistryEditor -ApplicationSettingsKey -InputObject $InputObject }.GetNewClosure()
             }
         )
 
@@ -129,8 +129,11 @@ function Import-FeatureRegistryLauncher {
 function Start-RegistryEditor {
     [CmdletBinding(DefaultParameterSetName='None')]
     param (
-        [Parameter(Mandatory=$false,ParameterSetName='UninstallKey64bit',HelpMessage='The ApplicationObject containing the Settings.')]
+        [Parameter(Mandatory=$false,ParameterSetName='ApplicationSettingsKey',HelpMessage='The ApplicationObject containing the Settings.')]
         [PSCustomObject]$InputObject,
+
+        [Parameter(Mandatory=$false,ParameterSetName='ApplicationSettingsKey',HelpMessage='Open the 64-bit Uninstall key.')]
+        [System.Management.Automation.SwitchParameter]$ApplicationSettingsKey,
 
         [Parameter(Mandatory=$false,ParameterSetName='UninstallKey64bit',HelpMessage='Open the 64-bit Uninstall key.')]
         [System.Management.Automation.SwitchParameter]$UninstallKey64bit,
@@ -154,18 +157,24 @@ function Start-RegistryEditor {
             PowerShellPolicyKey     = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell'
             LastOpenedSettingKey    = 'Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
         }
-
         # Set the registry key that contains the last opened key value for regedit
         [System.String]$KeyContainingLastOpenedKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
-
 
         # PREPARATION - DETERMINE LAST OPENED KEY
         # Determine which key to open
         [System.String]$LastKeyValue = switch ($PSCmdlet.ParameterSetName) {
-            'UninstallKey32bit'         { $Context.UninstallKey32bit }
             'UninstallKey64bit'         { $Context.UninstallKey64bit }
+            'UninstallKey32bit'         { $Context.UninstallKey32bit }
             'PowerShellPolicyKey'       { $Context.PowerShellPolicyKey }
             'LastOpenedSettingKey'      { $Context.LastOpenedSettingKey }
+            'ApplicationSettingsKey'    {
+                # Get the User Settings registry path from the Application Settings
+                [System.String]$UserSettingsRegistryPath = $InputObject.ApplicationSettings.UserSettingsRegistryPath
+                # Convert the User Settings registry path to the format used by regedit for the last opened key
+                [System.String]$UserSettingsRegistryPathForRegedit = $UserSettingsRegistryPath.Replace('HKCU:\','Computer\HKEY_CURRENT_USER\')
+                # Return the converted registry path
+                $UserSettingsRegistryPathForRegedit
+            }
             Default                     { [System.String]::Empty }
         }
 
@@ -175,6 +184,7 @@ function Start-RegistryEditor {
 
         # EXECUTION
         # Start the Registry Editor
+        Write-Line "Starting the Registry Editor at the key: ($LastKeyValue)"
         Start-Process regedit.exe
     }
     catch {

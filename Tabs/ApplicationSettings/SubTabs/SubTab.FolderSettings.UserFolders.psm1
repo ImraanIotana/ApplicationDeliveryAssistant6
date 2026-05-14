@@ -52,6 +52,7 @@ function Import-FeatureUserFolders {
                 RowNumber       = 1
                 Label           = 'My Output Folder:'
                 PropertyName    = 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
+                ToolTip         = 'The path to the My Output Folder'
             }
         )
 

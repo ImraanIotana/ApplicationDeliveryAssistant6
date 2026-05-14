@@ -57,11 +57,12 @@ function Add-TextBoxDimensions {
 ####################################################################################################
 <#
 .SYNOPSIS
-    This function creates a new TextBox.
+    Creates a new TextBox and adds it to the specified parent GroupBox.
 .DESCRIPTION
-    This function is part of the Application Delivery Assistant. It creates a new TextBox and adds it to the specified parent GroupBox.
+    This function creates a new TextBox and adds it to the specified parent GroupBox.
+    The TextBox properties such as location, size, font, colors, and custom properties are set based on the input parameters and the GraphicalSettings in the main object.
 .EXAMPLE
-    Invoke-TextBox -ParentGroupBox $MyGroupBox -RowNumber 2 -SizeType 'Medium' -Type 'Input' -Label 'Enter Name:' -TextColor 'Blue' -PropertyName 'UserName'
+    New-TextBox -ParentGroupBox $MyGroupBox -RowNumber 2 -SizeType 'Medium' -Type 'Input' -Label 'Enter Name:' -TextColor 'Blue' -PropertyName 'UserName'
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.GroupBox]
@@ -117,151 +118,136 @@ function New-TextBox {
         [System.String]$ToolTip
     )
 
-    begin {
-        ####################################################################################################
-        ### MAIN PROPERTIES ###
+    # PREPARATION
+    # Input
+    [System.Collections.Hashtable]$Settings     = $InputObject.GraphicalSettings
 
-        # Input
-        [System.Collections.Hashtable]$Settings     = $InputObject.GraphicalSettings
+    # Create a new TextBox as the Output
+    [System.Windows.Forms.TextBox]$NewTextBox   = New-Object System.Windows.Forms.TextBox
 
-        # Create a new TextBox as the Output
-        [System.Windows.Forms.TextBox]$NewTextBox   = New-Object System.Windows.Forms.TextBox
+    # EXECUTION
 
-        ####################################################################################################
+    # LOCATION
+    # Set the location
+    [System.Int32]$TextBoxTopLeftX  = $ParentGroupBox.Location.X + $Settings.TextBox.LeftMargin
+    [System.Int32]$TextBoxTopLeftY  = $Settings.TextBox.TopMargin + (($RowNumber - 1) * $Settings.TextBox.Height)
+    $NewTextBox.Location            = New-Object System.Drawing.Point($TextBoxTopLeftX, $TextBoxTopLeftY)
+
+    # SIZE
+    # Set the size
+    [System.Int32]$TextBoxWidth = switch ($SizeType) {
+        'Large'     { $Settings.TextBox.LargeWidth }
+        'Medium'    { $Settings.TextBox.MediumWidth }
+        'Small'     { $Settings.TextBox.SmallWidth }
     }
-    
-    process {
-        ####################################################################################################
-        ### NATIVE PROPERTIES ###
+    [System.Int32]$TextBoxHeight = $TextBoxTopLeftY + $Settings.TextBox.Height
+    $NewTextBox.Size = New-Object System.Drawing.Size($TextBoxWidth, $TextBoxHeight)
 
-        # LOCATION
-        # Set the location
-        [System.Int32]$TextBoxTopLeftX  = $ParentGroupBox.Location.X + $Settings.TextBox.LeftMargin
-        [System.Int32]$TextBoxTopLeftY  = $Settings.TextBox.TopMargin + (($RowNumber - 1) * $Settings.TextBox.Height)
-        $NewTextBox.Location            = New-Object System.Drawing.Point($TextBoxTopLeftX, $TextBoxTopLeftY)
+    # FONT
+    # Set the font
+    $NewTextBox.Font = $Settings.MainFont
 
-        # SIZE
-        # Set the size
-        [System.Int32]$TextBoxWidth = switch ($SizeType) {
-            'Large'     { $Settings.TextBox.LargeWidth }
-            'Medium'    { $Settings.TextBox.MediumWidth }
-            'Small'     { $Settings.TextBox.SmallWidth }
+    # COLORS
+    # Set the BackColor
+    $NewTextBox.BackColor = switch ($Type) {
+        'Input'     { 'White' }
+        'Output'    { 'Beige' }
+    }
+    # Set the ForeColor
+    $NewTextBox.ForeColor = $TextColor
+
+    # READONLY
+    # Set the ReadOnly property
+    $NewTextBox.ReadOnly = switch ($Type) {
+        'Input'     { $false }
+        'Output'    { $true }
+    }
+
+    # CUSTOM PROPERTIES
+
+    # TAG
+    # Create the Tag property
+    $NewTextBox.Tag = [PSCustomObject]@{}
+
+    # LABEL
+    # Create the label and add it to the Tag property
+    if ($Label) {
+        New-Label -InputObject $InputObject -ParentGroupBox $ParentGroupBox -Text $Label -RowNumber $RowNumber
+        $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name Label -Value $Label
+    }
+
+    # PROPERTYNAME
+    # Add the PropertyName
+    if ($PropertyName) {
+        $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name PropertyName -Value $PropertyName
+        # Make it interact with the registry
+        $NewTextBox.Text = Get-UserSetting -InputObject $InputObject -PropertyName $NewTextBox.Tag.PropertyName
+        # test
+        #Write-Line "The TextBox with the label ($($NewTextBox.Tag.Label)) is linked to the User Setting ($($NewTextBox.Tag.PropertyName)). Its current value is: ($($NewTextBox.Text))"
+        [PSCustomObject]$AppInputObject = $InputObject
+        $NewTextBox.Add_TextChanged([System.EventHandler]{
+            param($Sender, $EventArgs)
+            Set-UserSetting -InputObject $AppInputObject -PropertyName $Sender.Tag.PropertyName -PropertyValue $Sender.Text
+        }.GetNewClosure())
+    }
+
+    <# DEFAULTVALUE
+    # Add the DefaultValue
+    if ($DefaultValue) {
+        # Add the DefaultValue to the Tag property
+        $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name DefaultValue -Value $DefaultValue
+        # If the box is empty then fill it with the DefaultValue
+        if (Test-String -IsEmpty $NewTextBox.Text) {
+            Write-Line ("The box labeled ($($NewTextBox.Tag.Label)) is empty. It will be filled with the default value: ($DefaultValue)")
+            $NewTextBox.Text = $NewTextBox.Tag.DefaultValue
         }
-        [System.Int32]$TextBoxHeight = $TextBoxTopLeftY + $Settings.TextBox.Height
-        $NewTextBox.Size = New-Object System.Drawing.Size($TextBoxWidth, $TextBoxHeight)
+    }
 
-        # FONT
-        # Set the font
-        $NewTextBox.Font = $Settings.MainFont
-
-        # COLORS
-        # Set the BackColor
-        $NewTextBox.BackColor = switch ($Type) {
-            'Input'     { 'White' }
-            'Output'    { 'Beige' }
-        }
-        # Set the ForeColor
-        $NewTextBox.ForeColor = $TextColor
-
-        # READONLY
-        # Set the ReadOnly property
-        $NewTextBox.ReadOnly = switch ($Type) {
-            'Input'     { $false }
-            'Output'    { $true }
-        }
-
-        ####################################################################################################
-        ### CUSTOM PROPERTIES ###
-
-        # TAG
-        # Create the Tag property
-        $NewTextBox.Tag = [PSCustomObject]@{}
-
-        # LABEL
-        # Create the label and add it to the Tag property
-        if ($Label) {
-            New-Label -InputObject $InputObject -ParentGroupBox $ParentGroupBox -Text $Label -RowNumber $RowNumber
-            $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name Label -Value $Label
-        }
-
-        # PROPERTYNAME
-        # Add the PropertyName
-        if ($PropertyName) {
-            $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name PropertyName -Value $PropertyName
-            # Make it interact with the registry
-            $NewTextBox.Text = Get-UserSetting -InputObject $InputObject -PropertyName $NewTextBox.Tag.PropertyName
-            # test
-            #Write-Line "The TextBox with the label ($($NewTextBox.Tag.Label)) is linked to the User Setting ($($NewTextBox.Tag.PropertyName)). Its current value is: ($($NewTextBox.Text))"
-            [PSCustomObject]$AppInputObject = $InputObject
-            $NewTextBox.Add_TextChanged([System.EventHandler]{
-                param($Sender, $EventArgs)
-                Set-UserSetting -InputObject $AppInputObject -PropertyName $Sender.Tag.PropertyName -PropertyValue $Sender.Text
-            }.GetNewClosure())
-        }
-
-        <# DEFAULTVALUE
-        # Add the DefaultValue
-        if ($DefaultValue) {
-            # Add the DefaultValue to the Tag property
-            $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name DefaultValue -Value $DefaultValue
-            # If the box is empty then fill it with the DefaultValue
-            if (Test-String -IsEmpty $NewTextBox.Text) {
-                Write-Line ("The box labeled ($($NewTextBox.Tag.Label)) is empty. It will be filled with the default value: ($DefaultValue)")
-                $NewTextBox.Text = $NewTextBox.Tag.DefaultValue
-            }
-        }
-
-        # BUTTONS
-        # Add the ButtonPropertiesArray
-        if ($ButtonPropertiesArray.Count -gt 0) {
-            try {
-                # Initialize the ButtonPropertiesArray in the Tag property
-                $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name ButtonPropertiesArray -Value @()
-                # Add each button to the ButtonPropertiesArray
-                foreach ($Button in $ButtonPropertiesArray) {
-                    # Set the button properties
-                    [System.Int32]$ColumnNumber = $Button[0]
-                    [System.String]$ButtonText  = $Button[1]
-                    # Create the hashtable
-                    [System.Collections.Hashtable]$ButtonHashtable = @{
-                        ColumnNumber    = $ColumnNumber
-                        Text            = $ButtonText
-                        Function        = switch ($ButtonText) {
-                            'Copy'      { { Invoke-ClipBoard -CopyFromBox $NewTextBox }.GetNewClosure() }
-                            'Paste'     { { Invoke-ClipBoard -PasteToBox $NewTextBox }.GetNewClosure() }
-                            'Clear'     { { Clear-TextBox $NewTextBox }.GetNewClosure() }
-                            'Default'   { { Reset-TextBoxToDefault $NewTextBox }.GetNewClosure() }
-                            'Browse'    { { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $NewTextBox.Text = $FolderName } }.GetNewClosure() }
-                            'Open'      { { Open-Folder -Path $NewTextBox.Text }.GetNewClosure() }
-                        }
+    # BUTTONS
+    # Add the ButtonPropertiesArray
+    if ($ButtonPropertiesArray.Count -gt 0) {
+        try {
+            # Initialize the ButtonPropertiesArray in the Tag property
+            $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name ButtonPropertiesArray -Value @()
+            # Add each button to the ButtonPropertiesArray
+            foreach ($Button in $ButtonPropertiesArray) {
+                # Set the button properties
+                [System.Int32]$ColumnNumber = $Button[0]
+                [System.String]$ButtonText  = $Button[1]
+                # Create the hashtable
+                [System.Collections.Hashtable]$ButtonHashtable = @{
+                    ColumnNumber    = $ColumnNumber
+                    Text            = $ButtonText
+                    Function        = switch ($ButtonText) {
+                        'Copy'      { { Invoke-ClipBoard -CopyFromBox $NewTextBox }.GetNewClosure() }
+                        'Paste'     { { Invoke-ClipBoard -PasteToBox $NewTextBox }.GetNewClosure() }
+                        'Clear'     { { Clear-TextBox $NewTextBox }.GetNewClosure() }
+                        'Default'   { { Reset-TextBoxToDefault $NewTextBox }.GetNewClosure() }
+                        'Browse'    { { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $NewTextBox.Text = $FolderName } }.GetNewClosure() }
+                        'Open'      { { Open-Folder -Path $NewTextBox.Text }.GetNewClosure() }
                     }
-                    # Add the hashtable to the ButtonPropertiesArray
-                    $NewTextBox.Tag.ButtonPropertiesArray += $ButtonHashtable
                 }
-                # Create the buttons
-                Invoke-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
+                # Add the hashtable to the ButtonPropertiesArray
+                $NewTextBox.Tag.ButtonPropertiesArray += $ButtonHashtable
             }
-            catch {
-                Write-FullError
-            }
+            # Create the buttons
+            Invoke-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
         }
+        catch {
+            Write-FullError
+        }
+    }#>
 
-        # TOOLTIP
-        # Add the ToolTip
-        if ($ToolTip) {
-            [System.Windows.Forms.ToolTip]$TextBoxToolTip = New-Object System.Windows.Forms.ToolTip
-            $TextBoxToolTip.SetToolTip($NewTextBox, $ToolTip)
-        }#>
-
-        # ADD TO PARENT
-        # Add the new textbox to the parent
-        $ParentGroupBox.Controls.Add($NewTextBox)
+    # TOOLTIP
+    # Add the ToolTip
+    if ($ToolTip) {
+        [System.Windows.Forms.ToolTip]$TextBoxToolTip = New-Object System.Windows.Forms.ToolTip
+        $TextBoxToolTip.SetToolTip($NewTextBox, $ToolTip)
     }
 
-    end {
-        # Return the output
-        $NewTextBox
-    }
+    # ADD TO PARENT
+    # Add the new textbox to the parent
+    $ParentGroupBox.Controls.Add($NewTextBox)
 }
 
 ### END OF FUNCTION
