@@ -105,9 +105,7 @@ function Import-GraphicalSettings {
 
         # Check if the graphical settings file was found
         if ($GraphicalSettingsFileObject.Count -ne 1) {
-            [System.String]$ErrorMessage = "The graphical settings file ($GraphicalSettingsFileName) was not found in folder ($FolderToSearch) or its subfolders. (Found $($GraphicalSettingsFileObject.Count) files.)"
-            Write-Line $ErrorMessage -Type Error
-            throw $ErrorMessage
+            throw "The graphical settings file ($GraphicalSettingsFileName) was not found in folder ($FolderToSearch) or its subfolders. (Found $($GraphicalSettingsFileObject.Count) files.)"
         }
 
         # EXECUTION - IMPORT THE GRAPHICAL SETTINGS

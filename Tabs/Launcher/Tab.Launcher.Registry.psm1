@@ -129,6 +129,9 @@ function Import-FeatureRegistryLauncher {
 function Start-RegistryEditor {
     [CmdletBinding(DefaultParameterSetName='None')]
     param (
+        [Parameter(Mandatory=$false,ParameterSetName='UninstallKey64bit',HelpMessage='The ApplicationObject containing the Settings.')]
+        [PSCustomObject]$InputObject,
+
         [Parameter(Mandatory=$false,ParameterSetName='UninstallKey64bit',HelpMessage='Open the 64-bit Uninstall key.')]
         [System.Management.Automation.SwitchParameter]$UninstallKey64bit,
 
@@ -146,12 +149,15 @@ function Start-RegistryEditor {
         # PREPARATION - DEFINE VARIABLES
         # Define a hashtable to store the registry paths for different keys
         [System.Collections.Hashtable]$Context = @{
-            UninstallKey64bit           = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
-            UninstallKey32bit           = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
-            PowerShellPolicyKey         = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell'
-            LastOpenedSettingKey        = 'Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
-            KeyContainingLastOpenedKey  = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
+            UninstallKey64bit       = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+            UninstallKey32bit       = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+            PowerShellPolicyKey     = 'Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell'
+            LastOpenedSettingKey    = 'Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
         }
+
+        # Set the registry key that contains the last opened key value for regedit
+        [System.String]$KeyContainingLastOpenedKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
+
 
         # PREPARATION - DETERMINE LAST OPENED KEY
         # Determine which key to open
@@ -165,7 +171,7 @@ function Start-RegistryEditor {
 
         # PREPARATION - SET LAST OPENED KEY
         # If a specific key is requested, set it as the last opened key in regedit
-        if (Test-String -IsPopulated $LastKeyValue) { Set-ItemProperty -Path $Context.KeyContainingLastOpenedKey -Name 'LastKey' -Value $LastKeyValue -Force }
+        if (Test-String -IsPopulated $LastKeyValue) { Set-ItemProperty -Path $KeyContainingLastOpenedKey -Name 'LastKey' -Value $LastKeyValue -Force }
 
         # EXECUTION
         # Start the Registry Editor

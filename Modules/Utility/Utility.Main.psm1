@@ -26,6 +26,8 @@ function Start-Application {
     )
 
     try {
+        # Import and attach application settings to the ApplicationObject
+        Import-ApplicationSettings -InputObject $InputObject
         # Initialize the User Settings
         Initialize-UserSettings -InputObject $InputObject
         # Initialize the graphics

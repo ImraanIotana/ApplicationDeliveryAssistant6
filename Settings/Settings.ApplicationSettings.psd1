@@ -15,5 +15,5 @@
 @{
     # USER SETTINGS
     # Set the Registry path for the User Settings
-    RegistryPath = 'HKCU:\Software\Application Delivery Assistant\UserSettings'
+    UserSettingsRegistryPath = 'HKCU:\Software\Application Delivery Assistant\UserSettings'
 }
