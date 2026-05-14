@@ -20,11 +20,14 @@
 ####################################################################################################
 function Start-Application {
     [CmdletBinding()]
-    param ()
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject = $Global:ApplicationObject
+    )
 
     try {
         # Initialize the User Settings
-        Initialize-UserSettings
+        Initialize-UserSettings -InputObject $InputObject
         # Initialize the graphics
         Initialize-Graphics
         # Show the Main Form
