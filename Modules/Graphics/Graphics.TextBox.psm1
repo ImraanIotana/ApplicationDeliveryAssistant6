@@ -125,7 +125,7 @@ function New-TextBox {
     # Create a new TextBox as the Output
     [System.Windows.Forms.TextBox]$NewTextBox   = New-Object System.Windows.Forms.TextBox
 
-    # EXECUTION
+    # EXECUTION - SET PROPERTIES
 
     # LOCATION
     # Set the location
@@ -163,7 +163,7 @@ function New-TextBox {
         'Output'    { $true }
     }
 
-    # CUSTOM PROPERTIES
+    # EXECUTION - CUSTOM PROPERTIES '(TAG)'
 
     # TAG
     # Create the Tag property
@@ -182,12 +182,10 @@ function New-TextBox {
         $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name PropertyName -Value $PropertyName
         # Make it interact with the registry
         $NewTextBox.Text = Get-UserSetting -InputObject $InputObject -PropertyName $NewTextBox.Tag.PropertyName
-        # test
-        #Write-Line "The TextBox with the label ($($NewTextBox.Tag.Label)) is linked to the User Setting ($($NewTextBox.Tag.PropertyName)). Its current value is: ($($NewTextBox.Text))"
-        [PSCustomObject]$AppInputObject = $InputObject
+        #[PSCustomObject]$AppInputObject = $InputObject
         $NewTextBox.Add_TextChanged([System.EventHandler]{
             param($Sender, $EventArgs)
-            Set-UserSetting -InputObject $AppInputObject -PropertyName $Sender.Tag.PropertyName -PropertyValue $Sender.Text
+            Set-UserSetting -InputObject $InputObject -PropertyName $Sender.Tag.PropertyName -PropertyValue $Sender.Text
         }.GetNewClosure())
     }
 
@@ -219,12 +217,12 @@ function New-TextBox {
                     ColumnNumber    = $ColumnNumber
                     Text            = $ButtonText
                     Function        = switch ($ButtonText) {
+                        'Browse'    { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Browse' }.GetNewClosure() }
+                        'Open'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
                         'Copy'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
                         'Paste'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
-                        #'Clear'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
-                        #'Default'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
-                        #'Browse'    { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Browse' }.GetNewClosure() }
-                        #'Open'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
+                        'Default'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
+                        'Clear'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
                     }
                 }
                 # Add the hashtable to the ButtonPropertiesArray
@@ -253,6 +251,29 @@ function New-TextBox {
 ### END OF FUNCTION
 ####################################################################################################
 
+
+####################################################################################################
+<#
+.SYNOPSIS
+    This function performs the specified action on the given TextBox, such as opening a folder, copying text, pasting text, resetting to default value, etc.        
+.DESCRIPTION
+    This function performs the specified action on the given TextBox, such as opening a folder, copying text, pasting text, resetting to default value, etc.        
+    The function takes a TextBox and an Action as input parameters, validates the input, and executes the corresponding action based on the Action parameter.
+.EXAMPLE
+    Invoke-TextBoxAction -TextBox $MyTextBox -Action 'Browse'
+.INPUTS
+    [System.Windows.Forms.TextBox]
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
 function Invoke-TextBoxAction {
     [CmdletBinding()]
     param (
@@ -260,7 +281,7 @@ function Invoke-TextBoxAction {
         [System.Windows.Forms.TextBox]$TextBox,
 
         [Parameter(Mandatory=$true,HelpMessage='The action to be performed on the TextBox.')]
-        [ValidateSet('Copy','Paste','Clear','Default','Browse','Open')]
+        [ValidateSet('Browse','Open','Copy','Paste','Default','Clear')]
         [System.String]$Action
     )
     
@@ -278,12 +299,14 @@ function Invoke-TextBoxAction {
     # EXECUTION
     # Switch on the action
     switch ($Action) {
-        'Copy'      { Set-ClipBoard -Value  $TextBoxContent ; Write-Line "The content of the TextBox has been copied to the clipboard. ($TextBoxContent)" }
-        'Paste'     { $TextBox.Text = Get-ClipBoard ; Write-Line "The content of the clipboard has been pasted into the TextBox. ($($TextBox.Text))" }
-        'Clear'     { Clear-TextBox $TextBox }
-        'Default'   { Reset-TextBoxToDefault $TextBox }
         'Browse'    { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $TextBox.Text = $FolderName } }
         'Open'      { Open-Folder -Path $TextBox.Text }
+        'Copy'      { Set-ClipBoard -Value  $TextBoxContent ; Write-Line "The content of the TextBox has been copied to the clipboard. ($TextBoxContent)" }
+        'Paste'     { $TextBox.Text = Get-ClipBoard ; Write-Line "The content of the clipboard has been pasted into the TextBox. ($($TextBox.Text))" }
+        'Default'   { $TextBox.Text = $TextBox.Tag.DefaultValue ; Write-Line "The TextBox has been reset to the default value: ($($TextBox.Text))" }
+        'Clear'     { $TextBox.Clear() ; Write-Line "The TextBox has been cleared." }
     }
-
 }
+
+### END OF FUNCTION
+####################################################################################################

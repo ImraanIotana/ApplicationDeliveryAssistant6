@@ -54,6 +54,7 @@ function Import-FeatureUserFolders {
                 PropertyName    = 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
                 ToolTip         = 'The path to the My Output Folder'
                 Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Default'))
+                DefaultValue    = "$ENV:USERPROFILE\Downloads"
             }
         )
 
