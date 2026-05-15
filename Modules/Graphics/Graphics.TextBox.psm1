@@ -112,7 +112,7 @@ function New-TextBox {
         [System.String]$DefaultValue,
 
         [Parameter(Mandatory=$false,HelpMessage='The DefaultButtonsArray that will be added to the object.')]
-        [System.Object[][]]$ButtonPropertiesArray,
+        [System.Object[][]]$Buttons,
 
         [Parameter(Mandatory=$false,HelpMessage='The ToolTip text to display when hovering over the TextBox.')]
         [System.String]$ToolTip
@@ -191,7 +191,7 @@ function New-TextBox {
         }.GetNewClosure())
     }
 
-    <# DEFAULTVALUE
+    # DEFAULTVALUE
     # Add the DefaultValue
     if ($DefaultValue) {
         # Add the DefaultValue to the Tag property
@@ -205,12 +205,12 @@ function New-TextBox {
 
     # BUTTONS
     # Add the ButtonPropertiesArray
-    if ($ButtonPropertiesArray.Count -gt 0) {
+    if ($Buttons.Count -gt 0) {
         try {
             # Initialize the ButtonPropertiesArray in the Tag property
             $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name ButtonPropertiesArray -Value @()
             # Add each button to the ButtonPropertiesArray
-            foreach ($Button in $ButtonPropertiesArray) {
+            foreach ($Button in $Buttons) {
                 # Set the button properties
                 [System.Int32]$ColumnNumber = $Button[0]
                 [System.String]$ButtonText  = $Button[1]
@@ -219,24 +219,24 @@ function New-TextBox {
                     ColumnNumber    = $ColumnNumber
                     Text            = $ButtonText
                     Function        = switch ($ButtonText) {
-                        'Copy'      { { Invoke-ClipBoard -CopyFromBox $NewTextBox }.GetNewClosure() }
-                        'Paste'     { { Invoke-ClipBoard -PasteToBox $NewTextBox }.GetNewClosure() }
-                        'Clear'     { { Clear-TextBox $NewTextBox }.GetNewClosure() }
-                        'Default'   { { Reset-TextBoxToDefault $NewTextBox }.GetNewClosure() }
-                        'Browse'    { { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $NewTextBox.Text = $FolderName } }.GetNewClosure() }
-                        'Open'      { { Open-Folder -Path $NewTextBox.Text }.GetNewClosure() }
+                        'Copy'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
+                        'Paste'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
+                        #'Clear'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
+                        #'Default'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
+                        #'Browse'    { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Browse' }.GetNewClosure() }
+                        #'Open'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
                     }
                 }
                 # Add the hashtable to the ButtonPropertiesArray
                 $NewTextBox.Tag.ButtonPropertiesArray += $ButtonHashtable
             }
             # Create the buttons
-            Invoke-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
+            New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
         }
         catch {
-            Write-FullError
+            Write-ErrorReport -ErrorRecord $_
         }
-    }#>
+    }
 
     # TOOLTIP
     # Add the ToolTip
@@ -253,3 +253,37 @@ function New-TextBox {
 ### END OF FUNCTION
 ####################################################################################################
 
+function Invoke-TextBoxAction {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The TextBox on which the action will be performed.')]
+        [System.Windows.Forms.TextBox]$TextBox,
+
+        [Parameter(Mandatory=$true,HelpMessage='The action to be performed on the TextBox.')]
+        [ValidateSet('Copy','Paste','Clear','Default','Browse','Open')]
+        [System.String]$Action
+    )
+    
+    # PREPARATION
+    # Get the text from the TextBox
+    [System.String]$TextBoxContent = $TextBox.Text
+
+    # VALIDATION
+    # Test if the TextBox is empty, when the action is Copy or Open
+    if ((Test-String -IsEmpty $TextBoxContent) -and ($Action -in @('Copy','Open'))) {
+        Write-Line "The TextBox is empty. The $Action-action cannot be performed."
+        return
+    }
+
+    # EXECUTION
+    # Switch on the action
+    switch ($Action) {
+        'Copy'      { Set-ClipBoard -Value  $TextBoxContent ; Write-Line "The content of the TextBox has been copied to the clipboard. ($TextBoxContent)" }
+        'Paste'     { $TextBox.Text = Get-ClipBoard ; Write-Line "The content of the clipboard has been pasted into the TextBox. ($($TextBox.Text))" }
+        'Clear'     { Clear-TextBox $TextBox }
+        'Default'   { Reset-TextBoxToDefault $TextBox }
+        'Browse'    { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $TextBox.Text = $FolderName } }
+        'Open'      { Open-Folder -Path $TextBox.Text }
+    }
+
+}
