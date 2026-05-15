@@ -38,7 +38,9 @@ function Initialize-Graphics {
         # Load the assemblies
         Add-Assemblies -InputObject $InputObject
         # Add the main icon to the GraphicalSettings hashtable
-        Add-MainIconProperties -InputObject $InputObject
+        Add-MainIconToSettings -InputObject $InputObject
+        # Add the button icons to the GraphicalSettings hashtable
+        Add-ButtonIconsToSettings -InputObject $InputObject
         # Add the font properties
         Add-FontProperties -InputObject $InputObject
         # Add the graphical dimensions of the other controls to the GraphicalSettings hashtable
@@ -270,7 +272,7 @@ function Add-FontProperties {
 .DESCRIPTION
     This function finds the main icon file from the configured icon file name and stores it as a System.Drawing.Icon object in GraphicalSettings.
 .EXAMPLE
-    Add-MainIconProperties -InputObject $MyApplicationObject
+    Add-MainIconToSettings -InputObject $MyApplicationObject
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
@@ -283,7 +285,7 @@ function Add-FontProperties {
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Add-MainIconProperties {
+function Add-MainIconToSettings {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
@@ -307,6 +309,59 @@ function Add-MainIconProperties {
         Write-Line 'Setting main icon...'
         [System.Drawing.Icon]$MainIcon = New-Object System.Drawing.Icon($MainIconFileObject.FullName)
         $InputObject.GraphicalSettings.MainIcon = $MainIcon
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Adds the ButtonIcons properties to the Global ApplicationObject.
+.DESCRIPTION
+    This function finds the button icon files from the configured icon file names and stores them as System.Drawing.Image objects in GraphicalSettings.
+.EXAMPLE
+    Add-ButtonIconsToSettings -InputObject $MyApplicationObject
+.INPUTS
+    [PSCustomObject]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Add-ButtonIconsToSettings {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
+    )
+
+    try {
+        # PREPARATION
+        # Get the button icon files
+        [System.String]$FolderToSearch = $InputObject.RootFolder
+        [System.IO.FileInfo[]]$ButtonIconFileObjects = Get-ChildItem -Path $FolderToSearch -File -Filter *.png -Recurse
+
+        # Create a hashtable for the button icons
+        [System.Collections.Hashtable]$ButtonIcons = @{}
+        # Add the button icons to the hashtable
+        foreach ($ButtonIconFileObject in $ButtonIconFileObjects) {
+            [System.Byte[]]$IconBytes                       = [System.IO.File]::ReadAllBytes($ButtonIconFileObject.FullName)
+            [System.IO.MemoryStream]$MemoryStream           = New-Object System.IO.MemoryStream(,$IconBytes)
+            [System.Drawing.Image]$ButtonIcon               = [System.Drawing.Image]::FromStream($MemoryStream)
+            $ButtonIcons[$ButtonIconFileObject.BaseName]    = $ButtonIcon
+        }
+        $InputObject.GraphicalSettings.ButtonIcons = $ButtonIcons
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

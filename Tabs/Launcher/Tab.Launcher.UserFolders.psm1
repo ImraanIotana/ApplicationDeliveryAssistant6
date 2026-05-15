@@ -52,35 +52,35 @@ function Import-FeatureUserFolderLauncher {
             @{
                 ColumnNumber    = 1
                 Text            = 'Roaming Profile'
-                PNGFileName     = 'folder_user.png'
+                PNGFileName     = 'folder_user'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path $ENV:APPDATA }
             },
             @{
                 ColumnNumber    = 2
                 Text            = 'Local Profile'
-                PNGFileName     = 'folder_table.png'
+                PNGFileName     = 'folder_table'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path $ENV:LOCALAPPDATA }
             },
             @{
                 ColumnNumber    = 3
                 Text            = 'ProgramData'
-                PNGFileName     = 'folder_page.png'
+                PNGFileName     = 'folder_page'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path $ENV:PROGRAMDATA }
             },
             @{
                 ColumnNumber    = 4
                 Text            = 'Downloads'
-                PNGFileName     = 'download.png'
+                PNGFileName     = 'download'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path "$ENV:USERPROFILE\Downloads" }
             },
             @{
                 ColumnNumber    = 5
                 Text            = 'Temp'
-                PNGFileName     = 'folder_torn.png'
+                PNGFileName     = 'folder_torn'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path $ENV:TEMP }
             }

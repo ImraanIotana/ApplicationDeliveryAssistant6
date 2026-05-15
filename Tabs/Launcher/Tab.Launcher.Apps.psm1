@@ -52,7 +52,7 @@ function Import-FeatureAppLauncher {
             @{
                 ColumnNumber    = 1
                 Text            = 'Add/Remove Programs'
-                PNGFileName     = 'application_view_icons.png'
+                PNGFileName     = 'application_view_icons'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the Add/Remove Programs window to add or remove programs from your computer'
                 Function        = { Start-Process control.exe appwiz.cpl }
@@ -68,7 +68,7 @@ function Import-FeatureAppLauncher {
             @{
                 ColumnNumber    = 3
                 Text            = 'Cmd'
-                PNGFileName     = 'application_xp_terminal.png'
+                PNGFileName     = 'application_xp_terminal'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the Command Prompt window'
                 Function        = { Start-Process cmd.exe }
@@ -104,7 +104,7 @@ function Import-FeatureAppLauncher {
             @{
                 ColumnNumber    = 2
                 Text            = 'Services'
-                PNGFileName     = 'cog.png'
+                PNGFileName     = 'cog'
                 SizeType        = 'Large'
                 ToolTip         = 'Open the Services window to manage system services'
                 Function        = { Start-Process mmc.exe services.msc }

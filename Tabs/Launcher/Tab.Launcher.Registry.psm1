@@ -52,35 +52,35 @@ function Import-FeatureRegistryLauncher {
             @{
                 ColumnNumber    = 1
                 Text            = 'Registry Editor'
-                PNGFileName     = 'regedit.png'
+                PNGFileName     = 'regedit'
                 SizeType        = 'Large'
                 Function        = { Start-RegistryEditor }
             },
             @{
                 ColumnNumber    = 2
                 Text            = '64-bit Uninstall Key'
-                PNGFileName     = 'regedit.png'
+                PNGFileName     = 'regedit'
                 SizeType        = 'Large'
                 Function        = { Start-RegistryEditor -UninstallKey64bit }
             },
             @{
                 ColumnNumber    = 3
                 Text            = '32-bit Uninstall Key'
-                PNGFileName     = 'regedit.png'
+                PNGFileName     = 'regedit'
                 SizeType        = 'Large'
                 Function        = { Start-RegistryEditor -UninstallKey32bit }
             },
             @{
                 ColumnNumber    = 4
                 Text            = 'PowerShell Policy Key'
-                PNGFileName     = 'regedit.png'
+                PNGFileName     = 'regedit'
                 SizeType        = 'Large'
                 Function        = { Start-RegistryEditor -PowerShellPolicyKey }
-            }
+            },
             @{
                 ColumnNumber    = 5
                 Text            = 'Application Settings Key'
-                PNGFileName     = 'regedit.png'
+                PNGFileName     = 'regedit'
                 SizeType        = 'Large'
                 Function        = { Start-RegistryEditor -ApplicationSettingsKey -InputObject $InputObject }.GetNewClosure()
             }

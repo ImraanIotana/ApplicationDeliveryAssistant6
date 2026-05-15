@@ -67,7 +67,7 @@ function Add-ButtonDimensions {
         # Column 0 is the location underneath the Label
         [void]$ColumnNumbersLocationXArray.Add($LabelLeftMargin) # Column and Index 0
         # Column 1 is the first location underneath the TextBox
-        [void]$ColumnNumbersLocationXArray.Add(($MainTabControlLocationX + $LabelLeftMargin + $TextBoxLeftMargin)) # Column and Index 1
+        [void]$ColumnNumbersLocationXArray.Add(($MainTabControlLocationX + $TextBoxLeftMargin)) # Column and Index 1
         # Columns 2-5 are the following locations underneath the TextBox
         @(1..4) | ForEach-Object { [void]$ColumnNumbersLocationXArray.Add($ColumnNumbersLocationXArray[$_] + $ButtonMediumWidth) } # Column and Index 2-5
         # Column 6 is only used for the small buttons
@@ -192,6 +192,8 @@ function New-Button {
         # TOOLTIP - PREPARATION
         # Set the default ToolTips based on the Text of the button, if no ToolTip is provided
         [System.Collections.Hashtable]$DefaultToolTips = @{
+            'Browse'    = 'Browse for a file or folder'
+            'Open'      = 'Open the folder in File Explorer'
             'Copy'      = 'Copy the content of the box to your clipboard'
             'Paste'     = 'Paste the content of your clipboard to the box'
             'Clear'     = 'Clear the content of the box'
@@ -209,30 +211,23 @@ function New-Button {
             $NewButton.Add_MouseEnter({ $NewToolTipObject })
         }
         
-        # IMAGE
-        # If a PNG file name is provided, search for the file and add the image to the button
-        if ($PNGFileName) {
-            # If the PNG filename does not end with .png, then add the extension
-            if (-not $PNGFileName.EndsWith('.png')) { $PNGFileName += '.png' }
-            # Search for the PNG file
-            $PNGImagePath = Get-ChildItem -Path $InputObject.RootFolder -Filter $PNGFileName -File -Recurse | Select-Object -First 1 -ExpandProperty FullName
-            # Add the PNG Image
-            if ($PNGImagePath) { $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath) }
+        # IMAGE - PREPARATION
+        # Set the default Icons based on the Text of the button, if no PNGFileName is provided
+        [System.Collections.Hashtable]$DefaultIcons = @{
+            'Browse'    = 'folders_explorer'
+            'Open'      = 'folder_go'
+            'Copy'      = 'page_copy'
+            'Paste'     = 'page_paste'
+            'Clear'     = 'textfield_delete'
+            'Default'   = 'arrow_undo'
         }
-        
-        <# If the DefaultIcon is not specified, then use the Text to determine the DefaultIcon
-        if (-not $DefaultIcon) { $DefaultIcon = $Text }
-
-        # If the DefaultIcon exists in the Settings Icons
-        if ($Settings.Icons.ContainsKey($DefaultIcon)) {
-            # Set the Image from the Settings
-            $NewButton.Image = $Settings.Icons[$DefaultIcon]
-        } else {
-            # Add the PNG Image
-            if ($PNGImagePath) {
-                $NewButton.Image = [System.Drawing.Image]::FromFile($PNGImagePath)
-            }
-        }#>
+        # If no PNGFileName is provided, but the Text matches a default Text, then use the corresponding default Icon
+        if (-not $PNGFileName -and $DefaultIcons.ContainsKey($Text)) { $PNGFileName = $DefaultIcons[$Text] }
+        # If a PNGFileName is provided, search for the file and add the image to the button
+        if ($PNGFileName) {
+            # Add the image to the button if the PNGFileName is found in the ButtonIcons hashtable 
+            if ($Settings.ButtonIcons.ContainsKey($PNGFileName)) { $NewButton.Image = $Settings.ButtonIcons[$PNGFileName] }
+        }
 
         # IMAGE AND TEXT RELATION
         # Set TextImageRelation for all cases with images

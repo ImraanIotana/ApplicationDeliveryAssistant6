@@ -40,7 +40,7 @@ function Import-FeatureUserFolders {
             ParentTabPage   = $ParentTabPage
             Title           = 'FOLDER SETTINGS'
             Color           = 'Brown'
-            NumberOfRows    = 2
+            NumberOfRows    = 4
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
@@ -52,9 +52,16 @@ function Import-FeatureUserFolders {
                 RowNumber       = 1
                 Label           = 'My Output Folder:'
                 PropertyName    = 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
-                ToolTip         = 'The path to the My Output Folder'
+                ToolTip         = 'The path to the my Output Folder'
                 Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Default'))
                 DefaultValue    = "$ENV:USERPROFILE\Downloads"
+            }
+            @{
+                RowNumber       = 3
+                Label           = 'Software Library:'
+                PropertyName    = 'SubTab.FolderSettings.UserFolders.SoftwareLibrary'
+                ToolTip         = 'The path to the Software Library'
+                Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Clear'))
             }
         )
 
@@ -63,7 +70,6 @@ function Import-FeatureUserFolders {
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
         # Create the TextBoxes
         foreach ($TextBoxProperties in $TextBoxPropertiesArray) { New-TextBox @TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox }
-
         # Return the GroupBox object
         $FeatureGroupBox
     }
