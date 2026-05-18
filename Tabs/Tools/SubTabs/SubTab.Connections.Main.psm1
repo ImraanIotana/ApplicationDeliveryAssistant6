@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the General Settings sub-tab into the Application Settings tab.
+    Imports the Connections sub-tab into the Tools tab.
 .DESCRIPTION
-    This function imports the General Settings sub-tab into the Application Settings tab by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the Connections sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-SubTabGeneralSettings -ParentTabControl $MySubTabControl
+    Import-SubTabConnections -ParentTabControl $MySubTabControl
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabControl]
@@ -19,7 +19,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-SubTabGeneralSettings {
+function Import-SubTabConnections {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -33,21 +33,16 @@ function Import-SubTabGeneralSettings {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'GENERAL SETTINGS'
+            Title               = 'CONNECTIONS'
             Version             = '6.0.0.0'
-            BackGroundColor     = 'Cornsilk'
+            BackGroundColor     = 'RoyalBlue'
         }
 
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
-
         # Import the Features
-        $UserFoldersGroupBox = Import-FeatureUserFolders -InputObject $InputObject -ParentTabPage $ParentTabPage
-        #$AppLauncherGroupBox            = Import-FeatureAppLauncher             -InputObject $InputObject -ParentTabPage $ParentTabPage
-        #$RegistryLauncherGroupBox       = Import-FeatureRegistryLauncher        -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $AppLauncherGroupBox
-        #$UserFolderLauncherGroupBox     = Import-FeatureUserFolderLauncher      -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $RegistryLauncherGroupBox
-        #$null                           = Import-FeatureSystemFolderLauncher    -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $UserFolderLauncherGroupBox
+        $null = Import-FeaturePingComputer -InputObject $InputObject -ParentTabPage $ParentTabPage
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

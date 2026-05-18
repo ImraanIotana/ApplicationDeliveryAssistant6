@@ -54,9 +54,10 @@ function Initialize-Graphics {
 
         # EXECUTION - ADD TABS
         # Import the tabs
-        #Import-TabLauncher -InputObject $InputObject -ParentTabControl $Global:MainTabControl
-        Import-TabApplicationSettings -InputObject $InputObject -ParentTabControl $Global:MainTabControl
         Import-TabLauncher -InputObject $InputObject -ParentTabControl $Global:MainTabControl
+        Import-TabTools -InputObject $InputObject -ParentTabControl $Global:MainTabControl
+        Import-TabApplicationSettings -InputObject $InputObject -ParentTabControl $Global:MainTabControl
+        
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
