@@ -167,3 +167,51 @@ function Get-UserSetting {
 # END OF FUNCTION
 ####################################################################################################
 
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Gets a specific User Property value from the registry.
+.DESCRIPTION
+    This function reads a single User Property value from the configured User Properties registry path.
+.EXAMPLE
+    Get-UserProperty -InputObject $ApplicationObject -PropertyName 'OutputFolder'
+.INPUTS
+    [PSCustomObject]
+    [System.String]
+.OUTPUTS
+    [System.String] The value of the requested User Property.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Get-UserProperty {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject = $Global:ApplicationObject,
+
+        [Parameter(Mandatory=$true,HelpMessage='The name of the User Property to retrieve.')]
+        [ValidateSet('OutputFolder')]
+        [System.String]$PropertyName
+    )
+
+    try {
+        # EXECUTION
+        [System.String]$UserPropertyValue = switch ($PropertyName) {
+            'OutputFolder'  { Get-UserSetting -InputObject $InputObject -PropertyName 'SubTab.FolderSettings.UserFolders.MyOutputFolder' }
+            Default         { $null }
+        }
+        $UserPropertyValue
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+# END OF FUNCTION
+####################################################################################################
