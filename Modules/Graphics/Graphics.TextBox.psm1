@@ -181,11 +181,11 @@ function New-TextBox {
     if ($PropertyName) {
         $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name PropertyName -Value $PropertyName
         # Make it interact with the registry
-        $NewTextBox.Text = Get-UserSetting -InputObject $InputObject -PropertyName $NewTextBox.Tag.PropertyName
+        $NewTextBox.Text = Get-UserSetting -PropertyName $NewTextBox.Tag.PropertyName
         #[PSCustomObject]$AppInputObject = $InputObject
         $NewTextBox.Add_TextChanged([System.EventHandler]{
             param($Sender, $EventArgs)
-            Set-UserSetting -InputObject $InputObject -PropertyName $Sender.Tag.PropertyName -PropertyValue $Sender.Text
+            Set-UserSetting -PropertyName $Sender.Tag.PropertyName -PropertyValue $Sender.Text
         }.GetNewClosure())
     }
 

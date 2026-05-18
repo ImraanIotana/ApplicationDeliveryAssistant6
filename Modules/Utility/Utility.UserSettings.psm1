@@ -71,8 +71,8 @@ function Initialize-UserSettings {
 function Set-UserSetting {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
-        [PSCustomObject]$InputObject,
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject = $Global:ApplicationObject,
 
         [Parameter(Mandatory=$true,HelpMessage='The name of the User Setting to set.')]
         [System.String]$PropertyName,
