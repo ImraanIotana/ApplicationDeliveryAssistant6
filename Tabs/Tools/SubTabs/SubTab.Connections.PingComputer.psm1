@@ -73,8 +73,9 @@ function Import-FeaturePingComputer {
                 PNGFileName     = 'report_go'
                 SizeType        = 'Medium'
                 Function        = {
-                    [System.String]$ComputerName = Get-TextBoxValue -TextBoxPropertyName 'SubTab.Connections.Ping.ComputerName'
-                    Get-ComputerIPReport -ComputerNames @($ComputerName)
+                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
+                    [System.String]$OutputFolder = Get-UserSetting -PropertyName 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
+                    Start-ComputerIPReportAsync -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
                 }.GetNewClosure()
             }
         )
@@ -89,6 +90,116 @@ function Import-FeaturePingComputer {
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 2
         # Return the GroupBox object
         $FeatureGroupBox
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Starts IP report generation asynchronously in a background PowerShell job.
+.DESCRIPTION
+    This function queues report generation in a background job so the UI thread remains responsive.
+.EXAMPLE
+    Start-ComputerIPReportAsync -ComputerNames @('localhost') -OutputFolder 'C:\Demo\IPReports'
+#>
+####################################################################################################
+function Start-ComputerIPReportAsync {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The computer names to ping.')]
+        [AllowEmptyCollection()]
+        [System.String[]]$ComputerNames,
+
+        [Parameter(Mandatory=$false,HelpMessage='The output folder where the results will be saved.')]
+        [System.String]$OutputFolder = (Get-UserSetting -PropertyName 'SubTab.FolderSettings.UserFolders.MyOutputFolder')
+    )
+
+    try {
+        # VALIDATION
+        if (($null -eq $ComputerNames) -or ($ComputerNames.Count -eq 0)) {
+            Write-Line "The array of computer names is null or empty. Please provide at least one computer name to ping." -Type Error ; return
+        }
+        foreach ($ComputerName in $ComputerNames) {
+            if ([System.String]::IsNullOrWhiteSpace($ComputerName)) {
+                Write-Line "The computer name is null, empty, or consists only of whitespace. No action has been taken." -Type Error ; return
+            }
+        }
+
+        [System.Management.Automation.Job]$Job = Start-Job -Name "ADA-IPReport-$(Get-Date -Format 'yyyyMMddHHmmss')" -ArgumentList (,$ComputerNames), $OutputFolder -ScriptBlock {
+            param (
+                [System.String[]]$ComputerNames,
+                [System.String]$OutputFolder
+            )
+
+            if (-not (Test-Path -Path $OutputFolder)) {
+                New-Item -Path $OutputFolder -ItemType Directory | Out-Null
+            }
+
+            foreach ($ComputerName in $ComputerNames) {
+                if ([System.String]::IsNullOrWhiteSpace($ComputerName)) { continue }
+
+                # Replace invalid file name characters to avoid output file errors.
+                [System.String]$SafeComputerName = [System.Text.RegularExpressions.Regex]::Replace($ComputerName, '[\\/:*?""<>|]', '_')
+                [System.String]$OutputFile = Join-Path -Path $OutputFolder -ChildPath "IP-Report_$($SafeComputerName).txt"
+
+                if (Test-Path -Path $OutputFile) { Remove-Item -Path $OutputFile -Force }
+
+                [System.String]$PingResultWithTestNetConnection = try {
+                    Write-Line "Generating IP-Report for ($ComputerName) with [Test-NetConnection]..."
+                    Test-NetConnection -ComputerName $ComputerName -ErrorAction Stop | Format-List | Out-String
+                }
+                catch {
+                    "The Test-NetConnection command failed. The Computer named ($ComputerName) could not be reached from this host ($env:COMPUTERNAME)."
+                }
+
+                [System.String]$PingResultWithTestConnection = try {
+                    Write-Line "Generating IP-Report for ($ComputerName) with [Test-Connection]..."
+                    Test-Connection -ComputerName $ComputerName -Count 1 -ErrorAction Stop | Format-List | Out-String
+                }
+                catch {
+                    "The Test-Connection command failed. The Computer named ($ComputerName) could not be reached from this host ($env:COMPUTERNAME)."
+                }
+
+                [System.String]$PingResultWithResolveDnsName = try {
+                    Write-Line "Generating IP-Report for ($ComputerName) with [Resolve-DnsName]..."
+                    Resolve-DnsName -Name $ComputerName -ErrorAction Stop | Format-List | Out-String
+                }
+                catch {
+                    "The Resolve-DnsName command failed. The Computer named ($ComputerName) could not be resolved from this host ($env:COMPUTERNAME)."
+                }
+
+                @(
+                    "----------------------------------------------------------------------"
+                    "IP-Report for TARGET HOST: $ComputerName"
+                    "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+                    "Source host: $env:COMPUTERNAME"
+                    "----------------------------------------------------------------------",""
+                    "----------------------------------------------------------------------"
+                    "RESULT OF [Test-NetConnection] for ($ComputerName):"
+                    $PingResultWithTestNetConnection
+                    "----------------------------------------------------------------------"
+                    "RESULT OF [Test-Connection] for ($ComputerName):"
+                    $PingResultWithTestConnection
+                    "----------------------------------------------------------------------"
+                    "RESULT OF [Resolve-DnsName] for ($ComputerName):"
+                    $PingResultWithResolveDnsName
+                    "----------------------------------------------------------------------"
+                ) | Out-File -FilePath $OutputFile -Append
+            }
+        }
+
+        Write-Line "Started IP-Report generation in background Job Id [$($Job.Id)] for target(s): $($ComputerNames -join ', ')."
+
+        # POST-EXECUTION
+        # Open the output folder
+        Open-Folder -Path $OutputFolder
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -124,10 +235,11 @@ function Get-ComputerIPReport {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false,HelpMessage='The computer names to ping.')]
+        [AllowEmptyCollection()]
         [System.String[]]$ComputerNames,
 
         [Parameter(Mandatory=$false,HelpMessage='The output folder where the results will be saved.')]
-        [System.String]$OutputFolder = (Get-UserSetting -PropertyName 'SubTab.Connections.Ping.OutputFolder')
+        [System.String]$OutputFolder = (Get-UserSetting -PropertyName 'SubTab.FolderSettings.UserFolders.MyOutputFolder')
     )
 
     try {
@@ -225,10 +337,10 @@ function Get-ComputerIPReport {
         Open-Folder -Path $OutputFolder
     }
     catch {
-        Write-Error "The file $(Split-Path -Leaf $PSCommandPath) has encountered an error: $_"
+        Write-ErrorReport -ErrorRecord $_
     }
 
 }
 
-### END OF SCRIPT
+### END OF FUNCTION
 ####################################################################################################
