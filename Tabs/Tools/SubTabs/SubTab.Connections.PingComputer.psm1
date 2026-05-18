@@ -123,7 +123,7 @@ function Import-FeaturePingComputer {
 function Get-ComputerIPReport {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true,HelpMessage='The computer names to ping.')]
+        [Parameter(Mandatory=$false,HelpMessage='The computer names to ping.')]
         [System.String[]]$ComputerNames,
 
         [Parameter(Mandatory=$false,HelpMessage='The output folder where the results will be saved.')]
@@ -134,12 +134,12 @@ function Get-ComputerIPReport {
         # VALIDATION
         # Validate the array of computer names
         if (($null -eq $ComputerNames) -or ($ComputerNames.Count -eq 0)) {
-            throw "The array of computer names is null or empty. Please provide at least one computer name to ping."
+            Write-Line "The array of computer names is null or empty. Please provide at least one computer name to ping." -Type Error ; return
         }
         # Validate the computer names
         foreach ($ComputerName in $ComputerNames) {
             if ([System.String]::IsNullOrWhiteSpace($ComputerName)) {
-                throw "One of the computer names is null, empty, or consists only of whitespace. Please provide valid computer names."
+                Write-Line "The computer name is null, empty, or consists only of whitespace. No action has been taken." -Type Error ; return
             }
         }
 
