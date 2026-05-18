@@ -73,7 +73,7 @@ function Import-FeaturePingComputer {
                 PNGFileName     = 'report_go'
                 SizeType        = 'Medium'
                 Function        = {
-                    [System.String]$ComputerName = Get-UserSetting -InputObject $InputObject -PropertyName 'SubTab.Connections.Ping.ComputerName'
+                    [System.String]$ComputerName = Get-TextBoxValue -TextBoxPropertyName 'SubTab.Connections.Ping.ComputerName'
                     Get-ComputerIPReport -ComputerNames @($ComputerName)
                 }.GetNewClosure()
             }
@@ -127,7 +127,7 @@ function Get-ComputerIPReport {
         [System.String[]]$ComputerNames,
 
         [Parameter(Mandatory=$false,HelpMessage='The output folder where the results will be saved.')]
-        [System.String]$OutputFolder = (Get-UserProperty -PropertyName 'OutputFolder')
+        [System.String]$OutputFolder = (Get-UserSetting -PropertyName 'SubTab.Connections.Ping.OutputFolder')
     )
 
     try {

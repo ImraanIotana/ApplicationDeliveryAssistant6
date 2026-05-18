@@ -310,3 +310,21 @@ function Invoke-TextBoxAction {
 
 ### END OF FUNCTION
 ####################################################################################################
+
+
+
+####################################################################################################
+function Get-TextBoxValue {
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject = $Global:ApplicationObject,
+
+        [Parameter(Mandatory=$true,HelpMessage='The TextBox from which the value will be retrieved.')]
+        [System.String]$TextBoxPropertyName
+    )
+    
+    Get-UserSetting -InputObject $InputObject -PropertyName $TextBoxPropertyName
+}
+
+### END OF FUNCTION
+####################################################################################################
