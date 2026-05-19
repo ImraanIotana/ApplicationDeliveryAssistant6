@@ -26,10 +26,7 @@ function Initialize-Graphics {
     [OutputType([System.Void])]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
-        [PSCustomObject]$InputObject,
-
-        [Parameter(Mandatory=$false,HelpMessage='The Parent TabControl to which the tabs will be added.')]
-        [System.Windows.Forms.TabControl]$ParentTabControl = $Global:MainTabControl
+        [PSCustomObject]$InputObject
     )
 
     try {
@@ -56,11 +53,13 @@ function Initialize-Graphics {
         Add-MainTabControl -InputObject $InputObject -ParentForm $Global:MainForm
 
         # EXECUTION - ADD TABS
+        # Get the Global ParentTabControl
+        [System.Windows.Forms.TabControl]$ParentTabControl = $Global:MainTabControl
         # Import the tabs
-        Import-TabLauncher -InputObject $InputObject -ParentTabControl $Global:MainTabControl
-        #Import-TabApplicationIntake -InputObject $InputObject -ParentTabControl $Global:MainTabControl
-        Import-TabTools -InputObject $InputObject -ParentTabControl $Global:MainTabControl
-        Import-TabApplicationSettings -InputObject $InputObject -ParentTabControl $Global:MainTabControl
+        Import-TabLauncher -InputObject $InputObject -ParentTabControl $ParentTabControl
+        Import-TabApplicationIntake -InputObject $InputObject -ParentTabControl $ParentTabControl
+        Import-TabTools -InputObject $InputObject -ParentTabControl $ParentTabControl
+        Import-TabApplicationSettings -InputObject $InputObject -ParentTabControl $ParentTabControl
         
     }
     catch {
