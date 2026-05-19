@@ -203,8 +203,10 @@ function Add-GraphicalDimensions {
         Add-MainTabControlDimensions -InputObject $InputObject
         # Add the graphical dimensions of the GroupBoxes
         Add-GroupBoxDimensions -InputObject $InputObject
-        # Add the graphical dimensions of the TextBoxes and ComboBoxes
+        # Add the graphical dimensions of the TextBoxes
         Add-TextBoxDimensions -InputObject $InputObject
+        # Add the graphical dimensions of the ComboBoxes
+        Add-ComboBoxDimensions -InputObject $InputObject
         # Add the graphical dimensions of the Buttons
         Add-ButtonDimensions -InputObject $InputObject
     }

@@ -1,12 +1,13 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Intake tab into the main application.
+    Imports the Intake sub-tab into the Tools tab.
 .DESCRIPTION
-    This function imports the Application Intake tab into the main application by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the Intake sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-TabApplicationIntake -ParentTabControl $Global:MainTabControl
+    Import-SubTabIntake -ParentTabControl $MySubTabControl
 .INPUTS
+    [PSCustomObject]
     [System.Windows.Forms.TabControl]
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
@@ -18,7 +19,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-TabApplicationIntake {
+function Import-SubTabIntake {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -28,12 +29,11 @@ function Import-TabApplicationIntake {
         [System.Windows.Forms.TabControl]$ParentTabControl
     )
 
-
     try {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'APPLICATION INTAKE'
+            Title               = 'INTAKE'
             Version             = '6.0.0.0'
             BackGroundColor     = 'RoyalBlue'
         }
@@ -41,11 +41,8 @@ function Import-TabApplicationIntake {
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
-        # Create the SubTabControl and add it to the TabPage
-        [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
-
-        # Import the SubTabs
-        Import-SubTabIntake -InputObject $InputObject -ParentTabControl $SubTabControl
+        # Import the Features
+        $null = Import-FeatureApplicationIntake -InputObject $InputObject -ParentTabPage $ParentTabPage
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
