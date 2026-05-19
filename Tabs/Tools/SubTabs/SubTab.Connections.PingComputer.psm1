@@ -65,7 +65,10 @@ function Import-FeaturePingComputer {
                 Text            = 'Ping'
                 PNGFileName     = 'computer_go'
                 SizeType        = 'Medium'
-                Function        = {  }
+                Function        = {
+                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
+                    PING.EXE $ComputerName | Out-Host
+                }
             }
             @{
                 ColumnNumber    = 5
@@ -75,7 +78,9 @@ function Import-FeaturePingComputer {
                 Function        = {
                     [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
                     [System.String]$OutputFolder = Get-UserSetting -PropertyName 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
-                    Start-ComputerIPReportAsync -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
+                    Write-Line "This function is still in development."
+                    #Get-ComputerIPReport -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
+                    #Start-ComputerIPReportAsync -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
                 }.GetNewClosure()
             }
         )
@@ -138,10 +143,12 @@ function Start-ComputerIPReportAsync {
                 [System.String]$OutputFolder
             )
 
-            if (-not (Test-Path -Path $OutputFolder)) {
-                New-Item -Path $OutputFolder -ItemType Directory | Out-Null
-            }
+            # PREPARATION - OUTPUT FOLDER
+            # Create the output folder if it does not exist
+            if (-not (Test-Path -Path $OutputFolder)) { New-Item -Path $OutputFolder -ItemType Directory | Out-Null }
 
+            # EXECUTION - PING COMPUTERS AND GENERATE REPORTS
+            # Ping the computers and generate the reports
             foreach ($ComputerName in $ComputerNames) {
                 if ([System.String]::IsNullOrWhiteSpace($ComputerName)) { continue }
 
@@ -149,8 +156,10 @@ function Start-ComputerIPReportAsync {
                 [System.String]$SafeComputerName = [System.Text.RegularExpressions.Regex]::Replace($ComputerName, '[\\/:*?""<>|]', '_')
                 [System.String]$OutputFile = Join-Path -Path $OutputFolder -ChildPath "IP-Report_$($SafeComputerName).txt"
 
+                # If the output file already exists, remove it to ensure we start with a clean slate for this report.
                 if (Test-Path -Path $OutputFile) { Remove-Item -Path $OutputFile -Force }
 
+                # Try to ping the computer with [Test-NetConnection] and capture the results, handling any errors that may occur
                 [System.String]$PingResultWithTestNetConnection = try {
                     Write-Line "Generating IP-Report for ($ComputerName) with [Test-NetConnection]..."
                     Test-NetConnection -ComputerName $ComputerName -ErrorAction Stop | Format-List | Out-String
@@ -159,6 +168,7 @@ function Start-ComputerIPReportAsync {
                     "The Test-NetConnection command failed. The Computer named ($ComputerName) could not be reached from this host ($env:COMPUTERNAME)."
                 }
 
+                # Try to ping the computer with [Test-Connection] and capture the results, handling any errors that may occur
                 [System.String]$PingResultWithTestConnection = try {
                     Write-Line "Generating IP-Report for ($ComputerName) with [Test-Connection]..."
                     Test-Connection -ComputerName $ComputerName -Count 1 -ErrorAction Stop | Format-List | Out-String
@@ -167,6 +177,7 @@ function Start-ComputerIPReportAsync {
                     "The Test-Connection command failed. The Computer named ($ComputerName) could not be reached from this host ($env:COMPUTERNAME)."
                 }
 
+                # Try to resolve the DNS name of the computer with [Resolve-DnsName] and capture the results, handling any errors that may occur
                 [System.String]$PingResultWithResolveDnsName = try {
                     Write-Line "Generating IP-Report for ($ComputerName) with [Resolve-DnsName]..."
                     Resolve-DnsName -Name $ComputerName -ErrorAction Stop | Format-List | Out-String
@@ -175,6 +186,7 @@ function Start-ComputerIPReportAsync {
                     "The Resolve-DnsName command failed. The Computer named ($ComputerName) could not be resolved from this host ($env:COMPUTERNAME)."
                 }
 
+                # Write the report to the output file
                 @(
                     "----------------------------------------------------------------------"
                     "IP-Report for TARGET HOST: $ComputerName"
@@ -277,7 +289,7 @@ function Get-ComputerIPReport {
             # Try to ping the computer and capture the result, handling any errors that may occur
             Write-Line "Generating IP-Report for ($ComputerName) with [Test-NetConnection]..."
             [System.String]$PingResultWithTestNetConnection = try {
-                Test-NetConnection -ComputerName $ComputerName -ErrorAction Stop | Format-List | Out-String
+                Test-NetConnection -ComputerName $ComputerName -InformationLevel Quiet -ErrorAction Stop | Format-List | Out-String
             }
             catch {
                 # Write an error message to the console, and return it as the ping result
