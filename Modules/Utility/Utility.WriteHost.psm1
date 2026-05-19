@@ -119,6 +119,7 @@ function Write-ErrorReport {
         CallingFunction  = (Get-PSCallStack)[1].Command
     }
 
+    # EXECUTION
     # Write the error message and details to the host
     #Write-Line -Type ErrorSeparator
     Write-Line "ERRORMESSAGE: [$($CTX.CallingFunction)] has encountered an error." -Type Special
@@ -144,6 +145,10 @@ function Write-ErrorReport {
         }
         $PartsWithLabel | ForEach-Object { Write-Line $_ }
     }
+
+    # POST-EXECUTION
+    # Wait for user input before continuing
+    Read-Host -Prompt 'Press Enter to continue...'
 }
 
 ### END OF FUNCTION
