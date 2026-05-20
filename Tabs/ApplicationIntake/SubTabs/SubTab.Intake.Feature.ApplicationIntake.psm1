@@ -45,14 +45,23 @@ function Import-FeatureApplicationIntake {
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
 
-        # PREPARATION - TEXTBOXES
-        # Set the TextBox properties
-        [System.Collections.Hashtable[]]$TextBoxPropertiesArray = @(
+        # test
+        $InstalledApplications = Get-InstalledApplicationsFromRegistry
+        Write-Line "Installed Applications retrieved from the registry: $($InstalledApplications.Count)"
+
+
+
+
+        # PREPARATION - COMBOBOXES
+        # Set the ComboBox properties
+        [System.Collections.Hashtable[]]$ComboBoxPropertiesArray = @(
             @{
                 RowNumber       = 1
-                Label           = 'Application Name:'
-                PropertyName    = 'SubTab.Intake.ApplicationName'
+                Label           = 'Select from Registry:'
+                PropertyName    = 'SubTab.Intake.ApplicationSelectedFromRegistry'
                 ToolTip         = 'The name of the application to intake'
+                SizeType        = 'Medium'
+                ApplicationsFromRegistry    = $InstalledApplications
             }
         )
 
@@ -88,8 +97,8 @@ function Import-FeatureApplicationIntake {
         # EXECUTION
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
-        # Create the TextBoxes
-        foreach ($TextBoxProperties in $TextBoxPropertiesArray) { New-TextBox @TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox }
+        # Create the ComboBoxes
+        foreach ($ComboBoxProperties in $ComboBoxPropertiesArray) { New-ComboBox @ComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox }
         # Add the Buttons
         #New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 2
         # Return the GroupBox object

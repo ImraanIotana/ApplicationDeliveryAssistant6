@@ -180,9 +180,9 @@ function New-TextBox {
     # Add the PropertyName
     if ($PropertyName) {
         $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name PropertyName -Value $PropertyName
-        # Make it interact with the registry
+        # Set the initial value of the TextBox based on the user setting
         $NewTextBox.Text = Get-UserSetting -PropertyName $NewTextBox.Tag.PropertyName
-        #[PSCustomObject]$AppInputObject = $InputObject
+        # Add an event handler to update the user setting when the TextBox value changes
         $NewTextBox.Add_TextChanged([System.EventHandler]{
             param($Sender, $EventArgs)
             Set-UserSetting -PropertyName $Sender.Tag.PropertyName -PropertyValue $Sender.Text
