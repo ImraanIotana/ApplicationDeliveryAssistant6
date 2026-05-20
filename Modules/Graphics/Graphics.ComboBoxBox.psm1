@@ -114,7 +114,22 @@ function New-ComboBox {
         [System.Object[]]$ApplicationsFromRegistry
     )
 
-    # PREPARATION
+    # VALIDATION
+    # If both ContentStringArray and ApplicationsFromRegistry are provided, throw an error
+    if ($ContentStringArray.Count -gt 0 -and $ApplicationsFromRegistry.Count -gt 0) {
+        throw "Both ContentStringArray and ApplicationsFromRegistry parameters cannot be used at the same time. Please provide only one of them."
+    }
+    # If ApplicationsFromRegistry is provided but is not an array of objects, throw an error
+    if ($ApplicationsFromRegistry.Count -gt 0 -and -not ($ApplicationsFromRegistry -is [System.Object[]])) {
+    throw "The ApplicationsFromRegistry parameter must be an array of objects. Please provide an array of application objects retrieved from the registry."
+}
+
+    # If ContentStringArray is provided but is not an array of strings, throw an error
+    if ($ContentStringArray.Count -gt 0 -and -not ($ContentStringArray -is [System.String[]])) {
+    throw "The ContentStringArray parameter must be an array of strings. Please provide an array of strings to display in the ComboBox."
+    }
+
+     # PREPARATION
     # Input
     [System.Collections.Hashtable]$Settings     = $InputObject.GraphicalSettings
 
@@ -167,7 +182,7 @@ function New-ComboBox {
     # Fill the ComboBox items from the ApplicationsFromRegistry parameter
     if ($ApplicationsFromRegistry.Count -gt 0) {
         [System.String[]]$ApplicationDisplayNames = $ApplicationsFromRegistry |
-            Select-Object -ExpandProperty DisplayName -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty ComboBoxName -ErrorAction SilentlyContinue |
             Where-Object { -not [System.String]::IsNullOrWhiteSpace($_) }
 
         if ($ApplicationDisplayNames.Count -gt 0) {
