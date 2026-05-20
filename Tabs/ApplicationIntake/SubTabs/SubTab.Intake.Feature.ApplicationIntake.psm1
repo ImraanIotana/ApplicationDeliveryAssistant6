@@ -40,7 +40,7 @@ function Import-FeatureApplicationIntake {
             ParentTabPage   = $ParentTabPage
             Title           = 'Application Intake'
             Color           = 'White'
-            NumberOfRows    = 2
+            NumberOfRows    = 8
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
@@ -56,11 +56,11 @@ function Import-FeatureApplicationIntake {
         # Set the ComboBox properties
         [System.Collections.Hashtable[]]$ComboBoxPropertiesArray = @(
             @{
-                RowNumber       = 1
-                Label           = 'Select from Registry:'
-                PropertyName    = 'SubTab.Intake.ApplicationSelectedFromRegistry'
-                ToolTip         = 'The name of the application to intake'
-                SizeType        = 'Medium'
+                RowNumber                   = 1
+                Label                       = 'Select from Registry:'
+                PropertyName                = 'SubTab.Intake.ApplicationSelectedFromRegistry'
+                ToolTip                     = 'The name of the application to intake'
+                SizeType                    = 'Medium'
                 ApplicationsFromRegistry    = $InstalledApplications
             }
         )
@@ -69,27 +69,13 @@ function Import-FeatureApplicationIntake {
         # Set the Button properties
         [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
             @{
-                ColumnNumber    = 4
-                Text            = 'Ping'
-                PNGFileName     = 'computer_go'
+                ColumnNumber    = 2
+                Text            = 'Import'
+                PNGFileName     = 'download_for_windows'
                 SizeType        = 'Medium'
                 Function        = {
-                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
-                    PING.EXE $ComputerName | Out-Host
-                }
-            }
-            @{
-                ColumnNumber    = 5
-                Text            = 'IP Report'
-                PNGFileName     = 'report_go'
-                SizeType        = 'Medium'
-                Function        = {
-                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
-                    [System.String]$OutputFolder = Get-UserSetting -PropertyName 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
                     Write-Line "This function is still in development."
-                    #Get-ComputerIPReport -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
-                    #Start-ComputerIPReportAsync -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
-                }.GetNewClosure()
+                }
             }
         )
 
@@ -100,7 +86,7 @@ function Import-FeatureApplicationIntake {
         # Create the ComboBoxes
         foreach ($ComboBoxProperties in $ComboBoxPropertiesArray) { New-ComboBox @ComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox }
         # Add the Buttons
-        #New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 2
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 2
         # Return the GroupBox object
         $FeatureGroupBox
     }
