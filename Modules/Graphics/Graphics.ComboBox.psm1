@@ -111,7 +111,10 @@ function New-ComboBox {
         [System.String[]]$ContentStringArray,
 
         [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
-        [System.Object[]]$ApplicationsFromRegistry
+        [System.Object[]]$ApplicationsFromRegistry,
+
+        [Parameter(Mandatory=$false,HelpMessage='Switch for returning the ComboBox object after it is created and added to the parent.')]
+        [System.Management.Automation.SwitchParameter]$ReturnComboBox
     )
 
     # VALIDATION
@@ -181,13 +184,24 @@ function New-ComboBox {
     }
     # Fill the ComboBox items from the ApplicationsFromRegistry parameter
     if ($ApplicationsFromRegistry.Count -gt 0) {
-        [System.String[]]$ApplicationDisplayNames = $ApplicationsFromRegistry |
+        <#[System.String[]]$ApplicationDisplayNames = $ApplicationsFromRegistry |
             Select-Object -ExpandProperty ComboBoxName -ErrorAction SilentlyContinue |
             Where-Object { -not [System.String]::IsNullOrWhiteSpace($_) }
 
         if ($ApplicationDisplayNames.Count -gt 0) {
             [System.Void]$NewComboBox.Items.AddRange($ApplicationDisplayNames)
-        }
+        }#>
+        
+        # Laat de ComboBox deze property tonen
+        $NewComboBox.DisplayMember = 'ComboBoxName'
+
+        # (Optioneel) als je SelectedValue wilt gebruiken:
+        $NewComboBox.ValueMember = 'RegistryPath'
+
+        # Vul met de HELE objecten, niet alleen de namen
+        $NewComboBox.Items.Clear()
+        [void]$NewComboBox.Items.AddRange([object[]]$ApplicationsFromRegistry)
+
     }
 
     # EXECUTION - CUSTOM PROPERTIES '(TAG)'

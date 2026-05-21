@@ -54,22 +54,26 @@ function Import-FeatureApplicationIntake {
 
         # PREPARATION - COMBOBOXES
         # Set the ComboBox properties
-        [System.Collections.Hashtable[]]$ComboBoxPropertiesArray = @(
-            @{
+        [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
                 RowNumber                   = 1
                 Label                       = 'Select from Registry:'
-                PropertyName                = 'SubTab.Intake.ApplicationSelectedFromRegistry'
+                PropertyName                = 'SubTab.Intake.SelectedApplicationFromRegistry'
                 ToolTip                     = 'The name of the application to intake'
                 SizeType                    = 'Medium'
                 ApplicationsFromRegistry    = $InstalledApplications
             }
-        )
+        # EXECUTION
+        # Create the GroupBox
+        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
+        # Create the ComboBoxes
+        $SelectedApplicationComboBox = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+
 
         # PREPARATION - BUTTONS
         # Set the Button properties
         [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
             @{
-                ColumnNumber    = 2
+                ColumnNumber    = 1
                 Text            = 'Import'
                 PNGFileName     = 'download_for_windows'
                 SizeType        = 'Medium'
@@ -77,14 +81,36 @@ function Import-FeatureApplicationIntake {
                     Write-Line "This function is still in development."
                 }
             }
+            @{
+                ColumnNumber    = 3
+                Text            = 'Details'
+                PNGFileName     = 'information'
+                SizeType        = 'Medium'
+                Function        = {
+                    $SelectedApplication = $SelectedApplicationComboBox.SelectedItem
+
+                    # Fallback: some ComboBox states keep Text populated while SelectedItem stays null.
+                    if ($null -eq $SelectedApplication -and -not [System.String]::IsNullOrWhiteSpace($SelectedApplicationComboBox.Text)) {
+                        [System.String]$SelectedApplicationText = $SelectedApplicationComboBox.Text
+                        $SelectedApplication = @($InstalledApplications | Where-Object {
+                            ($_.ComboBoxName -eq $SelectedApplicationText) -or ($_.DisplayName -eq $SelectedApplicationText)
+                        } | Select-Object -First 1)
+                        if ($SelectedApplication.Count -gt 0) {
+                            $SelectedApplication = $SelectedApplication[0]
+                            $SelectedApplicationComboBox.SelectedItem = $SelectedApplication
+                        }
+                    }
+
+                    if ($null -eq $SelectedApplication) {
+                        Write-Line "No application is currently selected from the registry list." -Type Warning
+                        return
+                    }
+                    $SelectedApplication | Out-Host
+                    Write-Line "$($SelectedApplication.DisplayName) is selected. (This function is still in development.)"
+                }.GetNewClosure()
+            }
         )
 
-
-        # EXECUTION
-        # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
-        # Create the ComboBoxes
-        foreach ($ComboBoxProperties in $ComboBoxPropertiesArray) { New-ComboBox @ComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox }
         # Add the Buttons
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 2
         # Return the GroupBox object

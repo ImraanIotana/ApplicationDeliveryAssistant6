@@ -98,3 +98,6 @@ function Get-InstalledApplicationsFromRegistry {
     # Sort the applications by the ComboBoxName for better user experience in the ComboBox, and output the result to the pipeline
     $ApplicationObjectsFromRegistry | Sort-Object ComboBoxName
 }
+
+### END OF FUNCTION
+####################################################################################################
