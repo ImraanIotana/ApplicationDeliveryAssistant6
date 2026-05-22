@@ -183,25 +183,14 @@ function New-ComboBox {
         [System.Void]$NewComboBox.Items.AddRange($ContentStringArray)
     }
     # Fill the ComboBox items from the ApplicationsFromRegistry parameter
-    if ($ApplicationsFromRegistry.Count -gt 0) {
-        <#[System.String[]]$ApplicationDisplayNames = $ApplicationsFromRegistry |
-            Select-Object -ExpandProperty ComboBoxName -ErrorAction SilentlyContinue |
-            Where-Object { -not [System.String]::IsNullOrWhiteSpace($_) }
-
-        if ($ApplicationDisplayNames.Count -gt 0) {
-            [System.Void]$NewComboBox.Items.AddRange($ApplicationDisplayNames)
-        }#>
-        
-        # Laat de ComboBox deze property tonen
+    if ($ApplicationsFromRegistry.Count -gt 0) {       
+        # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
         $NewComboBox.DisplayMember = 'ComboBoxName'
-
-        # (Optioneel) als je SelectedValue wilt gebruiken:
+        # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the RegistryPath)
         $NewComboBox.ValueMember = 'RegistryPath'
-
-        # Vul met de HELE objecten, niet alleen de namen
+        # Clear any existing items and add the applications from the registry to the ComboBox items
         $NewComboBox.Items.Clear()
         [void]$NewComboBox.Items.AddRange([object[]]$ApplicationsFromRegistry)
-
     }
 
     # EXECUTION - CUSTOM PROPERTIES '(TAG)'
@@ -287,6 +276,10 @@ function New-ComboBox {
     # ADD TO PARENT
     # Add the new combobox to the parent
     $ParentGroupBox.Controls.Add($NewComboBox)
+
+    # POST-EXECUTION
+    # If the ReturnComboBox switch is set, return the ComboBox object
+    if ($ReturnComboBox.IsPresent) { $NewComboBox }
 }
 
 ### END OF FUNCTION
