@@ -47,6 +47,91 @@ function Add-ComboBoxDimensions {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Updates the content of an existing ComboBox.
+.DESCRIPTION
+    This function clears and repopulates an existing ComboBox.
+    You can provide either an array of strings or an array of application objects from the registry.
+.EXAMPLE
+    Update-ComboBox -ComboBox $MyComboBox -ContentStringArray @('Item1','Item2')
+.EXAMPLE
+    Update-ComboBox -ComboBox $MyComboBox -ApplicationsFromRegistry $ApplicationsFromRegistry
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+    [System.String[]]
+    [System.Object[]]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Update-ComboBox {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ComboBox to update.')]
+        [System.Windows.Forms.ComboBox]$ComboBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
+        [System.String[]]$ContentStringArray,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of application objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$ApplicationsFromRegistry
+    )
+
+    # VALIDATION
+    # If both ContentStringArray and ApplicationsFromRegistry are provided, throw an error
+    if ($ContentStringArray.Count -gt 0 -and $ApplicationsFromRegistry.Count -gt 0) {
+        throw "Both ContentStringArray and ApplicationsFromRegistry parameters cannot be used at the same time. Please provide only one of them."
+    }
+    # If ApplicationsFromRegistry is provided but is not an array of objects, throw an error
+    if ($ApplicationsFromRegistry.Count -gt 0 -and -not ($ApplicationsFromRegistry -is [System.Object[]])) {
+        throw "The ApplicationsFromRegistry parameter must be an array of objects. Please provide an array of application objects retrieved from the registry."
+    }
+
+    # If ContentStringArray is provided but is not an array of strings, throw an error
+    if ($ContentStringArray.Count -gt 0 -and -not ($ContentStringArray -is [System.String[]])) {
+        throw "The ContentStringArray parameter must be an array of strings. Please provide an array of strings to display in the ComboBox."
+    }
+
+    try {
+        # Clear existing items first
+        $ComboBox.Items.Clear()
+
+        # Fill the ComboBox items from the ContentStringArray parameter
+        if ($ContentStringArray.Count -gt 0) {
+            $ComboBox.DisplayMember = ''
+            $ComboBox.ValueMember = ''
+            [System.Void]$ComboBox.Items.AddRange($ContentStringArray)
+        }
+
+        # Fill the ComboBox items from the ApplicationsFromRegistry parameter
+        if ($ApplicationsFromRegistry.Count -gt 0) {
+            # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
+            $ComboBox.DisplayMember = 'ComboBoxName'
+            # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the RegistryPath)
+            $ComboBox.ValueMember = 'RegistryPath'
+            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$ApplicationsFromRegistry)
+        }
+
+        # Write a message to the host indicating that the ComboBox has been updated
+        Write-Line "The ComboBox ($($ComboBox.Tag.Label)) has been updated."
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Creates a new ComboBox and adds it to the specified parent GroupBox.
 .DESCRIPTION
     This function creates a new ComboBox and adds it to the specified parent GroupBox.

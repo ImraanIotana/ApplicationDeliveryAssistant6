@@ -34,6 +34,8 @@ function Add-GroupBoxDimensions {
         # GROUPBOX WIDTH
         # Add the Width of the GroupBox
         $Settings.GroupBox.Width = ($Settings.MainTabControl.Width - $Settings.GroupBox.RightMargin)
+        # Add the Width of the GroupBox when it is on a SubTab
+        $Settings.GroupBox.SubTabGroupboxWidth = ($Settings.GroupBox.Width - $Settings.GroupBox.SubTabMargin)
 
         # GROUPBOX HEIGHT
         # Create the GroupboxHeightTable

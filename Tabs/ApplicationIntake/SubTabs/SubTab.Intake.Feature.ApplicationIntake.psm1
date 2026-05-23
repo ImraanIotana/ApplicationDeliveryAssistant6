@@ -10,7 +10,7 @@
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -21,6 +21,7 @@
 ####################################################################################################
 function Import-FeatureApplicationIntake {
     [CmdletBinding()]
+    [OutputType([System.Windows.Forms.GroupBox])]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
         [PSCustomObject]$InputObject,
@@ -40,12 +41,12 @@ function Import-FeatureApplicationIntake {
             ParentTabPage   = $ParentTabPage
             Title           = 'Application Intake'
             Color           = 'White'
-            NumberOfRows    = 8
+            NumberOfRows    = 2
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
         # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
+        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
@@ -58,11 +59,11 @@ function Import-FeatureApplicationIntake {
             ApplicationsFromRegistry    = Get-InstalledApplicationsFromRegistry
         }
         # Create the ComboBoxes
-        $SelectedApplicationComboBox = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        [System.Windows.Forms.ComboBox]$SelectedApplicationComboBox = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
 
         # EXECUTION - BUTTONS
-        # Set the Button properties
-        [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
+        # Set the Import Button properties
+        [System.Collections.Hashtable[]]$ImportButtonPropertiesArray = @(
             @{
                 ColumnNumber    = 1
                 Text            = 'Import'
@@ -74,16 +75,44 @@ function Import-FeatureApplicationIntake {
                 }
             }
             @{
-                ColumnNumber    = 3
+                ColumnNumber    = 5
+                Text            = 'Refresh'
+                PNGFileName     = 'arrow_refresh'
+                SizeType        = 'Medium'
+                ToolTip         = 'Refresh the list of applications from the registry.'
+                Function        = { Update-ComboBox -ComboBox $SelectedApplicationComboBox -ApplicationsFromRegistry (Get-InstalledApplicationsFromRegistry) }.GetNewClosure()
+            }
+        )
+        # Set the Small Buttons properties
+        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
+            @{ # Testing duplicate buttons with the same function to ensure they work as expected
+                ColumnNumber    = 5
                 Text            = 'Details'
                 PNGFileName     = 'information'
-                SizeType        = 'Medium'
+                SizeType        = 'Small'
                 ToolTip         = 'View details of the selected application.'
+                Function        = { $SelectedApplicationComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
+            }
+            @{
+                ColumnNumber    = 6
+                Text            = 'Show'
+                PNGFileName     = 'regedit'
+                SizeType        = 'Small'
+                ToolTip         = 'Open the registry editor at the selected applications registry path.'
+                Function        = { $SelectedApplicationComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
+            }
+            @{
+                ColumnNumber    = 7
+                Text            = 'Export'
+                PNGFileName     = 'table_export'
+                SizeType        = 'Small'
+                ToolTip         = 'Export the selected application to a reg file.'
                 Function        = { $SelectedApplicationComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
         )
         # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 2
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ImportButtonPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 2
 
         # POST-EXECUTION
         # Return the GroupBox object
