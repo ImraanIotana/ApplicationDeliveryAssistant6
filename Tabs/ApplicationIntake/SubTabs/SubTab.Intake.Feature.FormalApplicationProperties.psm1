@@ -38,8 +38,8 @@ function Import-FeatureFormalApplicationProperties {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'FORMAL APPLICATION PROPERTIES'
-            Color           = 'Beige'
-            NumberOfRows    = 2
+            Color           = 'Yellow'
+            NumberOfRows    = 3
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
@@ -48,7 +48,7 @@ function Import-FeatureFormalApplicationProperties {
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
 
         # TEXTBOXES
-        # Set the TextBox properties
+        # Set the VendorNameTextBox properties
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Vendor Name:'
@@ -56,9 +56,34 @@ function Import-FeatureFormalApplicationProperties {
             ToolTip         = 'The formal name of the vendor of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
+            SmallButtons    = @(,@(5,'Copy'))
+                
+        }
+        # Set the ApplicationNameTextBox properties
+        [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
+            RowNumber       = 2
+            Label           = 'Application Name:'
+            PropertyName    = 'SubTab.Intake.FormalApplicationProperties.ApplicationName'
+            ToolTip         = 'The formal name of the application'
+            SizeType        = 'Medium'
+            Type            = 'Output'
+            SmallButtons    = @(,@(5,'Copy'))
+                
+        }
+        # Set the ApplicationVersionTextBox properties
+        [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
+            RowNumber       = 3
+            Label           = 'Application Version:'
+            PropertyName    = 'SubTab.Intake.FormalApplicationProperties.ApplicationVersion'
+            ToolTip         = 'The version of the application'
+            SizeType        = 'Medium'
+            Type            = 'Output'
+            SmallButtons    = @(,@(5,'Copy'))
         }
         # Create the TextBoxes
         $Global:SubTabIntakeFormalApplicationPropertiesVendorName = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:SubTabIntakeFormalApplicationPropertiesApplicationName = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:SubTabIntakeFormalApplicationPropertiesApplicationVersion = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox

@@ -115,6 +115,9 @@ function New-TextBox {
         [Parameter(Mandatory=$false,HelpMessage='The DefaultButtonsArray that will be added to the object.')]
         [System.Object[][]]$Buttons,
 
+        [Parameter(Mandatory=$false,HelpMessage='The small buttons array that will be added to the object.')]
+        [System.Object[][]]$SmallButtons,
+
         [Parameter(Mandatory=$false,HelpMessage='The ToolTip text to display when hovering over the TextBox.')]
         [System.String]$ToolTip,
 
@@ -234,6 +237,40 @@ function New-TextBox {
             }
             # Create the buttons
             New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
+        }
+        catch {
+            Write-ErrorReport -ErrorRecord $_
+        }
+    }
+    # Add the ButtonPropertiesArray
+    if ($SmallButtons.Count -gt 0) {
+        try {
+            # Initialize the ButtonPropertiesArray in the Tag property
+            $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name ButtonPropertiesArray -Value @()
+            # Add each button to the ButtonPropertiesArray
+            foreach ($Button in $SmallButtons) {
+                # Set the button properties
+                [System.Int32]$ColumnNumber = $Button[0]
+                [System.String]$ButtonText  = $Button[1]
+                # Create the hashtable
+                [System.Collections.Hashtable]$ButtonHashtable = @{
+                    ColumnNumber    = $ColumnNumber
+                    Text            = $ButtonText
+                    SizeType        = 'Small'
+                    Function        = switch ($ButtonText) {
+                        'Browse'    { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Browse' }.GetNewClosure() }
+                        'Open'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
+                        'Copy'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
+                        'Paste'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
+                        'Default'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
+                        'Clear'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
+                    }
+                }
+                # Add the hashtable to the ButtonPropertiesArray
+                $NewTextBox.Tag.ButtonPropertiesArray += $ButtonHashtable
+            }
+            # Create the buttons
+            New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber $RowNumber
         }
         catch {
             Write-ErrorReport -ErrorRecord $_

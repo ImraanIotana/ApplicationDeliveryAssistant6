@@ -41,7 +41,7 @@ function Import-FeatureIntakeApplicationSelection {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION SELECTION'
-            Color           = 'White'
+            Color           = 'CornSilk'
             NumberOfRows    = 2
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
@@ -72,8 +72,18 @@ function Import-FeatureIntakeApplicationSelection {
                 SizeType        = 'Medium'
                 ToolTip         = 'Import the selected application from the registry.'
                 Function        = {
-                    $SelectedApplication = $SelectedApplicationComboBox.SelectedItem
-                    if ($SelectedApplication) { $Global:SubTabIntakeFormalApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher }
+                    [PSCustomObject]$SelectedApplication = $SelectedApplicationComboBox.SelectedItem
+                    if ($SelectedApplication) {
+                        $Global:SubTabIntakeFormalApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher
+                        $Global:SubTabIntakeFormalApplicationPropertiesApplicationName.Text = $SelectedApplication.DisplayName
+                        $Global:SubTabIntakeFormalApplicationPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        $Global:SubTabIntakeCustomApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher
+                        $Global:SubTabIntakeCustomApplicationPropertiesApplicationName.Text = $SelectedApplication.DisplayName
+                        $Global:SubTabIntakeCustomApplicationPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                    }
+                    else {
+                        Write-Line 'No application selected. Please select an application from the dropdown menu.'
+                    }
                 }.GetNewClosure()
             }
             @{
