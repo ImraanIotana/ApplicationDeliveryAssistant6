@@ -32,7 +32,6 @@ try {
         RootFolder      = [System.String]$PSScriptRoot
         # Other Handlers
         LoadTimer       = [System.Diagnostics.Stopwatch]::StartNew()
-        LeaveHostOpen   = [System.Boolean]$false
     }
     # Import the modules
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
@@ -41,10 +40,6 @@ try {
 }
 catch {
     Write-Error "The Application Delivery Assistant encountered an error: $_"
-}
-finally {
-    # If LeaveHostOpen is set to true, leave the host open
-    if ($Global:ApplicationObject.LeaveHostOpen) { Read-Host -Prompt 'Press Enter to close this window...' }
 }
 
 ### END OF SCRIPT
