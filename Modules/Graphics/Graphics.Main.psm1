@@ -57,9 +57,9 @@ function Initialize-Graphics {
         [System.Windows.Forms.TabControl]$ParentTabControl = $Global:MainTabControl
         # Import the tabs
         Import-TabApplicationIntake -InputObject $InputObject -ParentTabControl $ParentTabControl
-        #Import-TabLauncher -InputObject $InputObject -ParentTabControl $ParentTabControl
-        #Import-TabTools -InputObject $InputObject -ParentTabControl $ParentTabControl
-        #Import-TabApplicationSettings -InputObject $InputObject -ParentTabControl $ParentTabControl
+        Import-TabLauncher -InputObject $InputObject -ParentTabControl $ParentTabControl
+        Import-TabTools -InputObject $InputObject -ParentTabControl $ParentTabControl
+        Import-TabApplicationSettings -InputObject $InputObject -ParentTabControl $ParentTabControl
         
     }
     catch {

@@ -25,13 +25,11 @@ param (
 try {
     # Create the Global Application Object
     [PSCustomObject]$Global:ApplicationObject = @{
-        # Application
-        Name            = [System.String]'Application Delivery Assistant'
-        Version         = [System.Version]'6.0.0.0'
-        # Folder Handlers
-        RootFolder      = [System.String]$PSScriptRoot
-        # Other Handlers
-        LoadTimer       = [System.Diagnostics.Stopwatch]::StartNew()
+        # Application properties
+        Name        = [System.String]'Application Delivery Assistant'
+        Version     = [System.Version]'6.0.0.0'
+        RootFolder  = [System.String]$PSScriptRoot
+        LoadTimer   = [System.Diagnostics.Stopwatch]::StartNew()
     }
     # Import the modules
     Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }

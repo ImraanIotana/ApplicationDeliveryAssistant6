@@ -81,6 +81,7 @@ function Add-TextBoxDimensions {
 ####################################################################################################
 function New-TextBox {
     [CmdletBinding()]
+    [OutputType([System.Windows.Forms.TextBox])]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject,
@@ -115,7 +116,10 @@ function New-TextBox {
         [System.Object[][]]$Buttons,
 
         [Parameter(Mandatory=$false,HelpMessage='The ToolTip text to display when hovering over the TextBox.')]
-        [System.String]$ToolTip
+        [System.String]$ToolTip,
+
+        [Parameter(Mandatory=$false,HelpMessage='Switch for returning the TextBox object after it is created and added to the parent.')]
+        [System.Management.Automation.SwitchParameter]$ReturnTextBox
     )
 
     # PREPARATION
@@ -246,6 +250,10 @@ function New-TextBox {
     # ADD TO PARENT
     # Add the new textbox to the parent
     $ParentGroupBox.Controls.Add($NewTextBox)
+
+    # POST-EXECUTION
+    # Return the TextBox if the switch is set
+    if ($ReturnTextBox) { $NewTextBox }
 }
 
 ### END OF FUNCTION

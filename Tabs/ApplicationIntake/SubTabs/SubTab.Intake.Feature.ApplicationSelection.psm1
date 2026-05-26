@@ -1,14 +1,15 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Ping Computer feature into the Connections sub-tab.
+            Imports the Application Intake feature into the Intake sub-tab.
 .DESCRIPTION
-    This function imports the Ping Computer feature into the Connections sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Application Intake feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeaturePingComputer -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureIntakeApplicationSelection -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
+    [System.Windows.Forms.GroupBox]
 .OUTPUTS
     [System.Windows.Forms.GroupBox]
 .NOTES
@@ -19,7 +20,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-FeatureApplicationIntake {
+function Import-FeatureIntakeApplicationSelection {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -39,7 +40,7 @@ function Import-FeatureApplicationIntake {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'Application Intake'
+            Title           = 'APPLICATION SELECTION'
             Color           = 'White'
             NumberOfRows    = 2
         }
@@ -71,8 +72,9 @@ function Import-FeatureApplicationIntake {
                 SizeType        = 'Medium'
                 ToolTip         = 'Import the selected application from the registry.'
                 Function        = {
-                    Write-Line "This function is still in development."
-                }
+                    $SelectedApplication = $SelectedApplicationComboBox.SelectedItem
+                    if ($SelectedApplication) { $Global:SubTabIntakeFormalApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher }
+                }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 5
@@ -106,7 +108,7 @@ function Import-FeatureApplicationIntake {
                 Text            = 'Export'
                 PNGFileName     = 'table_export'
                 SizeType        = 'Small'
-                ToolTip         = 'Export the selected application to a reg file.'
+                ToolTip         = 'Export the selected application to a text file.'
                 Function        = { $SelectedApplicationComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
         )
