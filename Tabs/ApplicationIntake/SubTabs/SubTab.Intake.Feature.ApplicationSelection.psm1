@@ -74,9 +74,11 @@ function Import-FeatureIntakeApplicationSelection {
                 Function        = {
                     [PSCustomObject]$SelectedApplication = $SelectedApplicationComboBox.SelectedItem
                     if ($SelectedApplication) {
+                        # Populate the Formal Application Properties section with the selected applications information from the registry
                         $Global:SubTabIntakeFormalApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher
                         $Global:SubTabIntakeFormalApplicationPropertiesApplicationName.Text = $SelectedApplication.DisplayName
                         $Global:SubTabIntakeFormalApplicationPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        # Populate the Custom Application Properties section with the selected applications information from the registry
                         $Global:SubTabIntakeCustomApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher
                         $Global:SubTabIntakeCustomApplicationPropertiesApplicationName.Text = $SelectedApplication.DisplayName
                         $Global:SubTabIntakeCustomApplicationPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion

@@ -45,7 +45,7 @@ function Import-FeatureFormalApplicationProperties {
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
 
         # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
+        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
         # TEXTBOXES
         # Set the VendorNameTextBox properties

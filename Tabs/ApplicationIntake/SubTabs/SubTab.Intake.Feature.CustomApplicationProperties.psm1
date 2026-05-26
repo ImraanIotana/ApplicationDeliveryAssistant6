@@ -45,7 +45,7 @@ function Import-FeatureCustomApplicationProperties {
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
 
         # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
+        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
         # TEXTBOXES
         # Set the VendorNameTextBox properties
@@ -78,9 +78,9 @@ function Import-FeatureCustomApplicationProperties {
             SmallButtons    = @(,@(5,'Copy'))
         }
         # Create the TextBoxes
-        $Global:SubTabIntakeCustomApplicationPropertiesVendorName = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:SubTabIntakeCustomApplicationPropertiesApplicationName = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:SubTabIntakeCustomApplicationPropertiesApplicationVersion = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:SubTabIntakeCustomApplicationPropertiesVendorName           = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:SubTabIntakeCustomApplicationPropertiesApplicationName      = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:SubTabIntakeCustomApplicationPropertiesApplicationVersion   = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox
