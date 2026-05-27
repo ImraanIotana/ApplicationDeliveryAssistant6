@@ -82,6 +82,8 @@ function Import-FeatureIntakeApplicationSelection {
                         $Global:SubTabIntakeCustomApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher
                         $Global:SubTabIntakeCustomApplicationPropertiesApplicationName.Text = $SelectedApplication.DisplayName
                         $Global:SubTabIntakeCustomApplicationPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        # Populate the Application Security section with the selected applications information from the registry
+                        $Global:SubTabIntakeApplicationSecurityInstallationFolder.Text = $SelectedApplication.InstallLocation
                     }
                     else {
                         Write-Line 'No application selected. Please select an application from the dropdown menu.'
