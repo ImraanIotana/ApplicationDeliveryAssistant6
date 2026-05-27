@@ -190,11 +190,12 @@ function Get-UserSetting {
 ####################################################################################################
 function Get-OutputFolder {
     [CmdletBinding()]
+    [OutputType([System.String])]
     param (
         [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject = $Global:ApplicationObject,
 
-        [Parameter(Mandatory=$true,HelpMessage='The name of the User Setting to retrieve.')]
+        [Parameter(Mandatory=$false,HelpMessage='The name of the User Setting to retrieve.')]
         [System.String]$PropertyName = 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
     )
 

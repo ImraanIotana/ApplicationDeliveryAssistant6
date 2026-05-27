@@ -256,8 +256,7 @@ function Add-FontProperties {
         [System.Drawing.FontStyle]$FontStyle    = [System.Drawing.FontStyle]::Bold
 
         # EXECUTION - ADD FONT
-        # Set the font
-        Write-Line 'Adding font...'
+        # Set the font for the application based on the MainFont properties from the GraphicalSettings
         [System.Drawing.Font]$MainFont = New-Object System.Drawing.Font($FontName,$FontSize,$FontStyle)
         # Replace the MainFont in the GraphicalSettings hashtable with the actual Font object
         $InputObject.GraphicalSettings.MainFont = $MainFont
@@ -312,7 +311,6 @@ function Add-MainIconToSettings {
         }
 
         # Replace the MainIcon in the GraphicalSettings hashtable with the actual Icon object
-        Write-Line 'Setting main icon...'
         [System.Drawing.Icon]$MainIcon = New-Object System.Drawing.Icon($MainIconFileObject.FullName)
         $InputObject.GraphicalSettings.MainIcon = $MainIcon
     }

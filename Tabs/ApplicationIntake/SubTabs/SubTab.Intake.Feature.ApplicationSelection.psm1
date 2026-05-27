@@ -121,7 +121,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'table_export'
                 SizeType        = 'Small'
                 ToolTip         = 'Export the selected application to a text file.'
-                Function        = { Export-RegistryKey -RegistryKeyPath $SelectedApplicationComboBox.SelectedItem.RegistryPath }.GetNewClosure()
+                Function        = { Export-RegistryKey -RegistryKeyPath $SelectedApplicationComboBox.SelectedItem.RegistryPath -OpenOutputFolder }.GetNewClosure()
             }
         )
         # Add the Buttons
