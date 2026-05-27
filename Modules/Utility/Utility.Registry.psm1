@@ -111,77 +111,6 @@ function Start-RegistryEditor {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Converts a registry key path into a PowerShell registry provider path.
-.DESCRIPTION
-    This function normalizes registry key paths from multiple formats (provider-qualified, short hive,
-    and long hive formats) into a provider-compatible path such as HKLM:\Software\....
-.EXAMPLE
-    Convert-RegistryKey -RegistryKeyPath 'Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\Software\MyCompany'
-.INPUTS
-    [System.String]
-.OUTPUTS
-    [System.String] The normalized registry provider path.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : May 2026
-    Last Update     : May 2026
-#>
-####################################################################################################
-function Convert-RegistryKey {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The registry key path to normalize.')]
-        [System.String]$RegistryKeyPath
-    )
-
-    try {
-        # PREPARATION - NORMALIZE INPUT TEXT
-        [System.String]$NormalizedRegistryKeyPath = $RegistryKeyPath.Trim()
-
-        # Handle provider-qualified paths (for example: Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\...).
-        if ($NormalizedRegistryKeyPath -match '^Microsoft\.PowerShell\.Core\\Registry::') {
-            $NormalizedRegistryKeyPath = $NormalizedRegistryKeyPath -replace '^Microsoft\.PowerShell\.Core\\Registry::',''
-        }
-        elseif ($NormalizedRegistryKeyPath -match '^Registry::') {
-            $NormalizedRegistryKeyPath = $NormalizedRegistryKeyPath -replace '^Registry::',''
-        }
-
-        # EXECUTION - MAP TO PROVIDER-COMPATIBLE HIVE PREFIXES
-        [System.String]$ProviderPath = switch -Regex ($NormalizedRegistryKeyPath) {
-            '^HKLM:\\' { $NormalizedRegistryKeyPath }
-            '^HKCU:\\' { $NormalizedRegistryKeyPath }
-            '^HKCR:\\' { $NormalizedRegistryKeyPath }
-            '^HKU:\\'  { $NormalizedRegistryKeyPath }
-            '^HKCC:\\' { $NormalizedRegistryKeyPath }
-            '^HKLM\\' { $NormalizedRegistryKeyPath -replace '^HKLM\\','HKLM:\\' }
-            '^HKCU\\' { $NormalizedRegistryKeyPath -replace '^HKCU\\','HKCU:\\' }
-            '^HKCR\\' { $NormalizedRegistryKeyPath -replace '^HKCR\\','HKCR:\\' }
-            '^HKU\\'  { $NormalizedRegistryKeyPath -replace '^HKU\\','HKU:\\' }
-            '^HKCC\\' { $NormalizedRegistryKeyPath -replace '^HKCC\\','HKCC:\\' }
-            '^HKEY_LOCAL_MACHINE\\' { $NormalizedRegistryKeyPath -replace '^HKEY_LOCAL_MACHINE\\','HKLM:\\' }
-            '^HKEY_CURRENT_USER\\' { $NormalizedRegistryKeyPath -replace '^HKEY_CURRENT_USER\\','HKCU:\\' }
-            '^HKEY_CLASSES_ROOT\\' { $NormalizedRegistryKeyPath -replace '^HKEY_CLASSES_ROOT\\','HKCR:\\' }
-            '^HKEY_USERS\\' { $NormalizedRegistryKeyPath -replace '^HKEY_USERS\\','HKU:\\' }
-            '^HKEY_CURRENT_CONFIG\\' { $NormalizedRegistryKeyPath -replace '^HKEY_CURRENT_CONFIG\\','HKCC:\\' }
-            default { throw "Unsupported registry path format: ($RegistryKeyPath)" }
-        }
-
-        $ProviderPath
-    }
-    catch {
-        Write-ErrorReport -ErrorRecord $_
-    }
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
     Retrieves a list of installed applications from the Windows registry.
 .DESCRIPTION
     This function queries the Windows registry to gather information about installed applications.
@@ -319,39 +248,34 @@ function Export-RegistryKey {
     )
 
     try {
-        # PREPARATION - VALIDATE OUTPUT FOLDER
-        if (-not (Test-String -IsPopulated $OutputFolder)) {
-            throw 'The output folder must be provided.'
-        }
-
-        if (-not (Test-Path -LiteralPath $OutputFolder)) {
-            New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null
-        }
+        # VALIDATION - VALIDATE OUTPUT FOLDER
+        # Ensure the output folder is not empty, and create it if it does not exist
+        if (-not (Test-String -IsPopulated $OutputFolder)) { throw 'The output folder is empty.'}
+        if (-not (Test-Path -Path $OutputFolder)) { New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null }
 
         # PREPARATION - NORMALIZE REGISTRY PATH FOR PROVIDER TESTS
+        # Convert the provided registry key path to a provider-compatible format (for example: HKLM:\SOFTWARE\...)
         [System.String]$ProviderPath = Convert-RegistryKey -RegistryKeyPath $RegistryKeyPath
-
+        # Validate that the registry key exists before attempting to export
         if (-not (Test-Path -LiteralPath $ProviderPath)) {
             throw "The registry key path does not exist: ($RegistryKeyPath)"
         }
 
-        # PREPARATION - BUILD OUTPUT FILE PATH FROM THE TARGET KEY NAME
+        # PREPARATION - OUTPUT FILE
+        # Derive a file name from the root key name of the provided registry path, and combine it with the output folder to get the full output file path
         [System.String]$RootKeyName = Split-Path -Path ($ProviderPath.TrimEnd('\\')) -Leaf
         if (-not (Test-String -IsPopulated $RootKeyName)) {
             throw "Unable to derive a key name from the registry path: ($RegistryKeyPath)"
         }
-
+        # Sanitize the root key name to remove any characters that are invalid in file names, and use it to build the output file path
         [System.String]$SanitizedRootKeyName = [System.String]::Join('_',($RootKeyName.Split([System.IO.Path]::GetInvalidFileNameChars(),[System.StringSplitOptions]::RemoveEmptyEntries)))
         if (-not (Test-String -IsPopulated $SanitizedRootKeyName)) {
             throw "Unable to build a valid file name from registry key name: ($RootKeyName)"
         }
-
+        # Build the output file path by combining the output folder and the sanitized root key name with a .txt extension
         [System.String]$OutputFilePath = Join-Path -Path $OutputFolder -ChildPath "$SanitizedRootKeyName.txt"
-
-        # EXECUTION
-        if (Test-Path -LiteralPath $OutputFilePath) {
-            Remove-Item -LiteralPath $OutputFilePath -Force
-        }
+        # If a file already exists at the output file path, remove it to ensure we start with a clean file for the export
+        if (Test-Path -LiteralPath $OutputFilePath) { Remove-Item -LiteralPath $OutputFilePath -Force }
 
         # Build a list containing the root key and all descendant keys.
         [System.String[]]$KeysToExport = @($ProviderPath)
@@ -372,7 +296,7 @@ function Export-RegistryKey {
             "" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
         }
 
-        Write-Line "Registry key exported to file: ($OutputFilePath)"
+        Write-Line "The RegistryKey ($RegistryKeyPath) has been exported to file: ($OutputFilePath)"
 
         # POST-EXECUTION - OPEN OUTPUT FOLDER
         if ($OpenOutputFolder) {
@@ -388,3 +312,72 @@ function Export-RegistryKey {
 ####################################################################################################
 
 
+####################################################################################################
+<#
+.SYNOPSIS
+    Converts a registry key path into a PowerShell registry provider path.
+.DESCRIPTION
+    This function normalizes registry key paths from multiple formats (provider-qualified, short hive,
+    and long hive formats) into a provider-compatible path such as HKLM:\Software\....
+.EXAMPLE
+    Convert-RegistryKey -RegistryKeyPath 'Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\Software\MyCompany'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.String] The normalized registry provider path.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Convert-RegistryKey {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The registry key path to normalize.')]
+        [System.String]$RegistryKeyPath
+    )
+
+    try {
+        # PREPARATION - NORMALIZE INPUT TEXT
+        [System.String]$NormalizedRegistryKeyPath = $RegistryKeyPath.Trim()
+
+        # Handle provider-qualified paths (for example: Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\...).
+        if ($NormalizedRegistryKeyPath -match '^Microsoft\.PowerShell\.Core\\Registry::') {
+            $NormalizedRegistryKeyPath = $NormalizedRegistryKeyPath -replace '^Microsoft\.PowerShell\.Core\\Registry::',''
+        }
+        elseif ($NormalizedRegistryKeyPath -match '^Registry::') {
+            $NormalizedRegistryKeyPath = $NormalizedRegistryKeyPath -replace '^Registry::',''
+        }
+
+        # EXECUTION - MAP TO PROVIDER-COMPATIBLE HIVE PREFIXES
+        [System.String]$ProviderPath = switch -Regex ($NormalizedRegistryKeyPath) {
+            '^HKLM:\\' { $NormalizedRegistryKeyPath }
+            '^HKCU:\\' { $NormalizedRegistryKeyPath }
+            '^HKCR:\\' { $NormalizedRegistryKeyPath }
+            '^HKU:\\'  { $NormalizedRegistryKeyPath }
+            '^HKCC:\\' { $NormalizedRegistryKeyPath }
+            '^HKLM\\' { $NormalizedRegistryKeyPath -replace '^HKLM\\','HKLM:\\' }
+            '^HKCU\\' { $NormalizedRegistryKeyPath -replace '^HKCU\\','HKCU:\\' }
+            '^HKCR\\' { $NormalizedRegistryKeyPath -replace '^HKCR\\','HKCR:\\' }
+            '^HKU\\'  { $NormalizedRegistryKeyPath -replace '^HKU\\','HKU:\\' }
+            '^HKCC\\' { $NormalizedRegistryKeyPath -replace '^HKCC\\','HKCC:\\' }
+            '^HKEY_LOCAL_MACHINE\\' { $NormalizedRegistryKeyPath -replace '^HKEY_LOCAL_MACHINE\\','HKLM:\\' }
+            '^HKEY_CURRENT_USER\\' { $NormalizedRegistryKeyPath -replace '^HKEY_CURRENT_USER\\','HKCU:\\' }
+            '^HKEY_CLASSES_ROOT\\' { $NormalizedRegistryKeyPath -replace '^HKEY_CLASSES_ROOT\\','HKCR:\\' }
+            '^HKEY_USERS\\' { $NormalizedRegistryKeyPath -replace '^HKEY_USERS\\','HKU:\\' }
+            '^HKEY_CURRENT_CONFIG\\' { $NormalizedRegistryKeyPath -replace '^HKEY_CURRENT_CONFIG\\','HKCC:\\' }
+            default { throw "Unsupported registry path format: ($RegistryKeyPath)" }
+        }
+
+        $ProviderPath
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
