@@ -39,8 +39,8 @@ function Import-FeaturePingComputer {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'PING COMPUTERS'
-            Color           = 'White'
-            NumberOfRows    = 2
+            Color           = 'LightCyan'
+            NumberOfRows    = 3
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
@@ -53,7 +53,8 @@ function Import-FeaturePingComputer {
                 Label           = 'ComputerName / IP address:'
                 PropertyName    = 'SubTab.Connections.Ping.ComputerName'
                 ToolTip         = 'The name or IP address of the computer to ping'
-                Buttons         = [System.Object[][]]@(@(1, 'Copy'), @(2, 'Paste'))
+                SizeType        = 'Medium'
+                SmallButtons    = [System.Object[][]]@(@(5, 'Copy'), @(6, 'Paste'))
             }
         )
 
@@ -61,26 +62,56 @@ function Import-FeaturePingComputer {
         # Set the Button properties
         [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
             @{
-                ColumnNumber    = 4
+                ColumnNumber    = 1
                 Text            = 'Ping'
                 PNGFileName     = 'computer_go'
-                SizeType        = 'Medium'
+                SizeType        = 'Large'
                 Function        = {
                     [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
-                    PING.EXE $ComputerName | Out-Host
+                    PING.EXE -n 1 $ComputerName | Out-Host
                 }
             }
             @{
-                ColumnNumber    = 5
-                Text            = 'IP Report'
-                PNGFileName     = 'report_go'
-                SizeType        = 'Medium'
+                ColumnNumber    = 2
+                Text            = 'Test-Connection'
+                PNGFileName     = 'computer_go'
+                SizeType        = 'Large'
                 Function        = {
                     [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
-                    [System.String]$OutputFolder = Get-UserSetting -PropertyName 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
-                    Write-Line "This function is still in development."
-                    #Get-ComputerIPReport -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
-                    #Start-ComputerIPReportAsync -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
+                    try {
+                        Test-Connection -ComputerName $ComputerName -Count 1 -ErrorAction Stop | Format-Table -AutoSize | Out-Host
+                    }
+                    catch {
+                        Write-Line "The Test-Connection command failed or timed out for ($ComputerName)." -Type Error
+                        Write-ErrorReport -ErrorRecord $_
+                    }
+                }
+            }
+            @{
+                ColumnNumber    = 3
+                Text            = 'Test-NetConnection'
+                PNGFileName     = 'computer_go'
+                SizeType        = 'Large'
+                Function        = {
+                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
+                    try {
+                        Invoke-TestNetConnectionWithTimeout -ComputerName $ComputerName -TimeoutSeconds 10 | Out-Host
+                    }
+                    catch {
+                        Write-Line "The Test-NetConnection command failed or timed out for ($ComputerName)." -Type Error
+                        Write-ErrorReport -ErrorRecord $_
+                    }
+                }
+            }
+            @{
+                ColumnNumber    = 4
+                Text            = 'IP Report'
+                PNGFileName     = 'report_go'
+                SizeType        = 'Large'
+                Function        = {
+                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
+                    [System.String]$OutputFolder = Get-OutputFolder
+                    Start-ComputerIPReportAsync -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
                 }.GetNewClosure()
             }
         )
@@ -98,6 +129,95 @@ function Import-FeaturePingComputer {
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Runs Test-NetConnection with a hard timeout.
+.DESCRIPTION
+    This helper prevents long waits when ICMP is blocked or a target is not responding. It wraps Test-NetConnection in a background job and kills it after the specified timeout.
+.EXAMPLE
+    Invoke-TestNetConnectionWithTimeout -ComputerName 'ServerName.domain.com' -TimeoutSeconds 10
+.INPUTS
+    [System.String]
+    [System.Int32]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Invoke-TestNetConnectionWithTimeout {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The name or IP address of the computer to test.')]
+        [System.String]$ComputerName,
+
+        [Parameter(Mandatory=$false,HelpMessage='The maximum number of seconds to wait before timing out.')]
+        [System.Int32]$TimeoutSeconds = 10
+    )
+
+    [System.Management.Automation.Job]$Job = $null
+    [System.DateTime]$StartTime = Get-Date
+    try {
+        Write-Line "Starting [Test-NetConnection] for ($ComputerName) with timeout [$TimeoutSeconds] second(s)..."
+
+        # EXECUTION - START BACKGROUND JOB
+        # Start the Test-NetConnection command in a background job to allow timeout control
+        $Job = Start-Job -ArgumentList $ComputerName -ScriptBlock {
+            param([System.String]$TargetComputerName)
+
+            # Suppress progress and informational chatter from Test-NetConnection.
+            $ProgressPreference = 'SilentlyContinue'
+            $InformationPreference = 'SilentlyContinue'
+            $VerbosePreference = 'SilentlyContinue'
+            $WarningPreference = 'SilentlyContinue'
+
+            Test-NetConnection -ComputerName $TargetComputerName -InformationLevel Quiet -ErrorAction Stop
+        }
+
+        # EXECUTION - WAIT FOR JOB
+        # Wait for the job to complete within the specified timeout; stop it if it exceeds the limit
+        if (-not (Wait-Job -Job $Job -Timeout $TimeoutSeconds)) {
+            Stop-Job -Job $Job -Force -ErrorAction SilentlyContinue
+            Write-Line "[Test-NetConnection] timed out for ($ComputerName) after [$TimeoutSeconds] second(s)." -Type Error
+            throw "The Test-NetConnection command timed out after $TimeoutSeconds seconds."
+        }
+
+        # POST-EXECUTION - RETURN RESULTS
+        # Receive and return the job output as a detailed string
+        [System.Boolean]$PingSucceeded = [System.Boolean](Receive-Job -Job $Job -ErrorAction Stop)
+        [System.Double]$DurationSeconds = [System.Math]::Round(((Get-Date) - $StartTime).TotalSeconds, 2)
+
+        Write-Line "Completed [Test-NetConnection] for ($ComputerName). Reachable = [$PingSucceeded]. Duration = [$DurationSeconds] second(s)."
+
+        @(
+            "ComputerName : $ComputerName"
+            "Reachable    : $PingSucceeded"
+            "DurationSec  : $DurationSeconds"
+        ) -join [System.Environment]::NewLine
+    }
+    catch {
+        Write-Line "[Test-NetConnection] failed for ($ComputerName)." -Type Error
+        Write-ErrorReport -ErrorRecord $_
+    }
+    finally {
+        # CLEANUP - REMOVE JOB
+        # Always remove the job to free up resources, regardless of success or failure
+        if ($null -ne $Job) {
+            Remove-Job -Job $Job -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 
@@ -162,7 +282,7 @@ function Start-ComputerIPReportAsync {
                 # Try to ping the computer with [Test-NetConnection] and capture the results, handling any errors that may occur
                 [System.String]$PingResultWithTestNetConnection = try {
                     Write-Line "Generating IP-Report for ($ComputerName) with [Test-NetConnection]..."
-                    Test-NetConnection -ComputerName $ComputerName -ErrorAction Stop | Format-List | Out-String
+                    Invoke-TestNetConnectionWithTimeout -ComputerName $ComputerName -TimeoutSeconds 10
                 }
                 catch {
                     "The Test-NetConnection command failed. The Computer named ($ComputerName) could not be reached from this host ($env:COMPUTERNAME)."
@@ -180,7 +300,7 @@ function Start-ComputerIPReportAsync {
                 # Try to resolve the DNS name of the computer with [Resolve-DnsName] and capture the results, handling any errors that may occur
                 [System.String]$PingResultWithResolveDnsName = try {
                     Write-Line "Generating IP-Report for ($ComputerName) with [Resolve-DnsName]..."
-                    Resolve-DnsName -Name $ComputerName -ErrorAction Stop | Format-List | Out-String
+                    Resolve-DnsName -Name $ComputerName -QuickTimeout -ErrorAction Stop | Format-List | Out-String
                 }
                 catch {
                     "The Resolve-DnsName command failed. The Computer named ($ComputerName) could not be resolved from this host ($env:COMPUTERNAME)."
@@ -289,7 +409,7 @@ function Get-ComputerIPReport {
             # Try to ping the computer and capture the result, handling any errors that may occur
             Write-Line "Generating IP-Report for ($ComputerName) with [Test-NetConnection]..."
             [System.String]$PingResultWithTestNetConnection = try {
-                Test-NetConnection -ComputerName $ComputerName -InformationLevel Quiet -ErrorAction Stop | Format-List | Out-String
+                Invoke-TestNetConnectionWithTimeout -ComputerName $ComputerName -TimeoutSeconds 10
             }
             catch {
                 # Write an error message to the console, and return it as the ping result
@@ -315,7 +435,7 @@ function Get-ComputerIPReport {
             # Try to resolve the DNS name of the computer and capture the result, handling any errors that may occur
             Write-Line "Generating IP-Report for ($ComputerName) with [Resolve-DnsName]..."
             [System.String]$PingResultWithResolveDnsName = try {
-                Resolve-DnsName -Name $ComputerName -ErrorAction Stop | Format-List | Out-String
+                Resolve-DnsName -Name $ComputerName -QuickTimeout -ErrorAction Stop | Format-List | Out-String
             }
             catch {
                 # Write an error message to the console, and return it as the ping result
