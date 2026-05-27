@@ -35,7 +35,7 @@ function Import-SubTabConnections {
             ParentTabControl    = $ParentTabControl
             Title               = 'CONNECTIONS'
             Version             = '6.0.0.0'
-            BackGroundColor     = 'Blue'
+            BackGroundColor     = 'DarkBlue'
         }
 
         # Create the TabPage

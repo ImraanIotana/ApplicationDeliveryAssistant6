@@ -39,7 +39,7 @@ function Import-FeaturePingComputer {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'PING COMPUTERS'
-            Color           = 'LightCyan'
+            Color           = 'Cyan'
             NumberOfRows    = 3
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
@@ -64,7 +64,7 @@ function Import-FeaturePingComputer {
             @{
                 ColumnNumber    = 1
                 Text            = 'Ping'
-                PNGFileName     = 'computer_go'
+                PNGFileName     = 'network_ip'
                 SizeType        = 'Large'
                 Function        = {
                     [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
@@ -74,7 +74,7 @@ function Import-FeaturePingComputer {
             @{
                 ColumnNumber    = 2
                 Text            = 'Test-Connection'
-                PNGFileName     = 'computer_go'
+                PNGFileName     = 'ip'
                 SizeType        = 'Large'
                 Function        = {
                     [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
@@ -90,7 +90,7 @@ function Import-FeaturePingComputer {
             @{
                 ColumnNumber    = 3
                 Text            = 'Test-NetConnection'
-                PNGFileName     = 'computer_go'
+                PNGFileName     = 'ip_class'
                 SizeType        = 'Large'
                 Function        = {
                     [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
@@ -119,7 +119,7 @@ function Import-FeaturePingComputer {
 
         # EXECUTION
         # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
+        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
         # Create the TextBoxes
         foreach ($TextBoxProperties in $TextBoxPropertiesArray) { New-TextBox @TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox }
         # Add the Buttons

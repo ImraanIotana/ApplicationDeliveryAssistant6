@@ -273,7 +273,7 @@ function Export-RegistryKey {
             throw "Unable to build a valid file name from registry key name: ($RootKeyName)"
         }
         # Build the output file path by combining the output folder and the sanitized root key name with a .txt extension
-        [System.String]$OutputFilePath = Join-Path -Path $OutputFolder -ChildPath "$SanitizedRootKeyName.txt"
+        [System.String]$OutputFilePath = Join-Path -Path $OutputFolder -ChildPath "Registry_Export_$SanitizedRootKeyName.txt"
         # If a file already exists at the output file path, remove it to ensure we start with a clean file for the export
         if (Test-Path -LiteralPath $OutputFilePath) { Remove-Item -LiteralPath $OutputFilePath -Force }
 
