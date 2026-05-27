@@ -9,8 +9,9 @@
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
+    [System.Windows.Forms.GroupBox]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -21,6 +22,7 @@
 ####################################################################################################
 function Import-FeatureFormalApplicationProperties {
     [CmdletBinding()]
+    [OutputType([System.Windows.Forms.GroupBox])]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
         [PSCustomObject]$InputObject,

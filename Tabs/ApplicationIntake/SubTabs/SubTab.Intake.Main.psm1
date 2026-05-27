@@ -42,9 +42,10 @@ function Import-SubTabIntake {
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
         # Import the Features
-        $IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection -InputObject $InputObject -ParentTabPage $ParentTabPage
+        $IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection  -InputObject $InputObject -ParentTabPage $ParentTabPage
         $FormalApplicationPropertiesGroupBox    = Import-FeatureFormalApplicationProperties -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
         $CustomApplicationPropertiesGroupBox    = Import-FeatureCustomApplicationProperties -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $FormalApplicationPropertiesGroupBox
+        $ApplicationSecurityGroupBox            = Import-FeatureApplicationSecurity         -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $CustomApplicationPropertiesGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

@@ -29,9 +29,6 @@ function Start-RegistryEditor {
         [Parameter(Mandatory=$false,ParameterSetName='ApplicationSettingsKey',HelpMessage='The ApplicationObject containing the Settings.')]
         [PSCustomObject]$InputObject,
 
-        [Parameter(Mandatory=$false,ParameterSetName='ApplicationSettingsKey',HelpMessage='Open the 64-bit Uninstall key.')]
-        [System.Management.Automation.SwitchParameter]$ApplicationSettingsKey,
-
         [Parameter(Mandatory=$false,ParameterSetName='UninstallKey64bit',HelpMessage='Open the 64-bit Uninstall key.')]
         [System.Management.Automation.SwitchParameter]$UninstallKey64bit,
 
@@ -42,7 +39,13 @@ function Start-RegistryEditor {
         [System.Management.Automation.SwitchParameter]$PowerShellPolicyKey,
 
         [Parameter(Mandatory=$false,ParameterSetName='LastOpenedSettingKey',HelpMessage='Open the last-opened-setting key.')]
-        [System.Management.Automation.SwitchParameter]$LastOpenedSettingKey
+        [System.Management.Automation.SwitchParameter]$LastOpenedSettingKey,
+
+        [Parameter(Mandatory=$false,ParameterSetName='ApplicationSettingsKey',HelpMessage='Open the 64-bit Uninstall key.')]
+        [System.Management.Automation.SwitchParameter]$ApplicationSettingsKey,
+
+        [Parameter(Mandatory=$false,ParameterSetName='CustomKey',HelpMessage='Open regedit at a specific key.')]
+        [System.String]$Key
     )
 
     try {
@@ -57,6 +60,17 @@ function Start-RegistryEditor {
         # Set the registry key that contains the last opened key value for regedit
         [System.String]$KeyContainingLastOpenedKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\Regedit'
 
+        # PREPARATION - MAKE KEY COMPATIBLE WITH REGEDIT
+        # If the custom key parameter is used, convert it to the format used by regedit for the last opened key
+        if ($PSCmdlet.ParameterSetName -eq 'CustomKey') {
+            [system.string]$PrefixToReplace = 'Microsoft.PowerShell.Core\Registry::'
+            if ($Key.StartsWith($PrefixToReplace)) {
+                $Key = $Key.Replace($PrefixToReplace, 'Computer\')
+            }
+        }
+        # Add the custom key to the context for easier access later
+        $Context.CustomKey = $Key
+
         # PREPARATION - DETERMINE LAST OPENED KEY
         # Determine which key to open
         [System.String]$LastKeyValue = switch ($PSCmdlet.ParameterSetName) {
@@ -64,6 +78,7 @@ function Start-RegistryEditor {
             'UninstallKey32bit'         { $Context.UninstallKey32bit }
             'PowerShellPolicyKey'       { $Context.PowerShellPolicyKey }
             'LastOpenedSettingKey'      { $Context.LastOpenedSettingKey }
+            'CustomKey'                 { $Context.CustomKey }
             'ApplicationSettingsKey'    {
                 # Get the User Settings registry path from the Application Settings
                 [System.String]$UserSettingsRegistryPath = $InputObject.ApplicationSettings.UserSettingsRegistryPath
@@ -196,3 +211,113 @@ function Get-InstalledApplicationsFromRegistry {
 
 ### END OF FUNCTION
 ####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Exports a registry key (including subkeys and values) to a text file.
+.DESCRIPTION
+    This function uses Get-ItemProperty with Format-List and Out-File to export the specified
+    registry key and all subkeys to a .txt file.
+.EXAMPLE
+    Export-RegistryKey -RegistryKeyPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -OutputFolder 'C:\Temp'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Export-RegistryKey {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The registry key path to export (for example: HKLM:\SOFTWARE\...).')]
+        [System.String]$RegistryKeyPath,
+
+        [Parameter(Mandatory=$false,HelpMessage='Destination folder where the export text file will be created.')]
+        [System.String]$OutputFolder = (Get-OutputFolder)
+    )
+
+    try {
+        # PREPARATION - VALIDATE OUTPUT FOLDER
+        if (-not (Test-String -IsPopulated $OutputFolder)) {
+            throw 'The output folder must be provided.'
+        }
+
+        if (-not (Test-Path -LiteralPath $OutputFolder)) {
+            New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null
+        }
+
+        # PREPARATION - NORMALIZE REGISTRY PATH FOR PROVIDER TESTS
+        [System.String]$ProviderPath = switch -Regex ($RegistryKeyPath.Trim()) {
+            '^HKLM:\\' { $RegistryKeyPath }
+            '^HKCU:\\' { $RegistryKeyPath }
+            '^HKCR:\\' { $RegistryKeyPath }
+            '^HKU:\\'  { $RegistryKeyPath }
+            '^HKCC:\\' { $RegistryKeyPath }
+            '^HKEY_LOCAL_MACHINE\\' { $RegistryKeyPath -replace '^HKEY_LOCAL_MACHINE\\','HKLM:\\' }
+            '^HKEY_CURRENT_USER\\' { $RegistryKeyPath -replace '^HKEY_CURRENT_USER\\','HKCU:\\' }
+            '^HKEY_CLASSES_ROOT\\' { $RegistryKeyPath -replace '^HKEY_CLASSES_ROOT\\','HKCR:\\' }
+            '^HKEY_USERS\\' { $RegistryKeyPath -replace '^HKEY_USERS\\','HKU:\\' }
+            '^HKEY_CURRENT_CONFIG\\' { $RegistryKeyPath -replace '^HKEY_CURRENT_CONFIG\\','HKCC:\\' }
+            default { throw "Unsupported registry path format: ($RegistryKeyPath)" }
+        }
+
+        if (-not (Test-Path -LiteralPath $ProviderPath)) {
+            throw "The registry key path does not exist: ($RegistryKeyPath)"
+        }
+
+        # PREPARATION - BUILD OUTPUT FILE PATH FROM THE TARGET KEY NAME
+        [System.String]$RootKeyName = Split-Path -Path ($ProviderPath.TrimEnd('\\')) -Leaf
+        if (-not (Test-String -IsPopulated $RootKeyName)) {
+            throw "Unable to derive a key name from the registry path: ($RegistryKeyPath)"
+        }
+
+        [System.String]$SanitizedRootKeyName = [System.String]::Join('_',($RootKeyName.Split([System.IO.Path]::GetInvalidFileNameChars(),[System.StringSplitOptions]::RemoveEmptyEntries)))
+        if (-not (Test-String -IsPopulated $SanitizedRootKeyName)) {
+            throw "Unable to build a valid file name from registry key name: ($RootKeyName)"
+        }
+
+        [System.String]$OutputFilePath = Join-Path -Path $OutputFolder -ChildPath "$SanitizedRootKeyName.txt"
+
+        # EXECUTION
+        if (Test-Path -LiteralPath $OutputFilePath) {
+            Remove-Item -LiteralPath $OutputFilePath -Force
+        }
+
+        # Build a list containing the root key and all descendant keys.
+        [System.String[]]$KeysToExport = @($ProviderPath)
+        [System.String[]]$ChildKeys = @(Get-ChildItem -Path $ProviderPath -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty PSPath)
+        if ($ChildKeys.Count -gt 0) {
+            $KeysToExport += $ChildKeys
+        }
+
+        foreach ($CurrentKeyPath in $KeysToExport) {
+            "####################################################################################################" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+            "RegistryKeyPath: $CurrentKeyPath" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+            "" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+
+            Get-ItemProperty -Path $CurrentKeyPath -ErrorAction SilentlyContinue |
+            Format-List |
+            Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+
+            "" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+        }
+
+        Write-Line "Registry key exported to file: ($OutputFilePath)"
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+

@@ -166,3 +166,50 @@ function Get-UserSetting {
 
 # END OF FUNCTION
 ####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Gets the configured output folder path from User Settings.
+.DESCRIPTION
+    This function retrieves the saved output folder path from the configured User Settings registry path.
+.EXAMPLE
+    Get-OutputFolder
+.INPUTS
+    [PSCustomObject]
+.OUTPUTS
+    [System.String] The configured output folder path.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Get-OutputFolder {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject = $Global:ApplicationObject,
+
+        [Parameter(Mandatory=$true,HelpMessage='The name of the User Setting to retrieve.')]
+        [System.String]$PropertyName = 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
+    )
+
+    try {
+        # EXECUTION
+        # Get the output folder path from User Settings.
+        [System.String]$OutputFolder = Get-UserSetting -PropertyName $PropertyName
+
+        # Return the output folder value.
+        $OutputFolder
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+# END OF FUNCTION
+####################################################################################################

@@ -113,7 +113,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'regedit'
                 SizeType        = 'Small'
                 ToolTip         = 'Open the registry editor at the selected applications registry path.'
-                Function        = { $SelectedApplicationComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { Start-RegistryEditor -Key $SelectedApplicationComboBox.SelectedItem.RegistryPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
@@ -121,7 +121,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'table_export'
                 SizeType        = 'Small'
                 ToolTip         = 'Export the selected application to a text file.'
-                Function        = { $SelectedApplicationComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { Export-RegistryKey -RegistryKeyPath $SelectedApplicationComboBox.SelectedItem.RegistryPath }.GetNewClosure()
             }
         )
         # Add the Buttons
