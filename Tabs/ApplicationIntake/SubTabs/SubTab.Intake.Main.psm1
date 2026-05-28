@@ -43,9 +43,11 @@ function Import-SubTabIntake {
 
         # Import the Features
         $IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection  -InputObject $InputObject -ParentTabPage $ParentTabPage
-        $FormalApplicationPropertiesGroupBox    = Import-FeatureFormalApplicationProperties -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
-        $CustomApplicationPropertiesGroupBox    = Import-FeatureCustomApplicationProperties -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $FormalApplicationPropertiesGroupBox
-        $ApplicationSecurityGroupBox            = Import-FeatureApplicationSecurity         -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $CustomApplicationPropertiesGroupBox
+        $ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
+        $ApplicationCustomPropertiesGroupBox    = Import-FeatureApplicationCustomProperties -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationFormalPropertiesGroupBox
+        $ApplicationSecurityGroupBox            = Import-FeatureApplicationSecurity         -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationCustomPropertiesGroupBox
+        $ApplicationDetectionGroupBox           = Import-FeatureIntakeApplicationDetection  -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationSecurityGroupBox
+        $ApplicationShortcutsGroupBox           = Import-FeatureIntakeApplicationShortcuts  -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationDetectionGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

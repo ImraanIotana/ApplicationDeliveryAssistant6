@@ -39,7 +39,7 @@ function Import-FeatureApplicationSecurity {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION SECURITY'
-            Color           = 'Orange'
+            Color           = 'Gold'
             NumberOfRows    = 3
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
@@ -56,7 +56,7 @@ function Import-FeatureApplicationSecurity {
             PropertyName    = 'SubTab.Intake.ApplicationSecurity.InstallationFolder'
             ToolTip         = 'The installation folder of the application'
             SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Copy'),@(6,'Paste'),@(7,'Open'))
+            SmallButtons    = @(@(6,'Paste'),@(7,'Open'))
         }
         # Set the ADGroupNameTextBox properties
         [System.Collections.Hashtable]$ADGroupNameTextBoxProperties = @{
@@ -80,6 +80,21 @@ function Import-FeatureApplicationSecurity {
         $Global:SubTabIntakeApplicationSecurityInstallationFolder   = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         $Global:SubTabIntakeApplicationSecurityADGroupName          = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         $Global:SubTabIntakeApplicationSecurityADGroupSID           = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+
+        # EXECUTION - BUTTONS
+        # Set the Small Buttons properties
+        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
+            @{ # Testing duplicate buttons with the same function to ensure they work as expected
+                ColumnNumber    = 5
+                Text            = 'Browse'
+                PNGFileName     = 'folders_explorer'
+                SizeType        = 'Small'
+                ToolTip         = 'Browse for a detection file or MSI.'
+                Function        = { $Global:SubTabIntakeApplicationSecurityInstallationFolder.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
+            }
+        )
+        # Add the Buttons
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
 
         # Return the GroupBox object
         $FeatureGroupBox

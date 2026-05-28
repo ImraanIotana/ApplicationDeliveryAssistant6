@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Formal Application Properties feature into the Intake tab.
+    Imports the Application Formal Properties feature into the Intake tab.
 .DESCRIPTION
-    This function imports the Formal Application Properties feature into the Intake tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Application Formal Properties feature into the Intake tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureFormalApplicationProperties -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureApplicationFormalProperties -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
@@ -20,7 +20,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-FeatureFormalApplicationProperties {
+function Import-FeatureApplicationFormalProperties {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -39,7 +39,7 @@ function Import-FeatureFormalApplicationProperties {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'FORMAL APPLICATION PROPERTIES'
+            Title           = 'APPLICATION FORMAL PROPERTIES'
             Color           = 'Yellow'
             NumberOfRows    = 3
         }
@@ -54,7 +54,7 @@ function Import-FeatureFormalApplicationProperties {
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Vendor Name:'
-            PropertyName    = 'SubTab.Intake.FormalApplicationProperties.VendorName'
+            PropertyName    = 'SubTab.Intake.ApplicationFormalProperties.VendorName'
             ToolTip         = 'The formal name of the vendor of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
@@ -65,7 +65,7 @@ function Import-FeatureFormalApplicationProperties {
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Application Name:'
-            PropertyName    = 'SubTab.Intake.FormalApplicationProperties.ApplicationName'
+            PropertyName    = 'SubTab.Intake.ApplicationFormalProperties.ApplicationName'
             ToolTip         = 'The formal name of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
@@ -76,16 +76,16 @@ function Import-FeatureFormalApplicationProperties {
         [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
             RowNumber       = 3
             Label           = 'Application Version:'
-            PropertyName    = 'SubTab.Intake.FormalApplicationProperties.ApplicationVersion'
+            PropertyName    = 'SubTab.Intake.ApplicationFormalProperties.ApplicationVersion'
             ToolTip         = 'The version of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
             SmallButtons    = @(,@(5,'Copy'))
         }
         # Create the TextBoxes
-        $Global:SubTabIntakeFormalApplicationPropertiesVendorName = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:SubTabIntakeFormalApplicationPropertiesApplicationName = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:SubTabIntakeFormalApplicationPropertiesApplicationVersion = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:SubTabIntakeApplicationFormalPropertiesVendorName = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:SubTabIntakeApplicationFormalPropertiesApplicationName = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:SubTabIntakeApplicationFormalPropertiesApplicationVersion = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox

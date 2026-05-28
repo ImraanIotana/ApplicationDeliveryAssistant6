@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-            Imports the Application Intake feature into the Intake sub-tab.
+    Imports the Application Selection feature into the Intake sub-tab.
 .DESCRIPTION
-    This function imports the Application Intake feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Application Selection feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
     Import-FeatureIntakeApplicationSelection -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
@@ -74,14 +74,14 @@ function Import-FeatureIntakeApplicationSelection {
                 Function        = {
                     [PSCustomObject]$SelectedApplication = $SelectedApplicationComboBox.SelectedItem
                     if ($SelectedApplication) {
-                        # Populate the Formal Application Properties section with the selected applications information from the registry
-                        $Global:SubTabIntakeFormalApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher
-                        $Global:SubTabIntakeFormalApplicationPropertiesApplicationName.Text = $SelectedApplication.DisplayName
-                        $Global:SubTabIntakeFormalApplicationPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
-                        # Populate the Custom Application Properties section with the selected applications information from the registry
-                        $Global:SubTabIntakeCustomApplicationPropertiesVendorName.Text = $SelectedApplication.Publisher
-                        $Global:SubTabIntakeCustomApplicationPropertiesApplicationName.Text = $SelectedApplication.DisplayName
-                        $Global:SubTabIntakeCustomApplicationPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        # Populate the Application Formal Properties section with the selected applications information from the registry
+                        $Global:SubTabIntakeApplicationFormalPropertiesVendorName.Text = $SelectedApplication.Publisher
+                        $Global:SubTabIntakeApplicationFormalPropertiesApplicationName.Text = $SelectedApplication.DisplayName
+                        $Global:SubTabIntakeApplicationFormalPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        # Populate the Application Custom Properties section with the selected applications information from the registry
+                        $Global:SubTabIntakeApplicationCustomPropertiesVendorName.Text = $SelectedApplication.Publisher
+                        $Global:SubTabIntakeApplicationCustomPropertiesApplicationName.Text = $SelectedApplication.DisplayName
+                        $Global:SubTabIntakeApplicationCustomPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
                         # Populate the Application Security section with the selected applications information from the registry
                         $Global:SubTabIntakeApplicationSecurityInstallationFolder.Text = $SelectedApplication.InstallLocation
                     }
