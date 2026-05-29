@@ -91,3 +91,96 @@ function Open-Folder {
 
 ### END OF FUNCTION
 ####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Retrieves shortcuts from system and user locations.
+.DESCRIPTION
+    This function scans common Start Menu and Desktop locations for shortcuts.
+    It returns rich objects that include a ComboBoxName property so the result can be used directly in ComboBoxes.
+    Returned items are prefixed with [SYSTEM] or [USER] based on their source location.
+.EXAMPLE
+    Get-Shortcuts
+.INPUTS
+    None.
+.OUTPUTS
+    [PSCustomObject[]]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Get-Shortcuts {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='Include internet shortcuts (*.url) in addition to shell shortcuts (*.lnk).')]
+        [System.Management.Automation.SwitchParameter]$IncludeInternetShortcuts
+    )
+
+    # PREPARATION
+    # Define known shortcut roots and their labels
+    [PSCustomObject[]]$ShortcutRoots = @(
+        @{
+            Path     = Join-Path -Path $env:ProgramData -ChildPath 'Microsoft\Windows\Start Menu\Programs'
+            Prefix   = 'SYSTEM'
+            Location = 'StartMenu'
+        }
+        @{
+            Path     = Join-Path -Path $env:Public -ChildPath 'Desktop'
+            Prefix   = 'SYSTEM'
+            Location = 'Desktop'
+        }
+        @{
+            Path     = Join-Path -Path $env:APPDATA -ChildPath 'Microsoft\Windows\Start Menu\Programs'
+            Prefix   = 'USER'
+            Location = 'StartMenu'
+        }
+        @{
+            Path     = Join-Path -Path $env:USERPROFILE -ChildPath 'Desktop'
+            Prefix   = 'USER'
+            Location = 'Desktop'
+        }
+    )
+
+    [System.String[]]$AllowedExtensions = @('.lnk')
+    if ($IncludeInternetShortcuts) { $AllowedExtensions += '.url' }
+
+    # EXECUTION
+    # Enumerate shortcuts from all available roots
+    [PSCustomObject[]]$Shortcuts = foreach ($ShortcutRoot in $ShortcutRoots) {
+        if (-not (Test-Path -Path $ShortcutRoot.Path)) { continue }
+
+        Get-ChildItem -Path $ShortcutRoot.Path -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object { $AllowedExtensions -contains $_.Extension.ToLowerInvariant() } |
+        ForEach-Object {
+            [PSCustomObject]@{
+                Name            = $_.BaseName
+                Extension       = $_.Extension
+                FullPath        = $_.FullName
+                FolderPath      = $_.DirectoryName
+                Prefix          = $ShortcutRoot.Prefix
+                SourceLocation  = $ShortcutRoot.Location
+                # Keep RegistryPath for compatibility with existing ComboBox helper behavior.
+                RegistryPath    = $_.FullName
+                ComboBoxName    = "[$($ShortcutRoot.Prefix)] $($_.BaseName)"
+            }
+        }
+    }
+
+    # OUTPUT
+    # Return unique shortcuts sorted by the display value shown in ComboBoxes
+    $Shortcuts |
+    Sort-Object FullPath -Unique |
+    Sort-Object ComboBoxName
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+

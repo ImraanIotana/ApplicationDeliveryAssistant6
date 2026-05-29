@@ -198,6 +198,9 @@ function New-ComboBox {
         [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
         [System.Object[]]$ApplicationsFromRegistry,
 
+        [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
+        [System.Object[]]$Shortcuts,
+
         [Parameter(Mandatory=$false,HelpMessage='Switch for returning the ComboBox object after it is created and added to the parent.')]
         [System.Management.Automation.SwitchParameter]$ReturnComboBox
     )
@@ -275,7 +278,17 @@ function New-ComboBox {
         $NewComboBox.ValueMember = 'RegistryPath'
         # Clear any existing items and add the applications from the registry to the ComboBox items
         $NewComboBox.Items.Clear()
-        [void]$NewComboBox.Items.AddRange([object[]]$ApplicationsFromRegistry)
+        [void]$NewComboBox.Items.AddRange([System.Object[]]$ApplicationsFromRegistry)
+    }
+    # Fill the ComboBox items from the Shortcuts parameter
+    if ($Shortcuts.Count -gt 0) {       
+        # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
+        $NewComboBox.DisplayMember = 'ComboBoxName'
+        # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the FullPath)
+        $NewComboBox.ValueMember = 'FullPath'
+        # Clear any existing items and add the applications from the registry to the ComboBox items
+        $NewComboBox.Items.Clear()
+        [void]$NewComboBox.Items.AddRange([System.Object[]]$Shortcuts)
     }
 
     # EXECUTION - CUSTOM PROPERTIES '(TAG)'

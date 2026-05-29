@@ -49,6 +49,10 @@ function Import-FeatureIntakeApplicationShortcuts {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+
+        # test
+        #Get-Shortcuts -IncludeInternetShortcuts | Format-Table -AutoSize | Out-String | Write-Host
+
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
         [System.Collections.Hashtable]$ApplicationShortcutsComboBoxProperties = @{
@@ -57,8 +61,9 @@ function Import-FeatureIntakeApplicationShortcuts {
             PropertyName                = 'SubTab.Intake.ApplicationShortcuts.SelectedShortcuts'
             ToolTip                     = 'The shortcuts of the application.'
             SizeType                    = 'Medium'
+            Shortcuts                   = Get-Shortcuts -IncludeInternetShortcuts
         }
-        # Create the ComboBoxes
+        # Create the ComboBox
         [System.Windows.Forms.ComboBox]$ApplicationShortcutsComboBox = New-ComboBox @ApplicationShortcutsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
 
         # EXECUTION - BUTTONS
