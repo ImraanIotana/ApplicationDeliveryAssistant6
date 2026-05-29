@@ -66,10 +66,17 @@ function Open-Folder {
     # EXECUTION
     switch ($ParameterSetName) {
         'OpenTheFolder'    {
-            # Open the folder
+            # Open the folder or highlight the file if a file path was supplied
             try {
-                Write-Line "Opening folder... ($FolderToOpen)"
-                Invoke-Item -Path $FolderToOpen
+                $SelectedItem = Get-Item -LiteralPath $FolderToOpen -ErrorAction Stop
+                if ($SelectedItem.PSIsContainer) {
+                    Write-Line "Opening folder... ($FolderToOpen)"
+                    Invoke-Item -Path $FolderToOpen
+                }
+                else {
+                    Write-Line "Opening folder and highlighting item... ($FolderToOpen)"
+                    Start-Process explorer.exe -ArgumentList ($HighlightPrefix -f $FolderToOpen)
+                }
             }
             catch {
                 Write-ErrorReport -ErrorRecord $_
@@ -78,7 +85,7 @@ function Open-Folder {
         'HighlightTheItem' {
             # Open the folder
             try {
-                Write-Line "Selecting item... ($ItemToHighlight)"
+                Write-Line "Opening folder and highlighting item... ($ItemToHighlight)"
                 Start-Process explorer.exe -ArgumentList ($HighlightPrefix -f $ItemToHighlight)
             }
             catch {
@@ -138,12 +145,12 @@ function Get-Shortcuts {
         }
         @{
             Path     = Join-Path -Path $env:APPDATA -ChildPath 'Microsoft\Windows\Start Menu\Programs'
-            Prefix   = 'USER'
+            Prefix   = 'USER__'
             Location = 'StartMenu'
         }
         @{
             Path     = Join-Path -Path $env:USERPROFILE -ChildPath 'Desktop'
-            Prefix   = 'USER'
+            Prefix   = 'USER__'
             Location = 'Desktop'
         }
     )
@@ -156,7 +163,29 @@ function Get-Shortcuts {
     [PSCustomObject[]]$Shortcuts = foreach ($ShortcutRoot in $ShortcutRoots) {
         if (-not (Test-Path -Path $ShortcutRoot.Path)) { continue }
 
-        Get-ChildItem -Path $ShortcutRoot.Path -Recurse -File -ErrorAction SilentlyContinue |
+        # Subfolders (top-level only) that contain at least one shortcut anywhere inside
+        Get-ChildItem -Path $ShortcutRoot.Path -Directory -ErrorAction SilentlyContinue |
+        Where-Object {
+            $null -ne (Get-ChildItem -Path $_.FullName -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $AllowedExtensions -contains $_.Extension.ToLowerInvariant() } |
+                Select-Object -First 1)
+        } |
+        ForEach-Object {
+            [PSCustomObject]@{
+                Name            = $_.Name
+                Extension       = ''
+                FullPath        = $_.FullName
+                FolderPath      = $_.Parent.FullName
+                Prefix          = $ShortcutRoot.Prefix
+                SourceLocation  = $ShortcutRoot.Location
+                RegistryPath    = $_.FullName
+                Type            = 'Folder'
+                ComboBoxName    = "[$($ShortcutRoot.Prefix)] $($_.Name)"
+            }
+        }
+
+        # Shortcut files in the root only (not recursive)
+        Get-ChildItem -Path $ShortcutRoot.Path -File -ErrorAction SilentlyContinue |
         Where-Object { $AllowedExtensions -contains $_.Extension.ToLowerInvariant() } |
         ForEach-Object {
             [PSCustomObject]@{
@@ -166,18 +195,18 @@ function Get-Shortcuts {
                 FolderPath      = $_.DirectoryName
                 Prefix          = $ShortcutRoot.Prefix
                 SourceLocation  = $ShortcutRoot.Location
-                # Keep RegistryPath for compatibility with existing ComboBox helper behavior.
                 RegistryPath    = $_.FullName
-                ComboBoxName    = "[$($ShortcutRoot.Prefix)] $($_.BaseName)"
+                Type            = 'Shortcut'
+                ComboBoxName    = "[$($ShortcutRoot.Prefix)] $($_.Name)"
             }
         }
     }
 
     # OUTPUT
-    # Return unique shortcuts sorted by the display value shown in ComboBoxes
+    # Return unique items — folders first, then shortcuts — sorted alphabetically within each group
     $Shortcuts |
     Sort-Object FullPath -Unique |
-    Sort-Object ComboBoxName
+    Sort-Object Type, ComboBoxName
 }
 
 ### END OF FUNCTION

@@ -83,7 +83,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'folder_go'
                 SizeType        = 'Small'
                 ToolTip         = 'Open the folder containing the selected shortcut.'
-                Function        = { Write-Line "This function is still in development." }.GetNewClosure()
+                Function        = { Open-Folder -Path $ApplicationShortcutsComboBox.SelectedItem.FullPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
