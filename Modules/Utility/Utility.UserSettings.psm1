@@ -202,7 +202,7 @@ function Get-OutputFolder {
         [PSCustomObject]$InputObject = $Global:ApplicationObject,
 
         [Parameter(Mandatory=$false,HelpMessage='The name of the User Setting to retrieve.')]
-        [System.String]$PropertyName = 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
+        [System.String]$PropertyName = 'TextBoxes.ApplicationSettings.FolderSettings.UserOutputFolder'
     )
 
     try {

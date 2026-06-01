@@ -39,7 +39,7 @@ function Import-FeatureApplicationSecurity {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION SECURITY'
-            Color           = 'Gold'
+            Color           = 'Yellow'
             NumberOfRows    = 3
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
@@ -87,7 +87,7 @@ function Import-FeatureApplicationSecurity {
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
         [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{ # Testing duplicate buttons with the same function to ensure they work as expected
+            @{
                 ColumnNumber    = 5
                 Text            = 'Browse'
                 PNGFileName     = 'folders_explorer'

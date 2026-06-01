@@ -41,7 +41,7 @@ function Import-FeatureIntakeApplicationSelection {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION SELECTION'
-            Color           = 'CornSilk'
+            Color           = 'Cyan'
             NumberOfRows    = 2
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property

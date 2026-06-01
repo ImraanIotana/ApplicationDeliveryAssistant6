@@ -41,7 +41,7 @@ function Import-FeatureIntakeApplicationShortcuts {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION SHORTCUTS'
-            Color           = 'Gold'
+            Color           = 'Yellow'
             NumberOfRows    = 1
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property

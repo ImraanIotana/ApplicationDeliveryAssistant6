@@ -20,7 +20,7 @@
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Import-FeatureIntakeApplicationDetection {
+function Import-FeatureIntakeApplicationID {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -40,9 +40,9 @@ function Import-FeatureIntakeApplicationDetection {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'APPLICATION DETECTION'
-            Color           = 'Yellow'
-            NumberOfRows    = 1
+            Title           = 'APPLICATION ID'
+            Color           = 'Cyan'
+            NumberOfRows    = 3
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
@@ -52,29 +52,27 @@ function Import-FeatureIntakeApplicationDetection {
         # EXECUTION - TEXTBOX
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
-            RowNumber                   = 1
-            Label                       = 'Detection file / MSI:'
-            PropertyName                = 'TextBoxes.IntakeApplication.Detection.SelectedApplication'
-            ToolTip                     = 'The name of the application to intake'
+            RowNumber                   = 3
+            Label                       = 'Application ID:'
+            PropertyName                = 'TextBoxes.IntakeApplication.ApplicationID'
+            ToolTip                     = 'The ID of the application to intake'
             SizeType                    = 'Medium'
-            SmallButtons                = @(@(6,'Paste'),@(7,'Open'))
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
         if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
-        if (-not $Global:Graphics.TextBoxes.IntakeApplication.ContainsKey('Detection')) { $Global:Graphics.TextBoxes.IntakeApplication.Detection = @{} }
         # Create the TextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.Detection.SelectedApplication = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeApplication.ApplicationID = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
-        # Set the Small Buttons properties
+        # Set the Buttons properties
         [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{ # Testing duplicate buttons with the same function to ensure they work as expected
-                ColumnNumber    = 5
-                Text            = 'Browse'
-                PNGFileName     = 'magnifier'
-                SizeType        = 'Small'
+            @{
+                ColumnNumber    = 1
+                Text            = 'Application ID'
+                PNGFileName     = 'download_for_windows'
+                SizeType        = 'Large'
                 ToolTip         = 'Browse for a detection file or MSI.'
-                Function        = { $Global:Graphics.TextBoxes.IntakeApplication.Detection.SelectedApplication.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { $Global:Graphics.TextBoxes.IntakeApplication.ApplicationID.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
         )
         # Add the Buttons
