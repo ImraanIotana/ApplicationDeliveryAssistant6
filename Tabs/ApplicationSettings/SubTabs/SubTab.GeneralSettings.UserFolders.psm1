@@ -16,7 +16,7 @@
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Import-FeatureUserFolders {
@@ -47,29 +47,31 @@ function Import-FeatureUserFolders {
 
         # PREPARATION - TEXTBOXES
         # Set the TextBox properties
-        [System.Collections.Hashtable[]]$TextBoxPropertiesArray = @(
-            @{
-                RowNumber       = 1
-                Label           = 'My Output Folder:'
-                PropertyName    = 'SubTab.FolderSettings.UserFolders.MyOutputFolder'
-                ToolTip         = 'The path to the my Output Folder'
-                Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Default'))
-                DefaultValue    = "$ENV:USERPROFILE\Downloads"
-            }
-            @{
-                RowNumber       = 3
-                Label           = 'Software Library:'
-                PropertyName    = 'SubTab.FolderSettings.UserFolders.SoftwareLibrary'
-                ToolTip         = 'The path to the Software Library'
-                Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Clear'))
-            }
-        )
+        [System.Collections.Hashtable]$OutputFolderTextBoxProperties = @{
+            RowNumber       = 1
+            Label           = 'My Output Folder:'
+            PropertyName    = 'TextBoxes.ApplicationSettings.FolderSettings.UserOutputFolder'
+            ToolTip         = 'The path to the my Output Folder'
+            Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Default'))
+            DefaultValue    = "$ENV:USERPROFILE\Downloads"
+        }
+        [System.Collections.Hashtable]$SoftwareLibraryTextBoxProperties = @{
+            RowNumber       = 3
+            Label           = 'Software Library:'
+            PropertyName    = 'TextBoxes.ApplicationSettings.FolderSettings.SoftwareLibrary'
+            ToolTip         = 'The path to the Software Library'
+            Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Clear'))
+        }
 
         # EXECUTION
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationSettings')) { $Global:Graphics.TextBoxes.ApplicationSettings = @{} }
+        if (-not $Global:Graphics.TextBoxes.ApplicationSettings.ContainsKey('FolderSettings')) { $Global:Graphics.TextBoxes.ApplicationSettings.FolderSettings = @{} }
         # Create the TextBoxes
-        foreach ($TextBoxProperties in $TextBoxPropertiesArray) { New-TextBox @TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox }
+        $Global:Graphics.TextBoxes.ApplicationSettings.FolderSettings.UserOutputFolder  = New-TextBox @OutputFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationSettings.FolderSettings.SoftwareLibrary   = New-TextBox @SoftwareLibraryTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         # Return the GroupBox object
         $FeatureGroupBox
     }

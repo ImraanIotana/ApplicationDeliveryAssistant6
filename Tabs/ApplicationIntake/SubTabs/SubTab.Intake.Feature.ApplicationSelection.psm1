@@ -75,15 +75,15 @@ function Import-FeatureIntakeApplicationSelection {
                     [PSCustomObject]$SelectedApplication = $SelectedApplicationComboBox.SelectedItem
                     if ($SelectedApplication) {
                         # Populate the Application Formal Properties section with the selected applications information from the registry
-                        $Global:SubTabIntakeApplicationFormalPropertiesVendorName.Text = $SelectedApplication.Publisher
-                        $Global:SubTabIntakeApplicationFormalPropertiesApplicationName.Text = $SelectedApplication.DisplayName
-                        $Global:SubTabIntakeApplicationFormalPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.VendorName.Text = $SelectedApplication.Publisher
+                        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.ApplicationName.Text = $SelectedApplication.DisplayName
+                        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.ApplicationVersion.Text = $SelectedApplication.DisplayVersion
                         # Populate the Application Custom Properties section with the selected applications information from the registry
-                        $Global:SubTabIntakeApplicationCustomPropertiesVendorName.Text = $SelectedApplication.Publisher
-                        $Global:SubTabIntakeApplicationCustomPropertiesApplicationName.Text = $SelectedApplication.DisplayName
-                        $Global:SubTabIntakeApplicationCustomPropertiesApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.VendorName.Text = $SelectedApplication.Publisher
+                        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.ApplicationName.Text = $SelectedApplication.DisplayName
+                        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.ApplicationVersion.Text = $SelectedApplication.DisplayVersion
                         # Populate the Application Security section with the selected applications information from the registry
-                        $Global:SubTabIntakeApplicationSecurityInstallationFolder.Text = $SelectedApplication.InstallLocation
+                        $Global:Graphics.TextBoxes.IntakeApplication.Security.InstallationFolder.Text = $SelectedApplication.InstallLocation
                     }
                     else {
                         Write-Line 'No application selected. Please select an application from the dropdown menu.'

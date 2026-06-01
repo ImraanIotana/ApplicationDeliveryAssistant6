@@ -17,7 +17,7 @@
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Import-FeatureApplicationFormalProperties {
@@ -54,38 +54,41 @@ function Import-FeatureApplicationFormalProperties {
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Vendor Name:'
-            PropertyName    = 'SubTab.Intake.ApplicationFormalProperties.VendorName'
+            PropertyName    = 'TextBoxes.IntakeApplication.FormalProperties.VendorName'
             ToolTip         = 'The formal name of the vendor of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
-            SmallButtons    = @(,@(5,'Copy'))
+            SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
                 
         }
         # Set the ApplicationNameTextBox properties
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Application Name:'
-            PropertyName    = 'SubTab.Intake.ApplicationFormalProperties.ApplicationName'
+            PropertyName    = 'TextBoxes.IntakeApplication.FormalProperties.ApplicationName'
             ToolTip         = 'The formal name of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
-            SmallButtons    = @(,@(5,'Copy'))
+            SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
                 
         }
         # Set the ApplicationVersionTextBox properties
         [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
             RowNumber       = 3
             Label           = 'Application Version:'
-            PropertyName    = 'SubTab.Intake.ApplicationFormalProperties.ApplicationVersion'
+            PropertyName    = 'TextBoxes.IntakeApplication.FormalProperties.ApplicationVersion'
             ToolTip         = 'The version of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
-            SmallButtons    = @(,@(5,'Copy'))
+            SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
         }
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
+        if (-not $Global:Graphics.TextBoxes.IntakeApplication.ContainsKey('FormalProperties')) { $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties = @{} }
         # Create the TextBoxes
-        $Global:SubTabIntakeApplicationFormalPropertiesVendorName = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:SubTabIntakeApplicationFormalPropertiesApplicationName = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:SubTabIntakeApplicationFormalPropertiesApplicationVersion = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.VendorName            = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.ApplicationName       = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.ApplicationVersion    = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox

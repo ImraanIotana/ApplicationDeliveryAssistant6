@@ -16,7 +16,7 @@
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Import-FeaturePingComputer {
@@ -47,16 +47,14 @@ function Import-FeaturePingComputer {
 
         # PREPARATION - TEXTBOXES
         # Set the TextBox properties
-        [System.Collections.Hashtable[]]$TextBoxPropertiesArray = @(
-            @{
-                RowNumber       = 1
-                Label           = 'ComputerName / IP address:'
-                PropertyName    = 'SubTab.Connections.Ping.ComputerName'
-                ToolTip         = 'The name or IP address of the computer to ping'
-                SizeType        = 'Medium'
-                SmallButtons    = [System.Object[][]]@(@(5, 'Copy'), @(6, 'Paste'))
-            }
-        )
+        [System.Collections.Hashtable]$TextBoxProperties = @{
+            RowNumber       = 1
+            Label           = 'ComputerName / IP address:'
+            PropertyName    = 'TextBoxes.Connections.ComputerName'
+            ToolTip         = 'The name or IP address of the computer to ping'
+            SizeType        = 'Medium'
+            SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
+        }
 
         # PREPARATION - BUTTONS
         # Set the Button properties
@@ -67,8 +65,8 @@ function Import-FeaturePingComputer {
                 PNGFileName     = 'network_ip'
                 SizeType        = 'Large'
                 Function        = {
-                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
-                    PING.EXE -n 1 $ComputerName | Out-Host
+                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'TextBoxes.Connections.ComputerName'
+                    if (Test-String -IsPopulated $ComputerName) { PING.EXE -n 1 $ComputerName | Out-Host }
                 }
             }
             @{
@@ -77,13 +75,15 @@ function Import-FeaturePingComputer {
                 PNGFileName     = 'ip'
                 SizeType        = 'Large'
                 Function        = {
-                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
-                    try {
-                        Test-Connection -ComputerName $ComputerName -Count 1 -ErrorAction Stop | Format-Table -AutoSize | Out-Host
-                    }
-                    catch {
-                        Write-Line "The Test-Connection command failed or timed out for ($ComputerName)." -Type Error
-                        Write-ErrorReport -ErrorRecord $_
+                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'TextBoxes.Connections.ComputerName'
+                    if (Test-String -IsPopulated $ComputerName) { 
+                        try {
+                            Test-Connection -ComputerName $ComputerName -Count 1 -ErrorAction Stop | Format-Table -AutoSize | Out-Host
+                        }
+                        catch {
+                            Write-Line "The Test-Connection command failed or timed out for ($ComputerName)." -Type Error
+                            Write-ErrorReport -ErrorRecord $_
+                        }
                     }
                 }
             }
@@ -93,13 +93,15 @@ function Import-FeaturePingComputer {
                 PNGFileName     = 'ip_class'
                 SizeType        = 'Large'
                 Function        = {
-                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
-                    try {
-                        Invoke-TestNetConnectionWithTimeout -ComputerName $ComputerName -TimeoutSeconds 10 | Out-Host
-                    }
-                    catch {
-                        Write-Line "The Test-NetConnection command failed or timed out for ($ComputerName)." -Type Error
-                        Write-ErrorReport -ErrorRecord $_
+                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'TextBoxes.Connections.ComputerName'
+                    if (Test-String -IsPopulated $ComputerName) {
+                        try {
+                            Invoke-TestNetConnectionWithTimeout -ComputerName $ComputerName -TimeoutSeconds 10 | Out-Host
+                        }
+                        catch {
+                            Write-Line "The Test-NetConnection command failed or timed out for ($ComputerName)." -Type Error
+                            Write-ErrorReport -ErrorRecord $_
+                        }
                     }
                 }
             }
@@ -109,7 +111,7 @@ function Import-FeaturePingComputer {
                 PNGFileName     = 'report_go'
                 SizeType        = 'Large'
                 Function        = {
-                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'SubTab.Connections.Ping.ComputerName'
+                    [System.String]$ComputerName = Get-UserSetting -PropertyName 'TextBoxes.Connections.ComputerName'
                     [System.String]$OutputFolder = Get-OutputFolder
                     Start-ComputerIPReportAsync -ComputerNames @($ComputerName) -OutputFolder $OutputFolder
                 }.GetNewClosure()
@@ -120,8 +122,10 @@ function Import-FeaturePingComputer {
         # EXECUTION
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('Connections')) { $Global:Graphics.TextBoxes.Connections = @{} }
         # Create the TextBoxes
-        foreach ($TextBoxProperties in $TextBoxPropertiesArray) { New-TextBox @TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox }
+        $Global:Graphics.TextBoxes.Connections.ComputerName = New-TextBox @TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         # Add the Buttons
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 2
         # Return the GroupBox object

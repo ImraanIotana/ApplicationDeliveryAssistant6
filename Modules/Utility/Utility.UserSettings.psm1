@@ -132,11 +132,17 @@ function Get-UserSetting {
         [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject = $Global:ApplicationObject,
 
-        [Parameter(Mandatory=$true,HelpMessage='The name of the User Setting to retrieve.')]
+        [Parameter(Mandatory=$false,HelpMessage='The name of the User Setting to retrieve.')]
         [System.String]$PropertyName
     )
 
     try {
+        # VALIDATION
+        # Ensure the PropertyName parameter is provided
+        if (-not $PSBoundParameters.ContainsKey('PropertyName') -or (Test-String -IsEmpty $PropertyName)) {
+            Write-Line "The Field / PropertyName is empty."
+            return
+        }
         # PREPARATION
         # Set the Registry path for the User Settings
         [System.String]$UserSettingsRegistryPath = $InputObject.ApplicationSettings.UserSettingsRegistryPath

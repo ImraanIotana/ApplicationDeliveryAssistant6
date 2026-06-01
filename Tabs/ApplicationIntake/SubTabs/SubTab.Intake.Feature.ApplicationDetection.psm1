@@ -17,7 +17,7 @@
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Import-FeatureIntakeApplicationDetection {
@@ -54,13 +54,16 @@ function Import-FeatureIntakeApplicationDetection {
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Detection file / MSI:'
-            PropertyName                = 'SubTab.Intake.SelectedApplicationFromRegistry'
+            PropertyName                = 'TextBoxes.IntakeApplication.Detection.SelectedApplication'
             ToolTip                     = 'The name of the application to intake'
             SizeType                    = 'Medium'
             SmallButtons                = @(@(6,'Paste'),@(7,'Open'))
         }
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
+        if (-not $Global:Graphics.TextBoxes.IntakeApplication.ContainsKey('Detection')) { $Global:Graphics.TextBoxes.IntakeApplication.Detection = @{} }
         # Create the TextBox
-        [System.Windows.Forms.TextBox]$SelectedApplicationTextBox = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeApplication.Detection.SelectedApplication = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
@@ -68,10 +71,10 @@ function Import-FeatureIntakeApplicationDetection {
             @{ # Testing duplicate buttons with the same function to ensure they work as expected
                 ColumnNumber    = 5
                 Text            = 'Browse'
-                PNGFileName     = 'folders_explorer'
+                PNGFileName     = 'magnifier'
                 SizeType        = 'Small'
                 ToolTip         = 'Browse for a detection file or MSI.'
-                Function        = { $SelectedApplicationTextBox.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { $Global:Graphics.TextBoxes.IntakeApplication.Detection.SelectedApplication.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
         )
         # Add the Buttons

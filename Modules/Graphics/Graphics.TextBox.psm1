@@ -183,7 +183,7 @@ function New-TextBox {
         $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name Label -Value $Label
     }
 
-    # PROPERTYNAME
+    # PROPERTYNAME - INTERACTION WITH REGISTRY
     # Add the PropertyName
     if ($PropertyName) {
         $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name PropertyName -Value $PropertyName

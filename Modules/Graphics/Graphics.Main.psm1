@@ -18,7 +18,7 @@
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : April 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Initialize-Graphics {
@@ -51,6 +51,11 @@ function Initialize-Graphics {
         Initialize-MainForm -InputObject $InputObject
         # Add the main tab control to the main form
         Add-MainTabControl -InputObject $InputObject -ParentForm $Global:MainForm
+
+        # EXECUTION - Create the Global Graphics Objects
+        [System.Collections.Hashtable]$Global:Graphics = @{}
+        $Global:Graphics.TextBoxes = @{}
+        $Global:Graphics.ComboBoxes = @{}
 
         # EXECUTION - ADD TABS
         # Get the Global ParentTabControl
