@@ -53,7 +53,7 @@ function Import-FeatureIntakeApplicationDetection {
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber                   = 1
-            Label                       = 'Detection file / MSI:'
+            Label                       = 'Detection file / MSI'
             PropertyName                = 'TextBoxes.IntakeApplication.Detection.SelectedApplication'
             ToolTip                     = 'The name of the application to intake'
             SizeType                    = 'Medium'

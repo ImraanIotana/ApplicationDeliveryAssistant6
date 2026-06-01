@@ -49,7 +49,7 @@ function Import-FeaturePingComputer {
         # Set the TextBox properties
         [System.Collections.Hashtable]$TextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'ComputerName / IP address:'
+            Label           = 'ComputerName / IP address'
             PropertyName    = 'TextBoxes.Connections.ComputerName'
             ToolTip         = 'The name or IP address of the computer to ping'
             SizeType        = 'Medium'

@@ -52,8 +52,8 @@ function Import-FeatureApplicationSecurity {
         # Set the InstallationFolderTextBox properties
         [System.Collections.Hashtable]$InstallationFolderTextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'Installation Folder:'
-            PropertyName    = 'TextBoxes.IntakeApplication.Security.InstallationFolder'
+            Label           = 'Installation Folder'
+            PropertyName    = 'TextBoxes.ApplicationIntake.Security.InstallationFolder'
             ToolTip         = 'The installation folder of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(6,'Paste'),@(7,'Open'))
@@ -61,8 +61,8 @@ function Import-FeatureApplicationSecurity {
         # Set the ADGroupNameTextBox properties
         [System.Collections.Hashtable]$ADGroupNameTextBoxProperties = @{
             RowNumber       = 2
-            Label           = 'AD Group Name:'
-            PropertyName    = 'TextBoxes.IntakeApplication.Security.ADGroupName'
+            Label           = 'AD Group Name'
+            PropertyName    = 'TextBoxes.ApplicationIntake.Security.ADGroupName'
             ToolTip         = 'The Active Directory group name associated with the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
@@ -70,19 +70,19 @@ function Import-FeatureApplicationSecurity {
         # Set the ADGroupSIDTextBox properties
         [System.Collections.Hashtable]$ADGroupSIDTextBoxProperties = @{
             RowNumber       = 3
-            Label           = 'AD Group SID:'
-            PropertyName    = 'TextBoxes.IntakeApplication.Security.ADGroupSID'
+            Label           = 'AD Group SID'
+            PropertyName    = 'TextBoxes.ApplicationIntake.Security.ADGroupSID'
             ToolTip         = 'The Security Identifier (SID) of the Active Directory group associated with the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
-        if (-not $Global:Graphics.TextBoxes.IntakeApplication.ContainsKey('Security')) { $Global:Graphics.TextBoxes.IntakeApplication.Security = @{} }
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.TextBoxes.ApplicationIntake = @{} }
+        if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Security')) { $Global:Graphics.TextBoxes.ApplicationIntake.Security = @{} }
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.IntakeApplication.Security.InstallationFolder   = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.Security.ADGroupName          = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.Security.ADGroupSID           = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder   = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupName          = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID           = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
@@ -93,7 +93,7 @@ function Import-FeatureApplicationSecurity {
                 PNGFileName     = 'folders_explorer'
                 SizeType        = 'Small'
                 ToolTip         = 'Browse for a detection file or MSI.'
-                Function        = { $Global:Graphics.TextBoxes.IntakeApplication.Security.InstallationFolder.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
         )
         # Add the Buttons

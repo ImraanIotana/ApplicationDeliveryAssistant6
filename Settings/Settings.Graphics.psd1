@@ -27,7 +27,7 @@
     MainForm            = @{
         IconFileName    = 'MainFormIcon.ico'    # The name of the icon file for the Main Form
         Width           = 800                   # Width of the Main Form
-        Height          = 800                   # Height of the Main Form
+        Height          = 750                   # Height of the Main Form
     }
 
     # MainTabControl settings

@@ -57,7 +57,7 @@ function Import-FeatureIntakeApplicationShortcuts {
         # Set the ComboBox properties
         [System.Collections.Hashtable]$ApplicationShortcutsComboBoxProperties = @{
             RowNumber                   = 1
-            Label                       = 'Select Shortcut(s):'
+            Label                       = 'Select Shortcut / Folder'
             PropertyName                = 'SubTab.Intake.ApplicationShortcuts.SelectedShortcuts'
             ToolTip                     = 'The shortcuts of the application.'
             SizeType                    = 'Medium'
@@ -69,7 +69,7 @@ function Import-FeatureIntakeApplicationShortcuts {
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
         [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{ # Testing duplicate buttons with the same function to ensure they work as expected
+            @{
                 ColumnNumber    = 5
                 Text            = 'Details'
                 PNGFileName     = 'information'

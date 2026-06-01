@@ -42,7 +42,7 @@ function Import-FeatureIntakeApplicationID {
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION ID'
             Color           = 'Cyan'
-            NumberOfRows    = 3
+            NumberOfRows    = 2
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
         if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
@@ -50,33 +50,43 @@ function Import-FeatureIntakeApplicationID {
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
         # EXECUTION - TEXTBOX
-        # Set the ComboBox properties
-        [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
-            RowNumber                   = 3
-            Label                       = 'Application ID:'
-            PropertyName                = 'TextBoxes.IntakeApplication.ApplicationID'
-            ToolTip                     = 'The ID of the application to intake'
-            SizeType                    = 'Medium'
+        # Set the TextBox properties
+        [System.Collections.Hashtable]$ApplicationIDTextBoxProperties = @{
+            RowNumber       = 2
+            Label           = 'Application ID'
+            PropertyName    = 'TextBoxes.IntakeApplication.ApplicationID'
+            ToolTip         = 'The ID of the application to intake'
+            SizeType        = 'Medium'
+            Type            = 'Output'
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
         if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
         # Create the TextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.ApplicationID = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeApplication.ApplicationID = New-TextBox @ApplicationIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
         # Set the Buttons properties
-        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{
-                ColumnNumber    = 1
-                Text            = 'Application ID'
-                PNGFileName     = 'download_for_windows'
-                SizeType        = 'Large'
-                ToolTip         = 'Browse for a detection file or MSI.'
-                Function        = { $Global:Graphics.TextBoxes.IntakeApplication.ApplicationID.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
-            }
-        )
+        [System.Collections.Hashtable]$ApplicationIDButtonProperties = @{
+            ColumnNumber    = 1
+            RowNumber       = 1
+            Text            = 'Application ID'
+            PNGFileName     = 'download_for_windows'
+            SizeType        = 'Medium'
+            ToolTip         = 'Browse for a detection file or MSI.'
+            Function        = { Write-Line "This function is still in development." }.GetNewClosure()
+        }
+        [System.Collections.Hashtable]$CreateFolderButtonProperties = @{
+            ColumnNumber    = 5
+            RowNumber       = 2
+            Text            = 'Create Folder'
+            PNGFileName     = 'folder_add'
+            SizeType        = 'Medium'
+            ToolTip         = 'Browse for a detection file or MSI.'
+            Function        = { Write-Line "This function is still in development." }.GetNewClosure()
+        }
         # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        New-Button @ApplicationIDButtonProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox
+        New-Button @CreateFolderButtonProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox
 
         # POST-EXECUTION
         # Return the GroupBox object

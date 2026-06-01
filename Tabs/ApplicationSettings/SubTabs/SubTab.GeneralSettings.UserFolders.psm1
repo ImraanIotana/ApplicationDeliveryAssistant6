@@ -49,7 +49,7 @@ function Import-FeatureUserFolders {
         # Set the TextBox properties
         [System.Collections.Hashtable]$OutputFolderTextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'My Output Folder:'
+            Label           = 'My Output Folder'
             PropertyName    = 'TextBoxes.ApplicationSettings.FolderSettings.UserOutputFolder'
             ToolTip         = 'The path to the my Output Folder'
             Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Default'))
@@ -57,7 +57,7 @@ function Import-FeatureUserFolders {
         }
         [System.Collections.Hashtable]$SoftwareLibraryTextBoxProperties = @{
             RowNumber       = 3
-            Label           = 'Software Library:'
+            Label           = 'Software Library'
             PropertyName    = 'TextBoxes.ApplicationSettings.FolderSettings.SoftwareLibrary'
             ToolTip         = 'The path to the Software Library'
             Buttons         = [System.Object[][]]@(@(1, 'Browse'), @(2, 'Open'), @(3, 'Copy'), @(4, 'Paste'), @(5, 'Clear'))

@@ -53,8 +53,8 @@ function Import-FeatureApplicationCustomProperties {
         # Set the VendorNameTextBox properties
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'Vendor Name:'
-            PropertyName    = 'TextBoxes.IntakeApplication.CustomProperties.VendorName'
+            Label           = 'Vendor Name'
+            PropertyName    = 'TextBoxes.ApplicationIntake.CustomProperties.VendorName'
             ToolTip         = 'The custom name of the vendor of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
@@ -62,8 +62,8 @@ function Import-FeatureApplicationCustomProperties {
         # Set the ApplicationNameTextBox properties
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
-            Label           = 'Application Name:'
-            PropertyName    = 'TextBoxes.IntakeApplication.CustomProperties.ApplicationName'
+            Label           = 'Application Name'
+            PropertyName    = 'TextBoxes.ApplicationIntake.CustomProperties.ApplicationName'
             ToolTip         = 'The custom name of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
@@ -72,19 +72,19 @@ function Import-FeatureApplicationCustomProperties {
         # Set the ApplicationVersionTextBox properties
         [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
             RowNumber       = 3
-            Label           = 'Application Version:'
-            PropertyName    = 'TextBoxes.IntakeApplication.CustomProperties.ApplicationVersion'
+            Label           = 'Application Version'
+            PropertyName    = 'TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion'
             ToolTip         = 'The custom version of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
-        if (-not $Global:Graphics.TextBoxes.IntakeApplication.ContainsKey('CustomProperties')) { $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties = @{} }
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.TextBoxes.ApplicationIntake = @{} }
+        if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) { $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties = @{} }
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.VendorName          = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.ApplicationName     = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.ApplicationVersion  = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.VendorName          = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationName     = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion  = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox

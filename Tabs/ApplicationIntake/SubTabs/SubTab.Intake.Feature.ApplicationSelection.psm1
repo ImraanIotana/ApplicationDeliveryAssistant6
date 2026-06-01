@@ -53,7 +53,7 @@ function Import-FeatureIntakeApplicationSelection {
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber                   = 1
-            Label                       = 'Import from Registry:'
+            Label                       = 'Import from Registry'
             PropertyName                = 'SubTab.Intake.SelectedApplicationFromRegistry'
             ToolTip                     = 'The name of the application to intake'
             SizeType                    = 'Medium'
@@ -75,15 +75,15 @@ function Import-FeatureIntakeApplicationSelection {
                     [PSCustomObject]$SelectedApplication = $SelectedApplicationComboBox.SelectedItem
                     if ($SelectedApplication) {
                         # Populate the Application Formal Properties section with the selected applications information from the registry
-                        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.VendorName.Text = $SelectedApplication.Publisher
-                        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.ApplicationName.Text = $SelectedApplication.DisplayName
-                        $Global:Graphics.TextBoxes.IntakeApplication.FormalProperties.ApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.VendorName.Text = $SelectedApplication.Publisher
+                        $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationName.Text = $SelectedApplication.DisplayName
+                        $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion.Text = $SelectedApplication.DisplayVersion
                         # Populate the Application Custom Properties section with the selected applications information from the registry
-                        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.VendorName.Text = $SelectedApplication.Publisher
-                        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.ApplicationName.Text = $SelectedApplication.DisplayName
-                        $Global:Graphics.TextBoxes.IntakeApplication.CustomProperties.ApplicationVersion.Text = $SelectedApplication.DisplayVersion
+                        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.VendorName.Text = $SelectedApplication.Publisher
+                        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationName.Text = $SelectedApplication.DisplayName
+                        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion.Text = $SelectedApplication.DisplayVersion
                         # Populate the Application Security section with the selected applications information from the registry
-                        $Global:Graphics.TextBoxes.IntakeApplication.Security.InstallationFolder.Text = $SelectedApplication.InstallLocation
+                        $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text = $SelectedApplication.InstallLocation
                     }
                     else {
                         Write-Line 'No application selected. Please select an application from the dropdown menu.'
