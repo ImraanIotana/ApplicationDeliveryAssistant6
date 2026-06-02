@@ -41,7 +41,7 @@ function Import-FeatureIntakeApplicationID {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION ID'
-            Color           = 'Cyan'
+            Color           = 'Lime'
             NumberOfRows    = 2
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
@@ -73,7 +73,7 @@ function Import-FeatureIntakeApplicationID {
             PNGFileName     = 'download_for_windows'
             SizeType        = 'Medium'
             ToolTip         = 'Browse for a detection file or MSI.'
-            Function        = { Write-Line "This function is still in development." }.GetNewClosure()
+            Function        = { Write-Line "Import-FeatureIntakeApplicationID: This function is still in development." }.GetNewClosure()
         }
         [System.Collections.Hashtable]$CreateFolderButtonProperties = @{
             ColumnNumber    = 5
@@ -82,7 +82,7 @@ function Import-FeatureIntakeApplicationID {
             PNGFileName     = 'folder_add'
             SizeType        = 'Medium'
             ToolTip         = 'Browse for a detection file or MSI.'
-            Function        = { Write-Line "This function is still in development." }.GetNewClosure()
+            Function        = { Write-Line "Import-FeatureIntakeApplicationID: This function is still in development." }.GetNewClosure()
         }
         # Add the Buttons
         New-Button @ApplicationIDButtonProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox

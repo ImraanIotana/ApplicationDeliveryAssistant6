@@ -109,7 +109,7 @@ function Add-ButtonDimensions {
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function New-Button {
@@ -192,12 +192,13 @@ function New-Button {
         # TOOLTIP - PREPARATION
         # Set the default ToolTips based on the Text of the button, if no ToolTip is provided
         [System.Collections.Hashtable]$DefaultToolTips = @{
-            'Browse'    = 'Browse for a file or folder'
-            'Open'      = 'Open the folder in File Explorer'
-            'Copy'      = 'Copy the content of the box to your clipboard'
-            'Paste'     = 'Paste the content of your clipboard to the box'
-            'Clear'     = 'Clear the content of the box'
-            'Default'   = 'Reset the box to the default value'
+            'Browse File'   = 'Browse for a file.'
+            'Browse Folder' = 'Browse for a folder.'
+            'Open'          = 'Open the folder in File Explorer.'
+            'Copy'          = 'Copy the content of the box to your clipboard.'
+            'Paste'         = 'Paste the content of your clipboard to the box.'
+            'Clear'         = 'Clear the content of the box.'
+            'Default'       = 'Reset the box to the default value.'
         }
         # If no ToolTip is provided, but the Text matches a default Text, then use the corresponding default ToolTip
         if (-not $ToolTip -and $DefaultToolTips.ContainsKey($Text)) { $ToolTip = $DefaultToolTips[$Text] }
@@ -214,12 +215,13 @@ function New-Button {
         # IMAGE - PREPARATION
         # Set the default Icons based on the Text of the button, if no PNGFileName is provided
         [System.Collections.Hashtable]$DefaultIcons = @{
-            'Browse'    = 'folders_explorer'
-            'Open'      = 'folder_go'
-            'Copy'      = 'page_copy'
-            'Paste'     = 'page_paste'
-            'Clear'     = 'textfield_delete'
-            'Default'   = 'arrow_undo'
+            'Browse File'   = 'magnifier'
+            'Browse Folder' = 'folders_explorer'
+            'Open'          = 'folder_go'
+            'Copy'          = 'page_copy'
+            'Paste'         = 'page_paste'
+            'Clear'         = 'textfield_delete'
+            'Default'       = 'arrow_undo'
         }
         # If no PNGFileName is provided, but the Text matches a default Text, then use the corresponding default Icon
         if (-not $PNGFileName -and $DefaultIcons.ContainsKey($Text)) { $PNGFileName = $DefaultIcons[$Text] }

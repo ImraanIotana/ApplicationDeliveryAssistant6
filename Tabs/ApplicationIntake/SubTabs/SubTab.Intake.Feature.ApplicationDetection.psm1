@@ -54,31 +54,16 @@ function Import-FeatureIntakeApplicationDetection {
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Detection file / MSI'
-            PropertyName                = 'TextBoxes.IntakeApplication.Detection.SelectedApplication'
-            ToolTip                     = 'The name of the application to intake'
+            PropertyName                = 'TextBoxes.IntakeApplication.Detection.DetectionFile'
+            ToolTip                     = 'The detection file or MSI of the application. This will be used to automatically populate the detection information in the distribution system.'
             SizeType                    = 'Medium'
-            SmallButtons                = @(@(6,'Paste'),@(7,'Open'))
+            SmallButtons                = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
         if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
         if (-not $Global:Graphics.TextBoxes.IntakeApplication.ContainsKey('Detection')) { $Global:Graphics.TextBoxes.IntakeApplication.Detection = @{} }
         # Create the TextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.Detection.SelectedApplication = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-
-        # EXECUTION - BUTTONS
-        # Set the Small Buttons properties
-        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{ # Testing duplicate buttons with the same function to ensure they work as expected
-                ColumnNumber    = 5
-                Text            = 'Browse'
-                PNGFileName     = 'magnifier'
-                SizeType        = 'Small'
-                ToolTip         = 'Browse for a detection file or MSI.'
-                Function        = { $Global:Graphics.TextBoxes.IntakeApplication.Detection.SelectedApplication.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
-            }
-        )
-        # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        $Global:Graphics.TextBoxes.IntakeApplication.Detection.DetectionFile = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # POST-EXECUTION
         # Return the GroupBox object

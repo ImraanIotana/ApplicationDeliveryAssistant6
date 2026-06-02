@@ -56,7 +56,7 @@ function Import-FeatureApplicationSecurity {
             PropertyName    = 'TextBoxes.ApplicationIntake.Security.InstallationFolder'
             ToolTip         = 'The installation folder of the application'
             SizeType        = 'Medium'
-            SmallButtons    = @(@(6,'Paste'),@(7,'Open'))
+            SmallButtons    = @(@(5,'Browse Folder'),@(6,'Paste'),@(7,'Open'))
         }
         # Set the ADGroupNameTextBox properties
         [System.Collections.Hashtable]$ADGroupNameTextBoxProperties = @{
@@ -83,21 +83,6 @@ function Import-FeatureApplicationSecurity {
         $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder   = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupName          = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID           = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-
-        # EXECUTION - BUTTONS
-        # Set the Small Buttons properties
-        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{
-                ColumnNumber    = 5
-                Text            = 'Browse'
-                PNGFileName     = 'folders_explorer'
-                SizeType        = 'Small'
-                ToolTip         = 'Browse for a detection file or MSI.'
-                Function        = { $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text | Format-List | Out-String | Write-Host }.GetNewClosure()
-            }
-        )
-        # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
 
         # Return the GroupBox object
         $FeatureGroupBox

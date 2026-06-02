@@ -76,7 +76,7 @@ function Add-TextBoxDimensions {
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function New-TextBox {
@@ -258,12 +258,13 @@ function New-TextBox {
                     Text            = $ButtonText
                     SizeType        = 'Small'
                     Function        = switch ($ButtonText) {
-                        'Browse'    { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Browse' }.GetNewClosure() }
-                        'Open'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
-                        'Copy'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
-                        'Paste'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
-                        'Default'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
-                        'Clear'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
+                        'Browse File'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'BrowseFile' }.GetNewClosure() }
+                        'Browse Folder' { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'BrowseFolder' }.GetNewClosure() }
+                        'Open'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
+                        'Copy'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
+                        'Paste'         { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
+                        'Default'       { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
+                        'Clear'         { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
                     }
                 }
                 # Add the hashtable to the ButtonPropertiesArray
@@ -305,7 +306,7 @@ function New-TextBox {
     This function performs the specified action on the given TextBox, such as opening a folder, copying text, pasting text, resetting to default value, etc.        
     The function takes a TextBox and an Action as input parameters, validates the input, and executes the corresponding action based on the Action parameter.
 .EXAMPLE
-    Invoke-TextBoxAction -TextBox $MyTextBox -Action 'Browse'
+    Invoke-TextBoxAction -TextBox $MyTextBox -Action 'Open'
 .INPUTS
     [System.Windows.Forms.TextBox]
     [System.String]
@@ -316,7 +317,7 @@ function New-TextBox {
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Invoke-TextBoxAction {
@@ -326,7 +327,7 @@ function Invoke-TextBoxAction {
         [System.Windows.Forms.TextBox]$TextBox,
 
         [Parameter(Mandatory=$true,HelpMessage='The action to be performed on the TextBox.')]
-        [ValidateSet('Browse','Open','Copy','Paste','Default','Clear')]
+        [ValidateSet('BrowseFile','BrowseFolder','Open','Copy','Paste','Default','Clear')]
         [System.String]$Action
     )
     
@@ -344,12 +345,16 @@ function Invoke-TextBoxAction {
     # EXECUTION
     # Switch on the action
     switch ($Action) {
-        'Browse'    { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $TextBox.Text = $FolderName } }
-        'Open'      { Open-Folder -Path $TextBox.Text }
-        'Copy'      { Set-ClipBoard -Value  $TextBoxContent ; Write-Line "The content of the TextBox has been copied to the clipboard. ($TextBoxContent)" }
-        'Paste'     { $TextBox.Text = Get-ClipBoard ; Write-Line "The content of the clipboard has been pasted into the TextBox. ($($TextBox.Text))" }
-        'Default'   { $TextBox.Text = $TextBox.Tag.DefaultValue ; Write-Line "The TextBox has been reset to the default value: ($($TextBox.Text))" }
-        'Clear'     { $TextBox.Clear() ; Write-Line "The TextBox has been cleared." }
+        # The Browse actions are still in development, but the structure is in place to easily implement them once the file and folder selection functions are ready.
+        'BrowseFile'    { Write-Line "Invoke-TextBoxAction: This function is still in development." }
+        'BrowseFolder'  { Write-Line "Invoke-TextBoxAction: This function is still in development." }
+        #'BrowseFile'    { [System.String]$FileName = Select-Item -File ; if ($FileName) { $TextBox.Text = $FileName } }
+        #'BrowseFolder'  { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $TextBox.Text = $FolderName } }
+        'Open'          { Open-Folder -Path $TextBoxContent }
+        'Copy'          { Set-ClipBoard -Value  $TextBoxContent ; Write-Line "The content of the TextBox has been copied to the clipboard. ($TextBoxContent)" }
+        'Paste'         { $TextBox.Text = Get-ClipBoard ; Write-Line "The content of the clipboard has been pasted into the TextBox. ($($TextBox.Text))" }
+        'Default'       { $TextBox.Text = $TextBox.Tag.DefaultValue ; Write-Line "The TextBox has been reset to the default value: ($($TextBox.Text))" }
+        'Clear'         { $TextBox.Clear() ; Write-Line "The TextBox has been cleared." }
     }
 }
 
