@@ -62,7 +62,7 @@ function Import-FeatureIntakeApplicationShortcuts {
             RowNumber                   = 1
             Label                       = 'Select Shortcut / Folder'
             PropertyName                = 'ComboBoxes.ApplicationIntake.ApplicationShortcuts'
-            ToolTip                     = 'The shortcuts of the application.'
+            ToolTip                     = 'The shortcut or shortcutfolder of the application.'
             SizeType                    = 'Medium'
             Shortcuts                   = Get-Shortcuts -IncludeInternetShortcuts
         }
@@ -79,7 +79,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 Text            = 'Details'
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
-                ToolTip         = 'View details of the selected shortcut.'
+                ToolTip         = 'View details of the selected shortcut or folder.'
                 Function        = { $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
             @{
