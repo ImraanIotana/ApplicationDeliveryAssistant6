@@ -17,7 +17,7 @@
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Import-FeatureIntakeApplicationSelection {
@@ -57,13 +57,15 @@ function Import-FeatureIntakeApplicationSelection {
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Import from Registry'
-            PropertyName                = 'SubTab.Intake.SelectedApplicationFromRegistry'
+            PropertyName                = 'ComboBoxes.ApplicationIntake.SelectedApplication'
             ToolTip                     = 'The name of the application to intake'
             SizeType                    = 'Medium'
             ApplicationsFromRegistry    = Get-InstalledApplicationsFromRegistry
         }
+        # Create the hashtables for the ComboBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.ComboBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.ComboBoxes.ApplicationIntake = @{} }
         # Create the ComboBoxes
-        [System.Windows.Forms.ComboBox]$SelectedApplicationComboBox = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        $Global:Graphics.ComboBoxes.ApplicationIntake.SelectedApplication = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
 
         # EXECUTION - BUTTONS
         # Set the Import Button properties
@@ -74,7 +76,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'download_for_windows'
                 SizeType        = 'Medium'
                 ToolTip         = 'Import the selected application from the registry.'
-                Function        = { Import-SelectedApplicationToIntake -SelectedApplication $SelectedApplicationComboBox.SelectedItem }.GetNewClosure()
+                Function        = { Import-SelectedApplicationToIntake -SelectedApplication $Global:Graphics.ComboBoxes.ApplicationIntake.SelectedApplication.SelectedItem }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 5
@@ -82,7 +84,10 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'arrow_refresh'
                 SizeType        = 'Medium'
                 ToolTip         = 'Refresh the list of applications from the registry.'
-                Function        = { Update-ComboBox -ComboBox $SelectedApplicationComboBox -ApplicationsFromRegistry (Get-InstalledApplicationsFromRegistry) }.GetNewClosure()
+                Function        = {
+                    Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.SelectedApplication -ApplicationsFromRegistry (Get-InstalledApplicationsFromRegistry)
+                    Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts -Shortcuts (Get-Shortcuts -IncludeInternetShortcuts)
+                }.GetNewClosure()
             }
         )
         # Set the Small Buttons properties
@@ -93,7 +98,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected application.'
-                Function        = { $SelectedApplicationComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { $Global:Graphics.ComboBoxes.ApplicationIntake.SelectedApplication.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -101,7 +106,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'regedit'
                 SizeType        = 'Small'
                 ToolTip         = 'Open the registry editor at the selected applications registry path.'
-                Function        = { Start-RegistryEditor -Key $SelectedApplicationComboBox.SelectedItem.RegistryPath }.GetNewClosure()
+                Function        = { Start-RegistryEditor -Key $Global:Graphics.ComboBoxes.ApplicationIntake.SelectedApplication.SelectedItem.RegistryPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
@@ -109,7 +114,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'table_export'
                 SizeType        = 'Small'
                 ToolTip         = 'Export the selected application to a text file.'
-                Function        = { Export-RegistryKey -RegistryKeyPath $SelectedApplicationComboBox.SelectedItem.RegistryPath -OpenOutputFolder }.GetNewClosure()
+                Function        = { Export-RegistryKey -RegistryKeyPath $Global:Graphics.ComboBoxes.ApplicationIntake.SelectedApplication.SelectedItem.RegistryPath -OpenOutputFolder }.GetNewClosure()
             }
         )
         # Add the Buttons
@@ -178,6 +183,7 @@ function Import-SelectedApplicationToIntake {
 
     # EXECUTION
     # Populate the Application Formal Properties and Application Custom Properties sections with the selected application's information from the registry
+    Write-Line "Importing application ($($SelectedApplication.DisplayName))..."
     foreach ($Section in $Sections) {
         foreach ($TextBoxName in $MappingHashtable.Keys) {
             [System.String]$SelectedApplicationPropertyName = $MappingHashtable[$TextBoxName]

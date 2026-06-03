@@ -119,7 +119,7 @@ function Open-Folder {
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Get-Shortcuts {
@@ -145,12 +145,12 @@ function Get-Shortcuts {
         }
         @{
             Path     = Join-Path -Path $env:APPDATA -ChildPath 'Microsoft\Windows\Start Menu\Programs'
-            Prefix   = 'USER__'
+            Prefix   = 'USER'
             Location = 'StartMenu'
         }
         @{
             Path     = Join-Path -Path $env:USERPROFILE -ChildPath 'Desktop'
-            Prefix   = 'USER__'
+            Prefix   = 'USER'
             Location = 'Desktop'
         }
     )
@@ -205,8 +205,7 @@ function Get-Shortcuts {
     # OUTPUT
     # Return unique items — folders first, then shortcuts — sorted alphabetically within each group
     $Shortcuts |
-    Sort-Object FullPath -Unique |
-    Sort-Object Type, ComboBoxName
+    Sort-Object FullPath -Unique | Sort-Object Prefix, Type, ComboBoxName
 }
 
 ### END OF FUNCTION

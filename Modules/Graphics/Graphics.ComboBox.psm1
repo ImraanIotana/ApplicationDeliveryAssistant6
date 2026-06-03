@@ -79,7 +79,10 @@ function Update-ComboBox {
         [System.String[]]$ContentStringArray,
 
         [Parameter(Mandatory=$false,HelpMessage='The array of application objects that will be displayed in the ComboBox.')]
-        [System.Object[]]$ApplicationsFromRegistry
+        [System.Object[]]$ApplicationsFromRegistry,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of shortcut objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$Shortcuts
     )
 
     # VALIDATION
@@ -115,6 +118,15 @@ function Update-ComboBox {
             # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the RegistryPath)
             $ComboBox.ValueMember = 'RegistryPath'
             [System.Void]$ComboBox.Items.AddRange([System.Object[]]$ApplicationsFromRegistry)
+        }
+
+        # Fill the ComboBox items from the Shortcuts parameter
+        if ($Shortcuts.Count -gt 0) {
+            # Set the DisplayMember to the property of the shortcut objects that contains the name to display in the ComboBox
+            $ComboBox.DisplayMember = 'ComboBoxName'
+            # Set the ValueMember to the property of the shortcut objects that contains the value to use when an item is selected in the ComboBox (in this case, the FullPath)
+            $ComboBox.ValueMember = 'FullPath'
+            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$Shortcuts)
         }
 
         # Write a message to the host indicating that the ComboBox has been updated

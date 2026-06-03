@@ -80,7 +80,7 @@ function Import-FeatureApplicationFormalProperties {
             RowNumber       = 3
             Label           = 'Application Version'
             PropertyName    = 'TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion'
-            ToolTip         = 'The version of the application'
+            ToolTip         = 'The formal version of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))

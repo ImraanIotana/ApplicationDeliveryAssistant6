@@ -61,13 +61,15 @@ function Import-FeatureIntakeApplicationShortcuts {
         [System.Collections.Hashtable]$ApplicationShortcutsComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Select Shortcut / Folder'
-            PropertyName                = 'SubTab.Intake.ApplicationShortcuts.SelectedShortcuts'
+            PropertyName                = 'ComboBoxes.ApplicationIntake.ApplicationShortcuts'
             ToolTip                     = 'The shortcuts of the application.'
             SizeType                    = 'Medium'
             Shortcuts                   = Get-Shortcuts -IncludeInternetShortcuts
         }
+        # Create the hashtables for the ComboBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.ComboBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.ComboBoxes.ApplicationIntake = @{} }
         # Create the ComboBox
-        [System.Windows.Forms.ComboBox]$ApplicationShortcutsComboBox = New-ComboBox @ApplicationShortcutsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts = New-ComboBox @ApplicationShortcutsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
 
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
@@ -78,7 +80,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected shortcut.'
-                Function        = { $ApplicationShortcutsComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -86,7 +88,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'folder_go'
                 SizeType        = 'Small'
                 ToolTip         = 'Open the folder containing the selected shortcut.'
-                Function        = { Open-Folder -Path $ApplicationShortcutsComboBox.SelectedItem.FullPath }.GetNewClosure()
+                Function        = { Open-Folder -Path $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem.FullPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
