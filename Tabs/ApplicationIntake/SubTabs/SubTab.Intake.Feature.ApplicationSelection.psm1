@@ -74,24 +74,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'download_for_windows'
                 SizeType        = 'Medium'
                 ToolTip         = 'Import the selected application from the registry.'
-                Function        = {
-                    [PSCustomObject]$SelectedApplication = $SelectedApplicationComboBox.SelectedItem
-                    if ($SelectedApplication) {
-                        # Populate the Application Formal Properties section with the selected applications information from the registry
-                        $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.VendorName.Text = $SelectedApplication.Publisher
-                        $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationName.Text = $SelectedApplication.DisplayName
-                        $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion.Text = $SelectedApplication.DisplayVersion
-                        # Populate the Application Custom Properties section with the selected applications information from the registry
-                        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.VendorName.Text = $SelectedApplication.Publisher
-                        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationName.Text = $SelectedApplication.DisplayName
-                        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion.Text = $SelectedApplication.DisplayVersion
-                        # Populate the Application Security section with the selected applications information from the registry
-                        $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text = $SelectedApplication.InstallLocation
-                    }
-                    else {
-                        Write-Line 'No application selected. Please select an application from the dropdown menu.'
-                    }
-                }.GetNewClosure()
+                Function        = { Import-SelectedApplicationToIntake -SelectedApplication $SelectedApplicationComboBox.SelectedItem }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 5
@@ -145,3 +128,66 @@ function Import-FeatureIntakeApplicationSelection {
 ### END OF FUNCTION
 ####################################################################################################
 
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Imports the selected registry application data into Intake textboxes.
+.DESCRIPTION
+    This function populates Application Formal Properties, Custom Properties, and Security fields
+    with values from the selected application object.
+.EXAMPLE
+    Import-SelectedApplicationToIntake -SelectedApplication $SelectedApplication
+.INPUTS
+    [PSCustomObject]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Import-SelectedApplicationToIntake {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The selected application object from the registry.')]
+        [PSCustomObject]$SelectedApplication
+    )
+
+    # VALIDATION
+    # If SelectedApplication is not provided, throw an error
+    if ($null -eq $SelectedApplication) {
+        Write-Line 'No application selected. Please select an application from the dropdown menu.' ; return
+    }
+
+    # PREPARATION
+    # Define the sections to populate
+    [System.Object[]]$Sections = @(
+        $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties
+        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties
+    )
+    # Set the mapping hashtable
+    [System.Collections.Hashtable]$MappingHashtable = @{
+        VendorName          = 'Publisher'
+        ApplicationName     = 'DisplayName'
+        ApplicationVersion  = 'DisplayVersion'
+    }
+
+    # EXECUTION
+    # Populate the Application Formal Properties and Application Custom Properties sections with the selected application's information from the registry
+    foreach ($Section in $Sections) {
+        foreach ($TextBoxName in $MappingHashtable.Keys) {
+            [System.String]$SelectedApplicationPropertyName = $MappingHashtable[$TextBoxName]
+            $Section.$TextBoxName.Text = $SelectedApplication.$SelectedApplicationPropertyName
+        }
+    }
+
+    # Populate the Application Security section with the selected application's information from the registry
+    $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text = $SelectedApplication.InstallLocation
+}
+
+### END OF FUNCTION
+####################################################################################################
