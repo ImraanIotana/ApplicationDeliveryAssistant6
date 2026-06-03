@@ -55,7 +55,7 @@ function Import-SubTabIntake {
         $ApplicationSecurityGroupBox            = Import-FeatureApplicationSecurity         -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationCustomPropertiesGroupBox
         $ApplicationDetectionGroupBox           = Import-FeatureIntakeApplicationDetection  -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationSecurityGroupBox
         $ApplicationShortcutsGroupBox           = Import-FeatureIntakeApplicationShortcuts  -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationDetectionGroupBox
-        $ApplicationIDGroupBox                  = Import-FeatureIntakeApplicationID         -InputObject $InputObject -Color $BottomColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationShortcutsGroupBox
+        $null                                   = Import-FeatureIntakeApplicationID         -InputObject $InputObject -Color $BottomColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationShortcutsGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
