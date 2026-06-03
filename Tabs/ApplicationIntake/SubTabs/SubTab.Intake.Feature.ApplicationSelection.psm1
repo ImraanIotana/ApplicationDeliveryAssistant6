@@ -31,7 +31,10 @@ function Import-FeatureIntakeApplicationSelection {
         [System.Windows.Forms.TabPage]$ParentTabPage,
 
         [Parameter(Mandatory=$false,HelpMessage='The GroupBox above which this Feature will be added.')]
-        [System.Windows.Forms.GroupBox]$GroupBoxAbove
+        [System.Windows.Forms.GroupBox]$GroupBoxAbove,
+
+        [Parameter(Mandatory=$false,HelpMessage='The color of the GroupBox.')]
+        [System.String]$Color
     )
 
     try {
@@ -41,7 +44,7 @@ function Import-FeatureIntakeApplicationSelection {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION SELECTION'
-            Color           = 'Lime'
+            Color           = $Color
             NumberOfRows    = 2
         }
         # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property

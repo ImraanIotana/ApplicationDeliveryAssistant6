@@ -151,7 +151,7 @@ function Update-ComboBox {
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function New-ComboBox {
@@ -178,7 +178,7 @@ function New-ComboBox {
         [System.String]$Label,
 
         [Parameter(Mandatory=$false,HelpMessage='The color of the text.')]
-        [System.String]$TextColor = 'Black',
+        [System.String]$TextColor,
 
         [Parameter(Mandatory=$false,HelpMessage='The PropertyName that will be added to the object, to interact with the registry.')]
         [System.String]$PropertyName,
@@ -256,7 +256,14 @@ function New-ComboBox {
         'Output'    { 'Beige' }
     }
     # Set the ForeColor
-    $NewComboBox.ForeColor = $TextColor
+    $NewComboBox.ForeColor = if ($TextColor) {
+        $TextColor
+    } else {
+        switch ($Type) {
+            'Input'     { 'Black' }
+            'Output'    { 'Blue' }
+        }
+    }
 
     # EDIT STYLE
     # Input combo boxes are editable, output combo boxes are selection-only

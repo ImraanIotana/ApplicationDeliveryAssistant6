@@ -104,7 +104,7 @@ function New-TextBox {
         [System.String]$Label,
 
         [Parameter(Mandatory=$false,HelpMessage='The color of the text.')]
-        [System.String]$TextColor = 'Black',
+        [System.String]$TextColor,
 
         [Parameter(Mandatory=$false,HelpMessage='The PropertyName that will be added to the object, to interact with the registry.')]
         [System.String]$PropertyName,
@@ -128,7 +128,6 @@ function New-TextBox {
     # PREPARATION
     # Input
     [System.Collections.Hashtable]$Settings     = $InputObject.GraphicalSettings
-
     # Create a new TextBox as the Output
     [System.Windows.Forms.TextBox]$NewTextBox   = New-Object System.Windows.Forms.TextBox
 
@@ -161,7 +160,14 @@ function New-TextBox {
         'Output'    { 'Beige' }
     }
     # Set the ForeColor
-    $NewTextBox.ForeColor = $TextColor
+    $NewTextBox.ForeColor = if ($TextColor) {
+        $TextColor
+    } else {
+        switch ($Type) {
+            'Input'     { 'Black' }
+            'Output'    { 'Blue' }
+        }
+    }
 
     # READONLY
     # Set the ReadOnly property
@@ -224,12 +230,13 @@ function New-TextBox {
                     ColumnNumber    = $ColumnNumber
                     Text            = $ButtonText
                     Function        = switch ($ButtonText) {
-                        'Browse'    { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Browse' }.GetNewClosure() }
-                        'Open'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
-                        'Copy'      { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
-                        'Paste'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
-                        'Default'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
-                        'Clear'     { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
+                        'Browse File'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'BrowseFile' }.GetNewClosure() }
+                        'Browse Folder' { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'BrowseFolder' }.GetNewClosure() }
+                        'Open'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
+                        'Copy'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
+                        'Paste'         { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
+                        'Default'       { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
+                        'Clear'         { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
                     }
                 }
                 # Add the hashtable to the ButtonPropertiesArray
@@ -248,10 +255,10 @@ function New-TextBox {
             # Initialize the ButtonPropertiesArray in the Tag property
             $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name ButtonPropertiesArray -Value @()
             # Add each button to the ButtonPropertiesArray
-            foreach ($Button in $SmallButtons) {
+            foreach ($SmallButton in $SmallButtons) {
                 # Set the button properties
-                [System.Int32]$ColumnNumber = $Button[0]
-                [System.String]$ButtonText  = $Button[1]
+                [System.Int32]$ColumnNumber = $SmallButton[0]
+                [System.String]$ButtonText  = $SmallButton[1]
                 # Create the hashtable
                 [System.Collections.Hashtable]$ButtonHashtable = @{
                     ColumnNumber    = $ColumnNumber
@@ -346,8 +353,8 @@ function Invoke-TextBoxAction {
     # Switch on the action
     switch ($Action) {
         # The Browse actions are still in development, but the structure is in place to easily implement them once the file and folder selection functions are ready.
-        'BrowseFile'    { Write-Line "Invoke-TextBoxAction: This function is still in development." }
-        'BrowseFolder'  { Write-Line "Invoke-TextBoxAction: This function is still in development." }
+        'BrowseFile'    { Write-Line "Invoke-TextBoxAction (BrowseFile): This function is still in development." }
+        'BrowseFolder'  { Write-Line "Invoke-TextBoxAction (BrowseFolder): This function is still in development." }
         #'BrowseFile'    { [System.String]$FileName = Select-Item -File ; if ($FileName) { $TextBox.Text = $FileName } }
         #'BrowseFolder'  { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $TextBox.Text = $FolderName } }
         'Open'          { Open-Folder -Path $TextBoxContent }
