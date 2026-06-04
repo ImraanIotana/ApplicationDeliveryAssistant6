@@ -66,6 +66,7 @@ function Import-FeatureApplicationSecurity {
             Label           = 'AD Group Name'
             PropertyName    = 'TextBoxes.ApplicationIntake.Security.ADGroupName'
             ToolTip         = 'The Active Directory group name associated with the application'
+            DefaultValue    = 'Everyone'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
         }
@@ -75,6 +76,7 @@ function Import-FeatureApplicationSecurity {
             Label           = 'AD Group SID'
             PropertyName    = 'TextBoxes.ApplicationIntake.Security.ADGroupSID'
             ToolTip         = 'The Security Identifier (SID) of the Active Directory group associated with the application'
+            DefaultValue    = 'S-1-1-0'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
         }
