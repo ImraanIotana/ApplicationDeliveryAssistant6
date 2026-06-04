@@ -40,8 +40,8 @@ function Import-TabApplicationIntake {
 
         # EXECUTION - TEXTBOXES AND COMBOBOXES
         # Create the hashtables for the TextBoxes and ComboBoxes of the Features
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.TextBoxes.ApplicationIntake = @{} }
-        if (-not $Global:Graphics.ComboBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.ComboBoxes.ApplicationIntake = @{} }
+        New-TextBoxSubKey -Name 'ApplicationIntake'
+        New-ComboBoxSubKey -Name 'ApplicationIntake'
 
         # EXECUTION - TABPAGE
         # Create the TabPage
