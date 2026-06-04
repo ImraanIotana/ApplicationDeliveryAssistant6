@@ -45,10 +45,12 @@ function Import-SubTabIntake {
         [System.String]$MiddleColor = 'Yellow'
         [System.String]$BottomColor = $TopColor
 
+        # EXECUTION - TABPAGE
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
-        # Import the Features
+        # EXECUTION - FEATURES
+        # Import the Features and store the returned GroupBoxes in variables to be used as the GroupBoxAbove parameter for the next Feature
         $IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection  -InputObject $InputObject -Color $TopColor -ParentTabPage $ParentTabPage
         $ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
         $ApplicationCustomPropertiesGroupBox    = Import-FeatureApplicationCustomProperties -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationFormalPropertiesGroupBox

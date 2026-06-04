@@ -86,7 +86,6 @@ function Import-FeatureApplicationFormalProperties {
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.TextBoxes.ApplicationIntake = @{} }
         if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('FormalProperties')) { $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties = @{} }
         # Create the TextBoxes
         $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.VendorName            = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox

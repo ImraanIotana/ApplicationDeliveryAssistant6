@@ -52,22 +52,16 @@ function Import-FeatureIntakeApplicationShortcuts {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
-
-        # test
-        #Get-Shortcuts -IncludeInternetShortcuts | Format-Table -AutoSize | Out-String | Write-Host
-
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
         [System.Collections.Hashtable]$ApplicationShortcutsComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Select Shortcut / Folder'
             PropertyName                = 'ComboBoxes.ApplicationIntake.ApplicationShortcuts'
-            ToolTip                     = 'The shortcut or shortcutfolder of the application.'
+            ToolTip                     = 'The shortcut or shortcut folder of the application.'
             SizeType                    = 'Medium'
             Shortcuts                   = Get-Shortcuts -IncludeInternetShortcuts
         }
-        # Create the hashtables for the ComboBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.ComboBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.ComboBoxes.ApplicationIntake = @{} }
         # Create the ComboBox
         $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts = New-ComboBox @ApplicationShortcutsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
 

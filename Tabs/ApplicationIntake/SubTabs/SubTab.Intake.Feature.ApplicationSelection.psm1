@@ -62,8 +62,6 @@ function Import-FeatureIntakeApplicationSelection {
             SizeType                    = 'Medium'
             ApplicationsFromRegistry    = Get-InstalledApplicationsFromRegistry
         }
-        # Create the hashtables for the ComboBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.ComboBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.ComboBoxes.ApplicationIntake = @{} }
         # Create the ComboBoxes
         $Global:Graphics.ComboBoxes.ApplicationIntake.SelectedApplication = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
 

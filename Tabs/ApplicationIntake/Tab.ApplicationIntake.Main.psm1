@@ -30,6 +30,7 @@ function Import-TabApplicationIntake {
 
 
     try {
+        # PREPARATION - TABPAGE
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
@@ -38,14 +39,20 @@ function Import-TabApplicationIntake {
             BackGroundColor     = 'RoyalBlue'
         }
 
+        # EXECUTION - TABPAGE
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
+        # EXECUTION - SUBTABS
         # Create the SubTabControl and add it to the TabPage
         [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
-
         # Import the SubTabs
         Import-SubTabIntake -InputObject $InputObject -ParentTabControl $SubTabControl
+
+        # EXECUTION - SUBTAB TEXTBOXES AND COMBOBOXES
+        # Create the hashtable for the TextBoxes and ComboBoxes of the Features in this sub-tab
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.TextBoxes.ApplicationIntake = @{} }
+        if (-not $Global:Graphics.ComboBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.ComboBoxes.ApplicationIntake = @{} }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
