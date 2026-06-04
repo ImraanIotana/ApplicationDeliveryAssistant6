@@ -38,6 +38,7 @@ function Import-FeatureApplicationFormalProperties {
     )
 
     try {
+        # EXECUTION - GROUPBOX
         # Feature properties
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
@@ -45,10 +46,8 @@ function Import-FeatureApplicationFormalProperties {
             Title           = 'APPLICATION FORMAL PROPERTIES'
             Color           = $Color
             NumberOfRows    = 3
+            GroupBoxAbove   = $GroupBoxAbove
         }
-        # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
-        if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
-
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 

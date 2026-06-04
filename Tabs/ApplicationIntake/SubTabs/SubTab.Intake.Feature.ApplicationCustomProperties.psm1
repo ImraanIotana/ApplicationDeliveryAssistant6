@@ -38,6 +38,7 @@ function Import-FeatureApplicationCustomProperties {
     )
 
     try {
+        # EXECUTION - GROUPBOX
         # Feature properties
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
@@ -45,10 +46,8 @@ function Import-FeatureApplicationCustomProperties {
             Title           = 'APPLICATION CUSTOM PROPERTIES'
             Color           = $Color
             NumberOfRows    = 3
+            GroupBoxAbove   = $GroupBoxAbove
         }
-        # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
-        if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
-
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
@@ -82,7 +81,6 @@ function Import-FeatureApplicationCustomProperties {
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.TextBoxes.ApplicationIntake = @{} }
         if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) { $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties = @{} }
         # Create the TextBoxes
         $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.VendorName          = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox

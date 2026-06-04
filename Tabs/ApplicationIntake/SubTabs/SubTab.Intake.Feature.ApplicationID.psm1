@@ -46,9 +46,8 @@ function Import-FeatureIntakeApplicationID {
             Title           = 'APPLICATION ID'
             Color           = $Color
             NumberOfRows    = 2
+            GroupBoxAbove   = $GroupBoxAbove
         }
-        # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
-        if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
@@ -57,15 +56,15 @@ function Import-FeatureIntakeApplicationID {
         [System.Collections.Hashtable]$ApplicationIDTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Application ID'
-            PropertyName    = 'TextBoxes.IntakeApplication.ApplicationID'
+            PropertyName    = 'TextBoxes.ApplicationIntake.ApplicationID'
             ToolTip         = 'The ID of the application to intake'
             SizeType        = 'Medium'
             Type            = 'Output'
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.TextBoxes.ApplicationIntake = @{} }
         # Create the TextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.ApplicationID = New-TextBox @ApplicationIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID = New-TextBox @ApplicationIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
         # Set the Buttons properties

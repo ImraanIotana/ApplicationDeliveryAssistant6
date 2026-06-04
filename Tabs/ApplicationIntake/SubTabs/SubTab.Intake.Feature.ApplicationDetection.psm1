@@ -46,9 +46,8 @@ function Import-FeatureIntakeApplicationDetection {
             Title           = 'APPLICATION DETECTION'
             Color           = $Color
             NumberOfRows    = 1
+            GroupBoxAbove   = $GroupBoxAbove
         }
-        # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
-        if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
@@ -57,16 +56,15 @@ function Import-FeatureIntakeApplicationDetection {
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Detection file / MSI'
-            PropertyName                = 'TextBoxes.IntakeApplication.Detection.DetectionFile'
+            PropertyName                = 'TextBoxes.ApplicationIntake.Detection.DetectionFile'
             ToolTip                     = 'The detection file or MSI of the application. This will be used to automatically populate the detection information in the distribution system.'
             SizeType                    = 'Medium'
             SmallButtons                = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeApplication')) { $Global:Graphics.TextBoxes.IntakeApplication = @{} }
-        if (-not $Global:Graphics.TextBoxes.IntakeApplication.ContainsKey('Detection')) { $Global:Graphics.TextBoxes.IntakeApplication.Detection = @{} }
+        if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Detection')) { $Global:Graphics.TextBoxes.ApplicationIntake.Detection = @{} }
         # Create the TextBox
-        $Global:Graphics.TextBoxes.IntakeApplication.Detection.DetectionFile = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # POST-EXECUTION
         # Return the GroupBox object
