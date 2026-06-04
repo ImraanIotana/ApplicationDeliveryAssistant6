@@ -39,9 +39,10 @@ function Import-TabApplicationIntake {
         }
 
         # EXECUTION - TEXTBOXES AND COMBOBOXES
-        # Create the hashtables for the TextBoxes and ComboBoxes of the Features
-        New-TextBoxSubKey -Name 'ApplicationIntake'
-        New-ComboBoxSubKey -Name 'ApplicationIntake'
+        # Create the subkeys for the TextBoxes and ComboBoxes of the Features
+        [System.String]$SubKeyName = 'ApplicationIntake'
+        New-TextBoxSubKey -Name $SubKeyName
+        New-ComboBoxSubKey -Name $SubKeyName
 
         # EXECUTION - TABPAGE
         # Create the TabPage
