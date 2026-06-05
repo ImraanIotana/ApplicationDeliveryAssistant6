@@ -58,7 +58,7 @@ function Import-FeatureApplicationSecurity {
             PropertyName    = 'TextBoxes.ApplicationIntake.Security.InstallationFolder'
             ToolTip         = 'The installation folder of the application'
             SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Browse Folder'),@(6,'Paste'),@(7,'Open'))
+            SmallButtons    = @(@(6,'Paste'),@(7,'Open'))
         }
         # Set the ADGroupNameTextBox properties
         [System.Collections.Hashtable]$ADGroupNameTextBoxProperties = @{
@@ -87,6 +87,24 @@ function Import-FeatureApplicationSecurity {
         $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupName          = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID           = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
+        # EXECUTION - BUTTONS
+        # Set the Small Buttons properties
+        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
+            @{
+                ColumnNumber    = 5
+                Text            = 'Browse Folder'
+                PNGFileName     = 'folders_explorer'
+                SizeType        = 'Small'
+                ToolTip         = 'The installation folder of the application. This will be used to automatically populate the installation information in the distribution system.'
+                Function        = {
+                    [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
+                    Select-Folder -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder
+                }.GetNewClosure()
+            }
+        )
+        # Add the Buttons
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        
         # Return the GroupBox object
         $FeatureGroupBox
     }

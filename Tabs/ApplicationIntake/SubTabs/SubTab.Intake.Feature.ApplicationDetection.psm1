@@ -59,12 +59,30 @@ function Import-FeatureIntakeApplicationDetection {
             PropertyName                = 'TextBoxes.ApplicationIntake.Detection.DetectionFile'
             ToolTip                     = 'The detection file or MSI of the application. This will be used to automatically populate the detection information in the distribution system.'
             SizeType                    = 'Medium'
-            SmallButtons                = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
+            SmallButtons                = @(@(6,'Paste'),@(7,'Open'))
         }
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
         if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Detection')) { $Global:Graphics.TextBoxes.ApplicationIntake.Detection = @{} }
         # Create the TextBox
         $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+
+        # EXECUTION - BUTTONS
+        # Set the Small Buttons properties
+        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
+            @{
+                ColumnNumber    = 5
+                Text            = 'Browse File'
+                PNGFileName     = 'magnifier'
+                SizeType        = 'Small'
+                ToolTip         = 'The detection file or MSI of the application. This will be used to automatically populate the detection information in the distribution system.'
+                Function        = {
+                    [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
+                    Select-File -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile -Type Executable
+                }.GetNewClosure()
+            }
+        )
+        # Add the Buttons
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
 
         # POST-EXECUTION
         # Return the GroupBox object
