@@ -95,7 +95,7 @@ function Import-FeatureApplicationSecurity {
                 Text            = 'Browse Folder'
                 PNGFileName     = 'folders_explorer'
                 SizeType        = 'Small'
-                ToolTip         = 'The installation folder of the application. This will be used to automatically populate the installation information in the distribution system.'
+                ToolTip         = 'The installation folder of the application. This will be used to create security files like AppLocker policies.'
                 Function        = {
                     [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
                     Select-Folder -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder
