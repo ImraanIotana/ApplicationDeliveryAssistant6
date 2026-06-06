@@ -38,15 +38,15 @@ function Import-TabApplicationIntake {
             BackGroundColor     = 'RoyalBlue'
         }
 
+        # EXECUTION - TABPAGE
+        # Create the TabPage
+        [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
+
         # EXECUTION - TEXTBOXES AND COMBOBOXES
         # Create the subkeys for the TextBoxes and ComboBoxes of the Features
         [System.String]$SubKeyName = 'ApplicationIntake'
         New-TextBoxSubKey -Name $SubKeyName
         New-ComboBoxSubKey -Name $SubKeyName
-
-        # EXECUTION - TABPAGE
-        # Create the TabPage
-        [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
         # EXECUTION - SUBTABS
         # Create the SubTabControl and add it to the TabPage

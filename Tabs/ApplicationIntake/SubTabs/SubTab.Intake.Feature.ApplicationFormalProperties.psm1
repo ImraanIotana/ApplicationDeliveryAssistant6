@@ -43,7 +43,7 @@ function Import-FeatureApplicationFormalProperties {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'APPLICATION FORMAL PROPERTIES'
+            Title           = 'FORMAL APPLICATION PROPERTIES'
             Color           = $Color
             NumberOfRows    = 3
             GroupBoxAbove   = $GroupBoxAbove
@@ -55,7 +55,7 @@ function Import-FeatureApplicationFormalProperties {
         # Set the VendorNameTextBox properties
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'Vendor Name'
+            Label           = 'Formal Vendor Name'
             PropertyName    = 'TextBoxes.ApplicationIntake.FormalProperties.VendorName'
             ToolTip         = 'The formal name of the vendor of the application'
             SizeType        = 'Medium'
@@ -66,7 +66,7 @@ function Import-FeatureApplicationFormalProperties {
         # Set the ApplicationNameTextBox properties
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
-            Label           = 'Application Name'
+            Label           = 'Formal Application Name'
             PropertyName    = 'TextBoxes.ApplicationIntake.FormalProperties.ApplicationName'
             ToolTip         = 'The formal name of the application'
             SizeType        = 'Medium'
@@ -77,7 +77,7 @@ function Import-FeatureApplicationFormalProperties {
         # Set the ApplicationVersionTextBox properties
         [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
             RowNumber       = 3
-            Label           = 'Application Version'
+            Label           = 'Formal Application Version'
             PropertyName    = 'TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion'
             ToolTip         = 'The formal version of the application'
             SizeType        = 'Medium'

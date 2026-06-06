@@ -57,7 +57,7 @@ function Import-FeatureIntakeApplicationDetection {
             RowNumber                   = 1
             Label                       = 'Detection file / MSI'
             PropertyName                = 'TextBoxes.ApplicationIntake.Detection.DetectionFile'
-            ToolTip                     = 'The detection file or MSI of the application. This will be used to automatically populate the detection information in the distribution system.'
+            ToolTip                     = 'The detection file or MSI of the application. This will be used to acquire the detection information for the distribution system.'
             SizeType                    = 'Medium'
             SmallButtons                = @(@(6,'Paste'),@(7,'Open'))
         }
@@ -74,7 +74,7 @@ function Import-FeatureIntakeApplicationDetection {
                 Text            = 'Browse File'
                 PNGFileName     = 'magnifier'
                 SizeType        = 'Small'
-                ToolTip         = 'The detection file or MSI of the application. This will be used to automatically populate the detection information in the distribution system.'
+                ToolTip         = 'Browse for the detection file or MSI of the application.'
                 Function        = {
                     [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
                     Select-File -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile -Type Executable
