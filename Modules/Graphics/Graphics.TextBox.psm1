@@ -353,8 +353,8 @@ function Invoke-TextBoxAction {
     # Switch on the action
     switch ($Action) {
         # The Browse actions are still in development, but the structure is in place to easily implement them once the file and folder selection functions are ready.
-        'BrowseFile'    { Select-File }
-        'BrowseFolder'  { Write-Line "Invoke-TextBoxAction (BrowseFolder): This function is still in development." }
+        'BrowseFile'    { Select-File -TextBox $TextBox }
+        'BrowseFolder'  { Select-Folder -TextBox $TextBox }
         #'BrowseFile'    { [System.String]$FileName = Select-Item -File ; if ($FileName) { $TextBox.Text = $FileName } }
         #'BrowseFolder'  { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $TextBox.Text = $FolderName } }
         'Open'          { Open-Folder -Path $TextBoxContent }

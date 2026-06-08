@@ -67,34 +67,6 @@ function Import-FeatureAppLauncher {
             },
             @{
                 ColumnNumber    = 3
-                Text            = 'Cmd'
-                PNGFileName     = 'application_xp_terminal'
-                SizeType        = 'Large'
-                ToolTip         = 'Open the Command Prompt window'
-                Function        = { Start-Process cmd.exe }
-            },
-            @{
-                ColumnNumber    = 4
-                Text            = 'PowerShell'
-                PNGFileName     = 'powershell'
-                SizeType        = 'Large'
-                ToolTip         = 'Open the PowerShell window'
-                Function        = { Start-Process powershell.exe }
-            },
-            @{
-                ColumnNumber    = 5
-                Text            = 'PowerShell ISE'
-                PNGFileName     = 'powershell'
-                SizeType        = 'Large'
-                ToolTip         = 'Open the PowerShell ISE window'
-                Function        = { Start-Process powershell_ise.exe }
-            }
-        )
-
-        # Set the Button properties
-        [System.Collections.Hashtable[]]$ButtonPropertiesArray2 = @(
-            @{
-                ColumnNumber    = 1
                 Text            = 'Event Viewer'
                 PNGFileName     = 'book'
                 SizeType        = 'Large'
@@ -102,7 +74,7 @@ function Import-FeatureAppLauncher {
                 Function        = { Start-Process mmc.exe eventvwr.msc }
             },
             @{
-                ColumnNumber    = 2
+                ColumnNumber    = 4
                 Text            = 'Services'
                 PNGFileName     = 'cog'
                 SizeType        = 'Large'
@@ -110,28 +82,54 @@ function Import-FeatureAppLauncher {
                 Function        = { Start-Process mmc.exe services.msc }
             },
             @{
-                ColumnNumber    = 3
-                Text            = 'Cmd (Admin)'
-                PNGFileName     = 'application_xp_terminal'
+                ColumnNumber    = 5
+                Text            = 'Certificate Manager'
+                PNGFileName     = 'ssl_certificates'
                 SizeType        = 'Large'
-                ToolTip         = 'Open the Command Prompt window as Administrator'
-                Function        = { Start-Process cmd.exe -Verb RunAs }
+                ToolTip         = 'Open the Certificate Manager window to manage certificates'
+                Function        = { Start-Process certmgr.msc }
+            }
+        )
+        [System.Collections.Hashtable[]]$ButtonPropertiesArray2 = @(
+            @{
+                ColumnNumber    = 1
+                Text            = 'Task Scheduler'
+                PNGFileName     = 'clock_go'
+                SizeType        = 'Large'
+                ToolTip         = 'Open the Task Scheduler window to manage scheduled tasks'
+                Function        = { Start-Process taskschd.msc }
+            },
+            @{
+                ColumnNumber    = 2
+                Text            = 'Snipping Tool'
+                PNGFileName     = 'camera_add'
+                SizeType        = 'Large'
+                ToolTip         = 'Open the Snipping Tool to capture screenshots'
+                Function        = { Start-Process snippingtool.exe }
+            }
+            @{
+                ColumnNumber    = 3
+                Text            = 'Computer Management'
+                PNGFileName     = 'computer'
+                SizeType        = 'Large'
+                ToolTip         = 'Open the Computer Management window to manage system settings'
+                Function        = { Start-Process compmgmt.msc }
             },
             @{
                 ColumnNumber    = 4
-                Text            = 'PowerShell (Admin)'
-                PNGFileName     = 'powershell'
+                Text            = 'User Management'
+                PNGFileName     = 'user'
                 SizeType        = 'Large'
-                ToolTip         = 'Open the PowerShell window as Administrator'
-                Function        = { Start-Process powershell.exe -Verb RunAs }
+                ToolTip         = 'Open the User Management window to manage user accounts'
+                Function        = { Start-Process lusrmgr.msc }
             },
             @{
                 ColumnNumber    = 5
-                Text            = 'PowerShell ISE (Admin)'
-                PNGFileName     = 'powershell'
+                Text            = 'Disk Management'
+                PNGFileName     = 'drive_magnify'
                 SizeType        = 'Large'
-                ToolTip         = 'Open the PowerShell ISE window as Administrator'
-                Function        = { Start-Process powershell_ise.exe -Verb RunAs }
+                ToolTip         = 'Open the Disk Management window to manage disk drives'
+                Function        = { Start-Process diskmgmt.msc }
             }
         )
 

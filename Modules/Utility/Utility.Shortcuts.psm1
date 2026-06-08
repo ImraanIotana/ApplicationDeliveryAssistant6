@@ -1,6 +1,253 @@
 ﻿####################################################################################################
 <#
 .SYNOPSIS
+    Retrieves shortcuts from system and user locations.
+.DESCRIPTION
+    This function scans common Start Menu and Desktop locations for shortcuts.
+    It returns rich objects that include a ComboBoxName property so the result can be used directly in ComboBoxes.
+    Returned items are prefixed with [SYSTEM] or [USER] based on their source location.
+.EXAMPLE
+    Get-Shortcuts
+.INPUTS
+    None.
+.OUTPUTS
+    [PSCustomObject[]]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Get-Shortcuts {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='Include internet shortcuts (*.url) in addition to shell shortcuts (*.lnk).')]
+        [System.Management.Automation.SwitchParameter]$IncludeInternetShortcuts
+    )
+
+    # PREPARATION
+    # Define known shortcut roots and their labels
+    [PSCustomObject[]]$ShortcutRoots = @(
+        @{
+            Path     = Join-Path -Path $env:ProgramData -ChildPath 'Microsoft\Windows\Start Menu\Programs'
+            Prefix   = 'SYSTEM'
+            Location = 'StartMenu'
+        }
+        @{
+            Path     = Join-Path -Path $env:Public -ChildPath 'Desktop'
+            Prefix   = 'SYSTEM'
+            Location = 'Desktop'
+        }
+        @{
+            Path     = Join-Path -Path $env:APPDATA -ChildPath 'Microsoft\Windows\Start Menu\Programs'
+            Prefix   = 'USER'
+            Location = 'StartMenu'
+        }
+        @{
+            Path     = Join-Path -Path $env:USERPROFILE -ChildPath 'Desktop'
+            Prefix   = 'USER'
+            Location = 'Desktop'
+        }
+    )
+
+    [System.String[]]$AllowedExtensions = @('.lnk')
+    if ($IncludeInternetShortcuts) { $AllowedExtensions += '.url' }
+
+    # EXECUTION
+    # Enumerate shortcuts from all available roots
+    [PSCustomObject[]]$Shortcuts = foreach ($ShortcutRoot in $ShortcutRoots) {
+        if (-not (Test-Path -Path $ShortcutRoot.Path)) { continue }
+
+        # Subfolders (top-level only) that contain at least one shortcut anywhere inside
+        Get-ChildItem -Path $ShortcutRoot.Path -Directory -ErrorAction SilentlyContinue |
+        Where-Object {
+            $null -ne (Get-ChildItem -Path $_.FullName -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $AllowedExtensions -contains $_.Extension.ToLowerInvariant() } |
+                Select-Object -First 1)
+        } |
+        ForEach-Object {
+            [PSCustomObject]@{
+                Name            = $_.Name
+                Extension       = ''
+                FullPath        = $_.FullName
+                FolderPath      = $_.Parent.FullName
+                Prefix          = $ShortcutRoot.Prefix
+                SourceLocation  = $ShortcutRoot.Location
+                RegistryPath    = $_.FullName
+                Type            = 'Folder'
+                ComboBoxName    = "[$($ShortcutRoot.Prefix)] $($_.Name)"
+            }
+        }
+
+        # Shortcut files in the root only (not recursive)
+        Get-ChildItem -Path $ShortcutRoot.Path -File -ErrorAction SilentlyContinue |
+        Where-Object { $AllowedExtensions -contains $_.Extension.ToLowerInvariant() } |
+        ForEach-Object {
+            [PSCustomObject]@{
+                Name            = $_.BaseName
+                Extension       = $_.Extension
+                FullPath        = $_.FullName
+                FolderPath      = $_.DirectoryName
+                Prefix          = $ShortcutRoot.Prefix
+                SourceLocation  = $ShortcutRoot.Location
+                RegistryPath    = $_.FullName
+                Type            = 'Shortcut'
+                ComboBoxName    = "[$($ShortcutRoot.Prefix)] $($_.Name)"
+            }
+        }
+    }
+
+    # OUTPUT
+    # Return unique items — folders first, then shortcuts — sorted alphabetically within each group
+    $Shortcuts |
+    Sort-Object FullPath -Unique | Sort-Object Prefix, Type, ComboBoxName
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Writes shortcut information for a shortcut file or folder to the host.
+.DESCRIPTION
+    This function reads shortcut information from a supplied path.
+    If the path is a shortcut file, that item is processed.
+    If the path is a folder, all shortcut files (*.lnk and *.url) in that folder (recursive) are processed.
+    All output is written to the host.
+.EXAMPLE
+    Write-ShortcutInformation -Path 'C:\Users\Public\Desktop\MyApp.lnk'
+.EXAMPLE
+    Write-ShortcutInformation -Path 'C:\Users\Public\Desktop'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Write-ShortcutInformation {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The shortcut file or folder path to inspect.')]
+        [AllowEmptyString()]
+        [System.String]$Path
+    )
+
+    # PREPARATION
+    # Define a variable for the WScript.Shell COM object, which will be created only if at least one .lnk file needs to be processed
+    [System.Object]$WScriptShell = $null
+
+    try {
+        # PREPARATION
+        # Input
+        [System.String]$InputPath = $Path
+
+        # VALIDATION
+        # Validate the input string
+        if (Test-String -IsEmpty $InputPath) { Write-Line 'The Path string is empty.' -Type Fail ; return }
+        # Validate the path
+        if (-not (Test-Path -LiteralPath $InputPath)) { Write-Line "The supplied path could not be reached. ($InputPath)" -Type Fail ; return }
+
+        # PREPARATION
+        # Resolve the path and collect shortcut files
+        [System.IO.FileSystemInfo]$SelectedItem = Get-Item -LiteralPath $InputPath -ErrorAction Stop
+        [System.IO.FileInfo[]]$ShortcutFiles = @()
+
+        if ($SelectedItem.PSIsContainer) {
+            Write-Line "Reading shortcut information from folder... ($($SelectedItem.FullName))"
+            $ShortcutFiles = Get-ChildItem -LiteralPath $SelectedItem.FullName -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { @('.lnk','.url') -contains $_.Extension.ToLowerInvariant() }
+        }
+        else {
+            if (@('.lnk','.url') -notcontains $SelectedItem.Extension.ToLowerInvariant()) {
+                Write-Line "The selected file is not a supported shortcut type (*.lnk or *.url). ($($SelectedItem.FullName))" -Type Fail
+                return
+            }
+            $ShortcutFiles = @($SelectedItem)
+        }
+
+        if ($ShortcutFiles.Count -eq 0) {
+            Write-Line "No shortcut files were found in the supplied path. ($InputPath)" -Type Warning
+            return
+        }
+
+        # PREPARATION
+        # Create the COM object only when at least one .lnk needs to be processed
+        if (($ShortcutFiles | Where-Object { $_.Extension.ToLowerInvariant() -eq '.lnk' }).Count -gt 0) {
+            $WScriptShell = New-Object -ComObject WScript.Shell
+        }
+
+        # EXECUTION
+        # Write information for each shortcut
+        foreach ($ShortcutFile in $ShortcutFiles | Sort-Object FullName) {
+            Write-Line ''
+            Write-Line "Shortcut Path       : $($ShortcutFile.FullName)" -Type Special
+            Write-Line "Shortcut Name       : $($ShortcutFile.BaseName)"
+            Write-Line "Shortcut Extension  : $($ShortcutFile.Extension)"
+            Write-Line "Last Write Time     : $($ShortcutFile.LastWriteTime)"
+
+            switch ($ShortcutFile.Extension.ToLowerInvariant()) {
+                '.lnk' {
+                    [System.Object]$ShellShortcut = $WScriptShell.CreateShortcut($ShortcutFile.FullName)
+                    Write-Line 'Shortcut Type       : Shell Shortcut (*.lnk)'
+                    Write-Line "Target Path         : $($ShellShortcut.TargetPath)"
+                    Write-Line "Arguments           : $($ShellShortcut.Arguments)"
+                    Write-Line "Working Directory   : $($ShellShortcut.WorkingDirectory)"
+                    Write-Line "Description         : $($ShellShortcut.Description)"
+                    Write-Line "HotKey              : $($ShellShortcut.Hotkey)"
+                    Write-Line "Icon Location       : $($ShellShortcut.IconLocation)"
+                    Write-Line "Window Style        : $($ShellShortcut.WindowStyle)"
+                }
+                '.url' {
+                    Write-Line 'Shortcut Type       : Internet Shortcut (*.url)'
+                    [System.String[]]$ShortcutContent = Get-Content -LiteralPath $ShortcutFile.FullName -ErrorAction SilentlyContinue
+                    [System.Collections.Hashtable]$InternetShortcutInformation = @{}
+
+                    foreach ($ContentLine in $ShortcutContent) {
+                        if ($ContentLine -match '^\s*([^=]+)=(.*)$') {
+                            $InternetShortcutInformation[$Matches[1].Trim()] = $Matches[2].Trim()
+                        }
+                    }
+
+                    if ($InternetShortcutInformation.Count -eq 0) {
+                        Write-Line 'No key/value information was found in this internet shortcut.' -Type Warning
+                    }
+                    else {
+                        foreach ($Key in $InternetShortcutInformation.Keys | Sort-Object) {
+                            Write-Line ("{0,-20}: {1}" -f $Key, $InternetShortcutInformation[$Key])
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+    finally {
+        if ($null -ne $WScriptShell -and [System.Runtime.InteropServices.Marshal]::IsComObject($WScriptShell)) {
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WScriptShell)
+        }
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Exports shortcut details from a shortcut file or folder to a text report.
 .DESCRIPTION
     This function reads shortcut information from a supplied path.

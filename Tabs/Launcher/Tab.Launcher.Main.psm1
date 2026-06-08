@@ -43,7 +43,8 @@ function Import-TabLauncher {
 
         # Import the Features
         $AppLauncherGroupBox            = Import-FeatureAppLauncher             -InputObject $InputObject -ParentTabPage $ParentTabPage
-        $RegistryLauncherGroupBox       = Import-FeatureRegistryLauncher        -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $AppLauncherGroupBox
+        $TerminalLauncherGroupBox       = Import-FeatureTerminalLauncher        -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $AppLauncherGroupBox
+        $RegistryLauncherGroupBox       = Import-FeatureRegistryLauncher        -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $TerminalLauncherGroupBox
         $UserFolderLauncherGroupBox     = Import-FeatureUserFolderLauncher      -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $RegistryLauncherGroupBox
         $null                           = Import-FeatureSystemFolderLauncher    -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $UserFolderLauncherGroupBox
     }
