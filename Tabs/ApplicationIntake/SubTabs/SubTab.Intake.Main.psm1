@@ -43,6 +43,7 @@ function Import-SubTabIntake {
         # Define the colors for the features in this sub-tab
         [System.String]$TopColor    = 'Cyan'
         [System.String]$MiddleColor = 'Yellow'
+        [System.String]$OtherColor  = 'Gold'
         [System.String]$BottomColor = $TopColor
 
         # EXECUTION - TABPAGE
@@ -51,13 +52,13 @@ function Import-SubTabIntake {
 
         # EXECUTION - FEATURES
         # Import the Features and store the returned GroupBoxes in variables to be used as the GroupBoxAbove parameter for the next Feature
-        $IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection  -InputObject $InputObject -Color $TopColor -ParentTabPage $ParentTabPage
-        $ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
-        $ApplicationCustomPropertiesGroupBox    = Import-FeatureApplicationCustomProperties -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationFormalPropertiesGroupBox
-        $ApplicationSecurityGroupBox            = Import-FeatureApplicationSecurity         -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationCustomPropertiesGroupBox
-        $ApplicationDetectionGroupBox           = Import-FeatureIntakeApplicationDetection  -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationSecurityGroupBox
-        $ApplicationShortcutsGroupBox           = Import-FeatureIntakeApplicationShortcuts  -InputObject $InputObject -Color $MiddleColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationDetectionGroupBox
-        $null                                   = Import-FeatureIntakeApplicationID         -InputObject $InputObject -Color $BottomColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationShortcutsGroupBox
+        $IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection  -InputObject $InputObject -Color $TopColor      -ParentTabPage $ParentTabPage
+        $ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -Color $MiddleColor   -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
+        $ApplicationCustomPropertiesGroupBox    = Import-FeatureApplicationCustomProperties -InputObject $InputObject -Color $MiddleColor   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationFormalPropertiesGroupBox
+        $ApplicationShortcutsGroupBox           = Import-FeatureIntakeApplicationShortcuts  -InputObject $InputObject -Color $MiddleColor   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationCustomPropertiesGroupBox
+        $ApplicationSecurityGroupBox            = Import-FeatureApplicationSecurity         -InputObject $InputObject -Color $OtherColor    -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationShortcutsGroupBox
+        $ApplicationDetectionGroupBox           = Import-FeatureIntakeApplicationDetection  -InputObject $InputObject -Color $OtherColor    -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationSecurityGroupBox
+        $null                                   = Import-FeatureIntakeApplicationID         -InputObject $InputObject -Color $BottomColor   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationDetectionGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
