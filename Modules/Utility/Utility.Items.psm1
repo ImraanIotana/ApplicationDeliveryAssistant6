@@ -245,6 +245,8 @@ function Write-ShortcutInformation {
         [System.String]$Path
     )
 
+    # PREPARATION
+    # Define a variable for the WScript.Shell COM object, which will be created only if at least one .lnk file needs to be processed
     [System.Object]$WScriptShell = $null
 
     try {
