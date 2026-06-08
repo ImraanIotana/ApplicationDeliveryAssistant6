@@ -73,7 +73,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected shortcut or folder.'
-                Function        = { $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { Write-ShortcutInformation -Path $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem.FullPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
