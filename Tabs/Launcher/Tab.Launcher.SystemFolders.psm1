@@ -79,28 +79,49 @@ function Import-FeatureSystemFolderLauncher {
             },
             @{
                 ColumnNumber    = 5
-                Text            = 'SCCM Cache'
-                PNGFileName     = 'folder_brick'
+                Text            = 'Windows Temp'
+                PNGFileName     = 'folder_torn'
                 SizeType        = 'Large'
-                Function        = { Open-Folder -Path "$ENV:WINDIR\ccmcache" }
+                Function        = { Open-Folder -Path "$ENV:WINDIR\Temp" }
             }
         )
 
         # Set the Button properties
         [System.Collections.Hashtable[]]$ButtonPropertiesArray2 = @(
             @{
-                ColumnNumber    = 4
+                ColumnNumber    = 1
+                Text            = 'My Output Folder'
+                PNGFileName     = 'folder_table'
+                SizeType        = 'Large'
+                Function        = { Open-Folder -Path (Get-OutputFolder) }
+            },
+            @{
+                ColumnNumber    = 2
+                Text            = 'Software Library'
+                PNGFileName     = 'cd'
+                SizeType        = 'Large'
+                Function        = { Open-Folder -Path (Get-SoftwareLibraryFolder) }
+            },
+            @{
+                ColumnNumber    = 3
                 Text            = 'Fonts'
                 PNGFileName     = 'font'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path "$ENV:WINDIR\Fonts" }
             },
             @{
-                ColumnNumber    = 5
+                ColumnNumber    = 4
                 Text            = 'Drivers'
                 PNGFileName     = 'printer'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path "$ENV:WINDIR\System32\DriverStore\FileRepository" }
+            },
+            @{
+                ColumnNumber    = 5
+                Text            = 'SCCM Cache'
+                PNGFileName     = 'folder_brick'
+                SizeType        = 'Large'
+                Function        = { Open-Folder -Path "$ENV:WINDIR\ccmcache" }
             }
         )
 

@@ -220,3 +220,51 @@ function Get-OutputFolder {
 
 # END OF FUNCTION
 ####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Gets the configured software library folder path from User Settings.
+.DESCRIPTION
+    This function retrieves the saved software library folder path from the configured User Settings registry path.
+.EXAMPLE
+    Get-SoftwareLibraryFolder
+.INPUTS
+    [PSCustomObject]
+.OUTPUTS
+    [System.String] The configured software library folder path.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Get-SoftwareLibraryFolder {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject = $Global:ApplicationObject,
+
+        [Parameter(Mandatory=$false,HelpMessage='The name of the User Setting to retrieve.')]
+        [System.String]$PropertyName = 'TextBoxes.ApplicationSettings.FolderSettings.SoftwareLibrary'
+    )
+
+    try {
+        # EXECUTION
+        # Get the software library folder path from User Settings.
+        [System.String]$SofwareLibraryFolder = Get-UserSetting -PropertyName $PropertyName
+
+        # Return the software library folder value.
+        $SofwareLibraryFolder
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+# END OF FUNCTION
+####################################################################################################

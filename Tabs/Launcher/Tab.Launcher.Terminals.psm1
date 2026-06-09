@@ -37,7 +37,7 @@ function Import-FeatureTerminalLauncher {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'TERMINALS'
+            Title           = 'CONSOLES / TERMINALS'
             Color           = 'Gold'
             NumberOfRows    = 4
         }
@@ -72,6 +72,14 @@ function Import-FeatureTerminalLauncher {
                 SizeType        = 'Large'
                 ToolTip         = 'Open the PowerShell ISE window'
                 Function        = { Start-Process powershell_ise.exe }
+            },
+            @{
+                ColumnNumber    = 4
+                Text            = 'Windows Terminal'
+                PNGFileName     = 'application_xp_terminal'
+                SizeType        = 'Large'
+                ToolTip         = 'Open the Windows Terminal window'
+                Function        = { Start-Process wt.exe }
             }
         )
 
@@ -100,6 +108,14 @@ function Import-FeatureTerminalLauncher {
                 SizeType        = 'Large'
                 ToolTip         = 'Open the PowerShell ISE window as Administrator'
                 Function        = { Start-Process powershell_ise.exe -Verb RunAs }
+            },
+            @{
+                ColumnNumber    = 4
+                Text            = 'Windows Terminal (Admin)'
+                PNGFileName     = 'application_xp_terminal'
+                SizeType        = 'Large'
+                ToolTip         = 'Open the Windows Terminal window as Administrator'
+                Function        = { Start-Process wt.exe -Verb RunAs }
             }
         )
 
