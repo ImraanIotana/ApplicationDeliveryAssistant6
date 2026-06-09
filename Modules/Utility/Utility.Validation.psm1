@@ -41,16 +41,11 @@ function Get-UserConfirmation {
             'Information'   { [System.Windows.Forms.MessageBoxButtons]::OK }
             'Question'      { [System.Windows.Forms.MessageBoxButtons]::YesNoCancel }
             'Warning'       { [System.Windows.Forms.MessageBoxButtons]::YesNoCancel }
-            'Error'         { [System.Windows.Forms.MessageBoxButtons]::OKCancel }
+            'Error'         { [System.Windows.Forms.MessageBoxButtons]::OK }
         }
 
         # Set the MessageBox icon from the selected type.
-        [System.Windows.Forms.MessageBoxIcon]$Icon = switch ($Type) {
-            'Information'   { [System.Windows.Forms.MessageBoxIcon]::Information }
-            'Question'      { [System.Windows.Forms.MessageBoxIcon]::Question }
-            'Warning'       { [System.Windows.Forms.MessageBoxIcon]::Warning }
-            'Error'         { [System.Windows.Forms.MessageBoxIcon]::Error }
-        }
+        [System.Windows.Forms.MessageBoxIcon]$Icon = [System.Enum]::Parse([System.Windows.Forms.MessageBoxIcon], $Type)
 
         # EXECUTION
         # Show the message box and evaluate whether the user confirmed.
