@@ -89,21 +89,34 @@ function Import-FeatureApplicationSecurity {
 
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
-        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{
-                ColumnNumber    = 5
-                Text            = 'Browse Folder'
-                PNGFileName     = 'folders_explorer'
-                SizeType        = 'Small'
-                ToolTip         = 'The installation folder of the application. This will be used to create security files like AppLocker policies.'
-                Function        = {
-                    [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
-                    Select-Folder -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder
-                }.GetNewClosure()
-            }
-        )
+        [System.Collections.Hashtable]$InstallFolderButton = @{
+            ColumnNumber    = 5
+            Text            = 'Browse Folder'
+            PNGFileName     = 'folders_explorer'
+            SizeType        = 'Small'
+            ToolTip         = 'The installation folder of the application. This will be used to create security files like AppLocker policies.'
+            Function        = {
+                [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
+                Select-Folder -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder
+            }.GetNewClosure()
+        }
+        
+        [System.Collections.Hashtable]$ADGroupDefaultButton = @{
+            ColumnNumber    = 7
+            Text            = 'Default'
+            PNGFileName     = 'arrow_undo'
+            SizeType        = 'Small'
+            ToolTip         = 'Set the Active Directory group and SID to their default values.'
+            Function        = {
+                Reset-TextBox -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupName
+                Reset-TextBox -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID -Force
+            }.GetNewClosure()
+        }
+
         # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        New-Button @InstallFolderButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        New-Button @ADGroupDefaultButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 3
+        #New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
         
         # Return the GroupBox object
         $FeatureGroupBox

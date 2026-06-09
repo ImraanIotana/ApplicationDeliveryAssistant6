@@ -41,11 +41,11 @@ function Import-SubTabIntake {
 
         # PREPARATION - COLORS
         # Define the colors for the features in this sub-tab
-        [System.String]$TopColor        = 'Cyan'
+        [System.String]$TopColor        = 'GreenYellow'
         [System.String]$MiddleColor1    = 'Gold'
         [System.String]$MiddleColor2    = 'Gold'
         [System.String]$MiddleColor3    = 'Gold'
-        [System.String]$BottomColor     = 'Cyan'
+        [System.String]$BottomColor     = 'GreenYellow'
 
         # EXECUTION - TABPAGE
         # Create the TabPage

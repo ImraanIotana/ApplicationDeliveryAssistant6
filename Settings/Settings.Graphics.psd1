@@ -68,10 +68,4 @@
     # ColumnNumber settings (# This will be filled by the function Add-GraphicalDimensionsToSettings)
     ColumnNumber        = @{
     }
-
-    # UPDATE SETTINGS
-    # URL of the zip file on GitHub where the latest version of the Application Delivery Assistant can be found
-    ZipFileOnGithub     = 'https://github.com/ImraanIotana/ADA6/archive/refs/heads/main.zip'
-    # URL of the version file on GitHub where the version number of the latest version of the Application Delivery Assistant can be found
-    VersionFileOnGithub = 'https://github.com/ImraanIotana/ADA6/blob/main/ApplicationDeliveryAssistant.ps1'#>
 }

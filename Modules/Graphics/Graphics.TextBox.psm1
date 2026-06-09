@@ -130,7 +130,10 @@ function New-TextBox {
     [System.Collections.Hashtable]$Settings     = $InputObject.GraphicalSettings
     # Create a new TextBox as the Output
     [System.Windows.Forms.TextBox]$NewTextBox   = New-Object System.Windows.Forms.TextBox
+    # Create the Tag property
+    $NewTextBox.Tag = [PSCustomObject]@{}
 
+    
     # EXECUTION - SET PROPERTIES
 
     # LOCATION
@@ -176,12 +179,6 @@ function New-TextBox {
         'Output'    { $true }
     }
 
-    # EXECUTION - CUSTOM PROPERTIES '(TAG)'
-
-    # TAG
-    # Create the Tag property
-    $NewTextBox.Tag = [PSCustomObject]@{}
-
     # LABEL
     # Create the label and add it to the Tag property
     if ($Label) {
@@ -215,70 +212,50 @@ function New-TextBox {
     }
 
     # BUTTONS
-    # Add the ButtonPropertiesArray
-    if ($Buttons.Count -gt 0) {
+    # Build regular and small button lines through one shared code path.
+    [System.Object[]]$ButtonGroups = @(
+        # Standard buttons render on the row below the TextBox.
+        @{ Buttons = $Buttons       ; Row = ($RowNumber + 1)    ; SizeType = $null   }
+        # Small buttons render on the same row as the TextBox.
+        @{ Buttons = $SmallButtons  ; Row = $RowNumber          ; SizeType = 'Small' }
+    )
+    foreach ($ButtonGroup in $ButtonGroups) {
+        # If there are no buttons defined for this group, skip to the next one.
+        if ($ButtonGroup.Buttons.Count -le 0) { continue }
+
         try {
-            # Initialize the ButtonPropertiesArray in the Tag property
-            $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name ButtonPropertiesArray -Value @()
-            # Add each button to the ButtonPropertiesArray
-            foreach ($Button in $Buttons) {
-                # Set the button properties
+            # Create a list of hashtables with button properties, to be used as input for the New-ButtonLine function
+            [System.Collections.Generic.List[System.Collections.Hashtable]]$ButtonPropertiesList = New-Object 'System.Collections.Generic.List[System.Collections.Hashtable]'
+            # Iterate over the button definitions in the current group
+            foreach ($Button in $ButtonGroup.Buttons) {
+                # Extract the column number and button text from the button definition
                 [System.Int32]$ColumnNumber = $Button[0]
                 [System.String]$ButtonText  = $Button[1]
-                # Create the hashtable
+                # Resolve each button label to its click handler script block.
+                [System.Management.Automation.ScriptBlock]$ActionScript = switch ($ButtonText) {
+                    'Browse File'   { { Select-File -TextBox $NewTextBox }.GetNewClosure() }
+                    'Browse Folder' { { Select-Folder -TextBox $NewTextBox }.GetNewClosure() }
+                    'Open'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
+                    'Copy'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
+                    'Paste'         { { Write-ClipBoardToTextBox -TextBox $NewTextBox }.GetNewClosure() }
+                    'Default'       { { Reset-TextBox -TextBox $NewTextBox }.GetNewClosure() }
+                    'Clear'         { { Clear-TextBox -TextBox $NewTextBox }.GetNewClosure() }
+                }
+                # Create a hashtable for each button with its properties, to be used as input for the New-ButtonLine function.
                 [System.Collections.Hashtable]$ButtonHashtable = @{
                     ColumnNumber    = $ColumnNumber
                     Text            = $ButtonText
-                    Function        = switch ($ButtonText) {
-                        'Browse File'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'BrowseFile' }.GetNewClosure() }
-                        'Browse Folder' { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'BrowseFolder' }.GetNewClosure() }
-                        'Open'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
-                        'Copy'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
-                        'Paste'         { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
-                        'Default'       { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
-                        'Clear'         { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
-                    }
+                    Function        = $ActionScript
                 }
-                # Add the hashtable to the ButtonPropertiesArray
-                $NewTextBox.Tag.ButtonPropertiesArray += $ButtonHashtable
+                # Only small button groups include the SizeType entry.
+                if ($ButtonGroup.SizeType) { $ButtonHashtable.SizeType = $ButtonGroup.SizeType }
+
+                [void]$ButtonPropertiesList.Add($ButtonHashtable)
             }
-            # Create the buttons
-            New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
-        }
-        catch {
-            Write-ErrorReport -ErrorRecord $_
-        }
-    }
-    # Add the ButtonPropertiesArray
-    if ($SmallButtons.Count -gt 0) {
-        try {
-            # Initialize the ButtonPropertiesArray in the Tag property
-            $NewTextBox.Tag | Add-Member -MemberType NoteProperty -Name ButtonPropertiesArray -Value @()
-            # Add each button to the ButtonPropertiesArray
-            foreach ($SmallButton in $SmallButtons) {
-                # Set the button properties
-                [System.Int32]$ColumnNumber = $SmallButton[0]
-                [System.String]$ButtonText  = $SmallButton[1]
-                # Create the hashtable
-                [System.Collections.Hashtable]$ButtonHashtable = @{
-                    ColumnNumber    = $ColumnNumber
-                    Text            = $ButtonText
-                    SizeType        = 'Small'
-                    Function        = switch ($ButtonText) {
-                        'Browse File'   { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'BrowseFile' }.GetNewClosure() }
-                        'Browse Folder' { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'BrowseFolder' }.GetNewClosure() }
-                        'Open'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Open' }.GetNewClosure() }
-                        'Copy'          { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Copy' }.GetNewClosure() }
-                        'Paste'         { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Paste' }.GetNewClosure() }
-                        'Default'       { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Default' }.GetNewClosure() }
-                        'Clear'         { { Invoke-TextBoxAction -TextBox $NewTextBox -Action 'Clear' }.GetNewClosure() }
-                    }
-                }
-                # Add the hashtable to the ButtonPropertiesArray
-                $NewTextBox.Tag.ButtonPropertiesArray += $ButtonHashtable
-            }
-            # Create the buttons
-            New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewTextBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber $RowNumber
+            # Convert the List to an Array, as the New-ButtonLine function expects an array as input
+            [System.Collections.Hashtable[]]$ButtonPropertiesArray = $ButtonPropertiesList.ToArray()
+            # Create the buttons for this TextBox
+            New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber $ButtonGroup.Row
         }
         catch {
             Write-ErrorReport -ErrorRecord $_
@@ -334,7 +311,7 @@ function Invoke-TextBoxAction {
         [System.Windows.Forms.TextBox]$TextBox,
 
         [Parameter(Mandatory=$true,HelpMessage='The action to be performed on the TextBox.')]
-        [ValidateSet('BrowseFile','BrowseFolder','Open','Copy','Paste','Default','Clear')]
+        [ValidateSet('Open','Copy')]
         [System.String]$Action
     )
     
@@ -353,16 +330,174 @@ function Invoke-TextBoxAction {
     # Switch on the action
     switch ($Action) {
         # The Browse actions are still in development, but the structure is in place to easily implement them once the file and folder selection functions are ready.
-        'BrowseFile'    { Select-File -TextBox $TextBox }
-        'BrowseFolder'  { Select-Folder -TextBox $TextBox }
-        #'BrowseFile'    { [System.String]$FileName = Select-Item -File ; if ($FileName) { $TextBox.Text = $FileName } }
-        #'BrowseFolder'  { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $TextBox.Text = $FolderName } }
         'Open'          { Open-Folder -Path $TextBoxContent }
         'Copy'          { Set-ClipBoard -Value  $TextBoxContent ; Write-Line "The content of the TextBox has been copied to the clipboard. ($TextBoxContent)" }
-        'Paste'         { $TextBox.Text = Get-ClipBoard ; Write-Line "The content of the clipboard has been pasted into the TextBox. ($($TextBox.Text))" }
-        'Default'       { $TextBox.Text = $TextBox.Tag.DefaultValue ; Write-Line "The TextBox has been reset to the default value: ($($TextBox.Text))" }
-        'Clear'         { $TextBox.Clear() ; Write-Line "The TextBox has been cleared." }
     }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Resets the specified TextBox to its configured default value.
+.DESCRIPTION
+    This function assigns the TextBox default value from the Tag metadata back to the Text property.
+    It also writes a status message to the host with the value that was applied.
+.EXAMPLE
+    Reset-TextBox -TextBox $MyTextBox
+.INPUTS
+    [System.Windows.Forms.TextBox]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Reset-TextBox {
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The TextBox to reset.')]
+        [System.Windows.Forms.TextBox]$TextBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and reset the TextBox immediately.')]
+        [System.Management.Automation.SwitchParameter]$Force
+    )
+
+    # VALIDATION
+    # Ask for confirmation only when the TextBox currently contains a value and -Force is not specified.
+    if ((Test-String -IsPopulated $TextBox.Text) -and -not $Force) {
+        [System.String]$Title   = 'Confirm Reset TextBox'
+        [System.String]$Body    = "This will reset the current value:`n`n$($TextBox.Text)`n`nto the default value:`n`n$($TextBox.Tag.DefaultValue)`n`nDo you want to continue?"
+        [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
+        if (-not $UserHasConfirmed) { return }
+    }
+
+    # EXECUTION
+    # Reset the TextBox to its default value and write a status message.
+    $TextBox.Text = $TextBox.Tag.DefaultValue
+    Write-Line "The TextBox ($($TextBox.Tag.Label)) has been reset to the default value: ($($TextBox.Text))"
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Clears the content of the specified TextBox.
+.DESCRIPTION
+    This function clears the text in the provided TextBox control.
+    It also writes a status message to the host after the TextBox is cleared.
+.EXAMPLE
+    Clear-TextBox -TextBox $MyTextBox
+.INPUTS
+    [System.Windows.Forms.TextBox]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Clear-TextBox {
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The TextBox to clear.')]
+        [System.Windows.Forms.TextBox]$TextBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and clear the TextBox immediately.')]
+        [System.Management.Automation.SwitchParameter]$Force
+    )
+
+    # VALIDATION
+    # Ask for confirmation only when the TextBox currently contains a value and -Force is not specified.
+    if ((Test-String -IsPopulated $TextBox.Text) -and -not $Force) {
+        [System.String]$Title   = 'Confirm Clear TextBox'
+        [System.String]$Body    = "This will clear the current value:`n`n$($TextBox.Text)`n`nDo you want to continue?"
+        [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
+        if (-not $UserHasConfirmed) { return }
+    }
+
+    # EXECUTION
+    # Clear the TextBox content and write a status message.
+    $TextBox.Clear()
+    Write-Line "The TextBox ($($TextBox.Tag.Label)) has been cleared."
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Writes the current clipboard content to the specified TextBox.
+.DESCRIPTION
+    This function retrieves the current clipboard content and assigns it to the provided TextBox control.
+    It also writes a status message to the host showing the value that was written.
+.EXAMPLE
+    Write-ClipBoardToTextBox -TextBox $MyTextBox
+.INPUTS
+    [System.Windows.Forms.TextBox]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Write-ClipBoardToTextBox {
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The TextBox where the clipboard content will be written.')]
+        [System.Windows.Forms.TextBox]$TextBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and write to the TextBox immediately.')]
+        [System.Management.Automation.SwitchParameter]$Force
+    )
+
+    # VALIDATION
+    # Ensure the clipboard currently contains text that can be written to a TextBox.
+    if (-not [System.Windows.Forms.Clipboard]::ContainsText()) {
+        Write-Line "The clipboard does not contain text that can be pasted into the TextBox."
+        return
+    }
+
+    # PREPARATION
+    # Get the content from the clipboard
+    [System.Object]$ClipboardContent = Get-ClipBoard
+    # Convert the clipboard content to a single string value for the TextBox.
+    [System.String]$ClipboardText = switch ($ClipboardContent) {
+        { $null -eq $_ } { '' }
+        { $_ -is [System.Array] } { [System.String]::Join([System.Environment]::NewLine, $_) }
+        default { [System.String]$_ }
+    }
+
+    # VALIDATION
+    # Ask for confirmation only when the TextBox already contains a value that would be overwritten.
+    if ((Test-String -IsPopulated $TextBox.Text) -and -not $Force) {
+        [System.String]$Title   = 'Confirm Paste Clipboard Content'
+        [System.String]$Body    = "This will overwrite the current value:`n`n$($TextBox.Text)`n`nwith the following value:`n`n$ClipboardText`n`nDo you want to continue?"
+        [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
+        # If the user did not confirm, exit the function without making any changes to the TextBox.
+        if (-not $UserHasConfirmed) { return }
+    }
+
+    # EXECUTION
+    # Write the clipboard content to the TextBox
+    $TextBox.Text = $ClipboardText
+    Write-Line "The content of the clipboard has been pasted into the TextBox ($($TextBox.Tag.Label)). ($($TextBox.Text))"
 }
 
 ### END OF FUNCTION
