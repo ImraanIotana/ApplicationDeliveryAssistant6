@@ -75,7 +75,7 @@ function Import-FeatureIntakeApplicationID {
             PNGFileName     = 'download_for_windows'
             SizeType        = 'Medium'
             ToolTip         = 'Browse for a detection file or MSI.'
-            Function        = { Write-Line "Import-FeatureIntakeApplicationID: This function is still in development." }.GetNewClosure()
+            Function        = { New-ApplicationIDFromTextBoxes -OutputTextBox $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID }.GetNewClosure()
         }
         [System.Collections.Hashtable]$CreateFolderButtonProperties = @{
             ColumnNumber    = 5
@@ -102,3 +102,81 @@ function Import-FeatureIntakeApplicationID {
 ### END OF FUNCTION
 ####################################################################################################
 
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Generates an Application ID from Intake Custom Properties textboxes.
+.DESCRIPTION
+    This function reads Vendor Name, Application Name, and Application Version from the Intake Custom Properties textboxes.
+    It removes all whitespace from each value, validates that all values are populated, and generates an Application ID string.
+    The generated ID is written to the supplied output textbox when one is provided.
+.EXAMPLE
+    New-ApplicationIDFromTextBoxes -OutputTextBox $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID
+.INPUTS
+    [System.Windows.Forms.TextBox]
+.OUTPUTS
+    No objects are returned to the pipeline. The result is written to the provided textbox.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function New-ApplicationIDFromTextBoxes {
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The TextBox to write the Application ID into.')]
+        [System.Windows.Forms.TextBox]$OutputTextBox
+    )
+    
+    # VALIDATION
+    # Define the TextBoxes to get the text from
+    [System.String[]]$TextBoxesToGetTextFrom = @(
+        'VendorName'
+        'ApplicationName'
+        'ApplicationVersion'
+    )
+    # Create a hashtable to store the trimmed values of the TextBoxes
+    [System.Collections.Hashtable]$TrimmedValues = @{}
+    # Loop through the TextBoxes, get the text, trim it and store it in the hashtable
+    foreach ($TextBoxName in $TextBoxesToGetTextFrom) {
+        $TrimmedValues[$TextBoxName] = ($Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.$TextBoxName.Text -replace '\s+', '')
+    }
+    # Validate that none of the trimmed values are empty
+    foreach ($Key in $TrimmedValues.Keys) {
+        if (Test-String -IsEmpty $TrimmedValues[$Key]) {
+            Write-Line "$Key is empty. The Application ID cannot be generated."
+            Clear-TextBox -TextBox $OutputTextBox -Force
+            return
+        }
+    }
+    # Reuse the already validated and normalized values
+    [System.String]$VendorName          = $TrimmedValues.VendorName
+    [System.String]$ApplicationName     = $TrimmedValues.ApplicationName
+    [System.String]$ApplicationVersion  = $TrimmedValues.ApplicationVersion
+
+
+    # VALIDATION
+    # If the Application Name contains the Application Version, write a warning
+    if ($ApplicationName.Contains($ApplicationVersion)) {
+        Write-Line "Warning: The Custom Application Name contains the Application Version. This will cause the Application Version to be duplicated in the Application ID." -Type Warning
+    }
+    # If the Application Name contains the Vendor Name, write a warning
+    if ($ApplicationName.Contains($VendorName)) {
+        Write-Line "Warning: The Custom Application Name contains the Vendor Name. This will cause the Vendor Name to be duplicated in the Application ID." -Type Warning
+    }
+
+    # EXECUTION
+    # Generate the Application ID in the format VendorName_ApplicationName_ApplicationVersion, without any whitespace
+    [System.String]$ApplicationID = "$($VendorName)_$($ApplicationName)_$($ApplicationVersion)"
+    Write-Line "Generated Application ID: $ApplicationID"
+
+    # EXECUTION
+    # Set the text to the textbox
+    if ($OutputTextBox) { $OutputTextBox.Text = $ApplicationID }
+}
+
+### END OF FUNCTION
+####################################################################################################

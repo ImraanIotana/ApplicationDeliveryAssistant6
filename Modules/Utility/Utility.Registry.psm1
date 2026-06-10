@@ -279,19 +279,41 @@ function Export-RegistryKey {
 
         # Build a list containing the root key and all descendant keys.
         [System.String[]]$KeysToExport = @($ProviderPath)
-        [System.String[]]$ChildKeys = @(Get-ChildItem -Path $ProviderPath -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty PSPath)
+        [System.String[]]$ChildKeys = @(Get-ChildItem -Path $ProviderPath -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty PSPath | Sort-Object)
         if ($ChildKeys.Count -gt 0) {
             $KeysToExport += $ChildKeys
         }
+        [System.String[]]$KeysToExport = @($KeysToExport | Sort-Object -Unique)
 
         foreach ($CurrentKeyPath in $KeysToExport) {
             "####################################################################################################" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
             "RegistryKeyPath: $CurrentKeyPath" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
             "" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
 
-            Get-ItemProperty -Path $CurrentKeyPath -ErrorAction SilentlyContinue |
-            Format-List |
-            Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+            [System.Object]$RegistryProperties = Get-ItemProperty -Path $CurrentKeyPath -ErrorAction SilentlyContinue
+            if ($null -ne $RegistryProperties) {
+                [System.String[]]$PropertyNames = @(
+                    $RegistryProperties.PSObject.Properties |
+                    Where-Object { $_.MemberType -eq 'NoteProperty' } |
+                    Select-Object -ExpandProperty Name |
+                    Sort-Object
+                )
+
+                foreach ($PropertyName in $PropertyNames) {
+                    [System.Object]$PropertyValue = $RegistryProperties.$PropertyName
+                    [System.String]$PropertyValueText = if ($null -eq $PropertyValue) {
+                        [System.String]::Empty
+                    }
+                    elseif ($PropertyValue -is [System.Array]) {
+                        ($PropertyValue | ForEach-Object { [System.String]$_ }) -join ', '
+                    }
+                    else {
+                        [System.String]$PropertyValue
+                    }
+
+                    ("{0,-15} : {1}" -f $PropertyName, $PropertyValueText) | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
+                }
+            }
 
             "" | Out-File -FilePath $OutputFilePath -Append -Encoding UTF8
         }
@@ -300,7 +322,7 @@ function Export-RegistryKey {
 
         # POST-EXECUTION - OPEN OUTPUT FOLDER
         if ($OpenOutputFolder) {
-            Open-Folder -Path $OutputFolder
+            Open-Folder -Path $OutputFilePath
         }
     }
     catch {
