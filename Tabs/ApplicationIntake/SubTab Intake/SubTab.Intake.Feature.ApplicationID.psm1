@@ -84,7 +84,7 @@ function Import-FeatureIntakeApplicationID {
             PNGFileName     = 'folder_add'
             SizeType        = 'Medium'
             ToolTip         = 'Browse for a detection file or MSI.'
-            Function        = { Write-Line "Import-FeatureIntakeApplicationID: This function is still in development." }.GetNewClosure()
+            Function        = { New-ApplicationFolder }.GetNewClosure()
         }
         # Add the Buttons
         New-Button @ApplicationIDButtonProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox
@@ -131,52 +131,121 @@ function New-ApplicationIDFromTextBoxes {
         [System.Windows.Forms.TextBox]$OutputTextBox
     )
     
-    # VALIDATION
-    # Define the TextBoxes to get the text from
-    [System.String[]]$TextBoxesToGetTextFrom = @(
-        'VendorName'
-        'ApplicationName'
-        'ApplicationVersion'
-    )
-    # Create a hashtable to store the trimmed values of the TextBoxes
-    [System.Collections.Hashtable]$TrimmedValues = @{}
-    # Loop through the TextBoxes, get the text, trim it and store it in the hashtable
-    foreach ($TextBoxName in $TextBoxesToGetTextFrom) {
-        $TrimmedValues[$TextBoxName] = ($Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.$TextBoxName.Text -replace '\s+', '')
-    }
-    # Validate that none of the trimmed values are empty
-    foreach ($Key in $TrimmedValues.Keys) {
-        if (Test-String -IsEmpty $TrimmedValues[$Key]) {
-            Write-Line "$Key is empty. The Application ID cannot be generated."
-            Clear-TextBox -TextBox $OutputTextBox -Force
-            return
+    try {
+        # VALIDATION
+        # Define the TextBoxes to get the text from
+        [System.String[]]$TextBoxesToGetTextFrom = @(
+            'VendorName'
+            'ApplicationName'
+            'ApplicationVersion'
+        )
+        # Create a hashtable to store the trimmed values of the TextBoxes
+        [System.Collections.Hashtable]$TrimmedValues = @{}
+        # Loop through the TextBoxes, get the text, trim it and store it in the hashtable
+        foreach ($TextBoxName in $TextBoxesToGetTextFrom) {
+            $TrimmedValues[$TextBoxName] = ($Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.$TextBoxName.Text -replace '\s+', '')
         }
+        # Validate that none of the trimmed values are empty
+        foreach ($Key in $TrimmedValues.Keys) {
+            if (Test-String -IsEmpty $TrimmedValues[$Key]) {
+                Write-Line "$Key is empty. The Application ID cannot be generated."
+                if ($OutputTextBox) { Clear-TextBox -TextBox $OutputTextBox -Force }
+                return
+            }
+        }
+        # Reuse the already validated and normalized values
+        [System.String]$VendorName          = $TrimmedValues.VendorName
+        [System.String]$ApplicationName     = $TrimmedValues.ApplicationName
+        [System.String]$ApplicationVersion  = $TrimmedValues.ApplicationVersion
+
+
+        # VALIDATION
+        # If the Application Name contains the Application Version, write a warning
+        if ($ApplicationName.Contains($ApplicationVersion)) {
+            Write-Line "Warning: The Custom Application Name contains the Application Version. This will cause the Application Version to be duplicated in the Application ID." -Type Warning
+        }
+        # If the Application Name contains the Vendor Name, write a warning
+        if ($ApplicationName.Contains($VendorName)) {
+            Write-Line "Warning: The Custom Application Name contains the Vendor Name. This will cause the Vendor Name to be duplicated in the Application ID." -Type Warning
+        }
+
+        # EXECUTION
+        # Generate the Application ID in the format VendorName_ApplicationName_ApplicationVersion, without any whitespace
+        [System.String]$ApplicationID = "$($VendorName)_$($ApplicationName)_$($ApplicationVersion)"
+        Write-Line "Generated Application ID: $ApplicationID"
+
+        # EXECUTION
+        # Set the text to the textbox
+        if ($OutputTextBox) { $OutputTextBox.Text = $ApplicationID }
     }
-    # Reuse the already validated and normalized values
-    [System.String]$VendorName          = $TrimmedValues.VendorName
-    [System.String]$ApplicationName     = $TrimmedValues.ApplicationName
-    [System.String]$ApplicationVersion  = $TrimmedValues.ApplicationVersion
-
-
-    # VALIDATION
-    # If the Application Name contains the Application Version, write a warning
-    if ($ApplicationName.Contains($ApplicationVersion)) {
-        Write-Line "Warning: The Custom Application Name contains the Application Version. This will cause the Application Version to be duplicated in the Application ID." -Type Warning
+    catch {
+        Write-ErrorReport -ErrorRecord $_
     }
-    # If the Application Name contains the Vendor Name, write a warning
-    if ($ApplicationName.Contains($VendorName)) {
-        Write-Line "Warning: The Custom Application Name contains the Vendor Name. This will cause the Vendor Name to be duplicated in the Application ID." -Type Warning
-    }
-
-    # EXECUTION
-    # Generate the Application ID in the format VendorName_ApplicationName_ApplicationVersion, without any whitespace
-    [System.String]$ApplicationID = "$($VendorName)_$($ApplicationName)_$($ApplicationVersion)"
-    Write-Line "Generated Application ID: $ApplicationID"
-
-    # EXECUTION
-    # Set the text to the textbox
-    if ($OutputTextBox) { $OutputTextBox.Text = $ApplicationID }
 }
 
 ### END OF FUNCTION
 ####################################################################################################
+
+
+function New-ApplicationFolder {
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='Destination folder where the export text file will be created.')]
+        [System.String]$OutputFolder = (Get-OutputFolder)
+    )
+    
+    try {
+        # VALIDATION
+        # If OutputFolder is not provided, throw an error
+        if (Test-String -IsEmpty $OutputFolder) { throw "The OutputFolder parameter is empty." }
+        # If the output folder does not exist, create it
+        if (-not (Test-Path -Path $OutputFolder -PathType Container)) { New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null }
+
+        # PREPARATION
+        # Get the Application ID from the ApplicationID TextBox
+        [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
+        # If the Application ID is empty, throw an error
+        if (Test-String -IsEmpty $ApplicationID) {
+            Write-Line "The Application ID is empty. Please generate an Application ID before creating the application folder. No action has been taken."
+            return
+        }
+        # Set the path for the new folder
+        [System.String]$NewFolderPath = Join-Path -Path $OutputFolder -ChildPath $ApplicationID
+
+        # CONFIRMATION
+        # Set the Title and Body for the confirmation message box
+        if (Test-Path -Path $NewFolderPath -PathType Container) {
+            [System.String]$Title   = "Confirm Overwrite Application Folder"
+            [System.String]$Body    = "This will OVERWRITE the EXISTING Application Folder with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
+            
+        }
+        else {
+            [System.String]$Title   = "Create Application Folder"
+            [System.String]$Body    = "This will create a NEW Application Folder with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
+        }
+        # Get user confirmation to create the folder
+        [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
+        # If the user did not confirm, exit the function without making any changes to the TextBox.
+        if (-not $UserHasConfirmed) { return }
+
+        # EXECUTION
+        # Remove the existing folder if it exists (if it already exists, it will be overwritten)
+        if (Test-Path -Path $NewFolderPath -PathType Container) { Remove-Item -Path $NewFolderPath -Recurse -Force }
+        # Create the new folder (if it already exists, it will be overwritten)
+        New-Item -Path $NewFolderPath -ItemType Directory -Force | Out-Null
+
+
+
+        # This function is still in development. The output folder is set to: $OutputFolder
+        Write-Line "New-ApplicationFolder: This function is still in development. The output folder is set to: $OutputFolder"
+
+        # POST-EXECUTION
+        # Open the OutputFolder
+        Open-Folder -Path $OutputFolder
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+### END OF FUNCTION
+####################################################################################################
+

@@ -250,7 +250,7 @@ function Export-RegistryKey {
     try {
         # VALIDATION - VALIDATE OUTPUT FOLDER
         # Ensure the output folder is not empty, and create it if it does not exist
-        if (-not (Test-String -IsPopulated $OutputFolder)) { throw 'The output folder is empty.'}
+        if (-not (Test-String -IsPopulated $OutputFolder)) { throw 'The OutputFolder parameter is empty.'}
         if (-not (Test-Path -Path $OutputFolder)) { New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null }
 
         # PREPARATION - NORMALIZE REGISTRY PATH FOR PROVIDER TESTS
