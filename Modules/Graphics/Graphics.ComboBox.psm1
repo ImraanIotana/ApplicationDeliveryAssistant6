@@ -82,7 +82,10 @@ function Update-ComboBox {
         [System.Object[]]$ApplicationsFromRegistry,
 
         [Parameter(Mandatory=$false,HelpMessage='The array of shortcut objects that will be displayed in the ComboBox.')]
-        [System.Object[]]$Shortcuts
+        [System.Object[]]$Shortcuts,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of customer template objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$CustomerTemplates
     )
 
     # VALIDATION
@@ -196,6 +199,7 @@ function New-ComboBox {
         [System.String]$PropertyName,
 
         [Parameter(Mandatory=$false,HelpMessage='The DefaultValue that will be added to the object.')]
+        [Alias('Default')]
         [System.String]$DefaultValue,
 
         [Parameter(Mandatory=$false,HelpMessage='The DefaultButtonsArray that will be added to the object.')]
@@ -207,11 +211,14 @@ function New-ComboBox {
         [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
         [System.String[]]$ContentStringArray,
 
-        [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
+        [Parameter(Mandatory=$false,HelpMessage='The array of objects that will be displayed in the ComboBox.')]
         [System.Object[]]$ApplicationsFromRegistry,
 
-        [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
+        [Parameter(Mandatory=$false,HelpMessage='The array of objects that will be displayed in the ComboBox.')]
         [System.Object[]]$Shortcuts,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$CustomerTemplates,
 
         [Parameter(Mandatory=$false,HelpMessage='Switch for returning the ComboBox object after it is created and added to the parent.')]
         [System.Management.Automation.SwitchParameter]$ReturnComboBox
@@ -309,6 +316,16 @@ function New-ComboBox {
         $NewComboBox.Items.Clear()
         [void]$NewComboBox.Items.AddRange([System.Object[]]$Shortcuts)
     }
+    # Fill the ComboBox items from the CustomerTemplates parameter
+    if ($CustomerTemplates.Count -gt 0) {       
+        # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
+        $NewComboBox.DisplayMember = 'ComboBoxName'
+        # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the TemplatePath)
+        $NewComboBox.ValueMember = 'TemplatePath'
+        # Clear any existing items and add the applications from the registry to the ComboBox items
+        $NewComboBox.Items.Clear()
+        [void]$NewComboBox.Items.AddRange([System.Object[]]$CustomerTemplates)
+    }
 
     # EXECUTION - CUSTOM PROPERTIES '(TAG)'
 
@@ -341,10 +358,37 @@ function New-ComboBox {
     if ($DefaultValue) {
         # Add the DefaultValue to the Tag property
         $NewComboBox.Tag | Add-Member -MemberType NoteProperty -Name DefaultValue -Value $DefaultValue
-        # If the box is empty then fill it with the DefaultValue
+        # If the box is empty then select/apply the DefaultValue.
         if (Test-String -IsEmpty $NewComboBox.Text) {
-            Write-Line ("The box labeled ($($NewComboBox.Tag.Label)) is empty. It will be filled with the default value: ($DefaultValue)")
-            $NewComboBox.Text = $NewComboBox.Tag.DefaultValue
+            Write-Line ("The ComboBox labeled ($($NewComboBox.Tag.Label)) is empty. It will be filled with the default value: ($DefaultValue)")
+
+            # Prefer selecting an existing item (for object-backed combo boxes), then fall back to text assignment.
+            [System.Object]$MatchingDefaultItem = $null
+            foreach ($Item in $NewComboBox.Items) {
+                if ($null -eq $Item) { continue }
+
+                if ($Item -is [string] -and $Item -eq $NewComboBox.Tag.DefaultValue) {
+                    $MatchingDefaultItem = $Item
+                    break
+                }
+
+                if ($null -ne $Item.PSObject.Properties['ComboBoxName'] -and $Item.ComboBoxName -eq $NewComboBox.Tag.DefaultValue) {
+                    $MatchingDefaultItem = $Item
+                    break
+                }
+
+                if ($null -ne $Item.PSObject.Properties['TemplateName'] -and $Item.TemplateName -eq $NewComboBox.Tag.DefaultValue) {
+                    $MatchingDefaultItem = $Item
+                    break
+                }
+            }
+
+            if ($null -ne $MatchingDefaultItem) {
+                $NewComboBox.SelectedItem = $MatchingDefaultItem
+            }
+            else {
+                $NewComboBox.Text = $NewComboBox.Tag.DefaultValue
+            }
         }
     }
 
