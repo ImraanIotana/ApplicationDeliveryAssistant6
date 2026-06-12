@@ -216,21 +216,18 @@ function New-ApplicationFolder {
         if (Test-Path -Path $NewFolderPath -PathType Container) {
             [System.String]$Title   = "Confirm Overwrite Application Folder"
             [System.String]$Body    = "This will OVERWRITE the EXISTING Application Folder with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
-            
         }
         else {
             [System.String]$Title   = "Create Application Folder"
             [System.String]$Body    = "This will create a NEW Application Folder with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
         }
-        # Get user confirmation to create the folder
-        [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
-        # If the user did not confirm, exit the function without making any changes to the TextBox.
-        if (-not $UserHasConfirmed) { return }
+        # If the user did not confirm, return
+        if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
 
         # EXECUTION
-        # Remove the existing folder if it exists (if it already exists, it will be overwritten)
+        # Remove the existing folder if it exists
         if (Test-Path -Path $NewFolderPath -PathType Container) { Remove-Item -Path $NewFolderPath -Recurse -Force }
-        # Create the new folder (if it already exists, it will be overwritten)
+        # Create the new folder
         New-Item -Path $NewFolderPath -ItemType Directory -Force | Out-Null
 
 

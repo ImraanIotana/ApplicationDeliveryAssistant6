@@ -41,7 +41,7 @@ function Import-SubTabIntakeSettings {
 
         # PREPARATION - COLORS
         # Define the colors for the features in this sub-tab
-        [System.String]$TopColor        = 'GreenYellow'
+        [System.String]$TopColor        = 'Brown'
         [System.String]$MiddleColor1    = 'Gold'
         [System.String]$MiddleColor2    = 'Gold'
         [System.String]$MiddleColor3    = 'Gold'
@@ -53,6 +53,7 @@ function Import-SubTabIntakeSettings {
 
         # EXECUTION - FEATURES
         # Import the Features and store the returned GroupBoxes in variables to be used as the GroupBoxAbove parameter for the next Feature
+        $TemplateSelectionGroupBox = Import-FeatureIntakeTemplateSelection -InputObject $InputObject -Color $TopColor -ParentTabPage $ParentTabPage
         <#$IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection  -InputObject $InputObject -Color $TopColor      -ParentTabPage $ParentTabPage
         $ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -Color $MiddleColor1   -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
         $ApplicationCustomPropertiesGroupBox    = Import-FeatureApplicationCustomProperties -InputObject $InputObject -Color $MiddleColor1   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationFormalPropertiesGroupBox

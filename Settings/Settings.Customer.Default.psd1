@@ -13,6 +13,10 @@
 ####################################################################################################
 
 @{
+    # GENERAL SETTINGS
+    # Set the Identity Property of the Customer
+    Identity = 'Default'
+
     # APPLICATION INTAKE SETTINGS
     # Set the subfolders for the Application Folder
     ApplicationFolderSubFolders = @{
@@ -22,6 +26,7 @@
         SCCMPackage     = '3. Package\SCCM'
         Security        = '4. Security'
         AppLocker       = '4. Security\AppLocker'
+        Work            = '8. Work'
         Archive         = '9. Archive'
         Logs            = '9. Archive\Logs'
         Metadata        = '9. Archive\Metadata'
