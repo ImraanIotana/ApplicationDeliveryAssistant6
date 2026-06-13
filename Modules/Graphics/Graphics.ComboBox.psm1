@@ -132,6 +132,15 @@ function Update-ComboBox {
             [System.Void]$ComboBox.Items.AddRange([System.Object[]]$Shortcuts)
         }
 
+        # Fill the ComboBox items from the CustomerTemplates parameter
+        if ($CustomerTemplates.Count -gt 0) {
+            # Set the DisplayMember to the property of the customer template objects that contains the name to display in the ComboBox
+            $ComboBox.DisplayMember = 'ComboBoxName'
+            # Set the ValueMember to the property of the customer template objects that contains the template path
+            $ComboBox.ValueMember = 'TemplatePath'
+            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$CustomerTemplates)
+        }
+
         # Write a message to the host indicating that the ComboBox has been updated
         Write-Line "The ComboBox ($($ComboBox.Tag.Label)) has been updated."
     }

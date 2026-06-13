@@ -229,7 +229,13 @@ function New-ApplicationFolder {
         if (Test-Path -Path $NewFolderPath -PathType Container) { Remove-Item -Path $NewFolderPath -Recurse -Force }
         # Create the new folder
         New-Item -Path $NewFolderPath -ItemType Directory -Force | Out-Null
-
+        # Get the subfolders from the Application Folder Template
+        [System.Collections.Generic.List[System.String]]$SubFolders = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.ApplicationFolderSubFolders.GetEnumerator() | ForEach-Object { $_.Value }
+        # Create the subfolders in the new folder
+        foreach ($SubFolder in $SubFolders) {
+            $SubFolderPath = Join-Path -Path $NewFolderPath -ChildPath $SubFolder
+            New-Item -Path $SubFolderPath -ItemType Directory -Force | Out-Null
+        }
 
 
         # This function is still in development. The output folder is set to: $OutputFolder

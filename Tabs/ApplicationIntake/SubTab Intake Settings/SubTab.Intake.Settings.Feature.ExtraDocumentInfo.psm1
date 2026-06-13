@@ -20,7 +20,7 @@
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Import-FeatureIntakeTemplateSelection {
+function Import-FeatureExtraDocumentInformation {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -43,66 +43,40 @@ function Import-FeatureIntakeTemplateSelection {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'TEMPLATE SELECTION'
+            Title           = 'EXTRA DOCUMENT INFORMATION'
             Color           = $Color
-            NumberOfRows    = 1
+            NumberOfRows    = 2
             GroupBoxAbove   = $GroupBoxAbove
         }
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
-        # EXECUTION - COMBOBOXES
-        # Set the ComboBox properties
-        [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
-            RowNumber           = 1
-            Label               = 'Select Customer Template'
-            PropertyName        = 'ComboBoxes.ApplicationIntake.TemplateSelection'
-            ToolTip             = 'The list of customer templates to select from.'
-            SizeType            = 'Medium'
-            TextColor           = $Color
-            CustomerTemplates   = Get-CustomerTemplates
-            DefaultValue        = 'Default'
+        # TEXTBOXES
+        # Set the VendorNameTextBox properties
+        [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
+            RowNumber       = 1
+            Label           = 'My Full Name'
+            PropertyName    = 'TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName'
+            ToolTip         = 'The full name of the user that will be used in the document properties.'
+            SizeType        = 'Medium'
+            SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
         }
-        # Create the ComboBox
-        $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        # Set the ApplicationNameTextBox properties
+        [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
+            RowNumber       = 2
+            Label           = 'My Email Address'
+            PropertyName    = 'TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress'
+            ToolTip         = 'The email address of the user that will be used in the document properties.'
+            SizeType        = 'Medium'
+            SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
 
-        # EXECUTION - BUTTONS
-        # Set the Small Buttons properties
-        [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{ # Testing duplicate buttons with the same function to ensure they work as expected
-                ColumnNumber    = 5
-                Text            = 'Details'
-                PNGFileName     = 'information'
-                SizeType        = 'Small'
-                ToolTip         = 'View details of the selected template.'
-                Function        = {
-                    Write-Line "Template Identity: $($Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.Identity)" -Type Special
-                    Write-Line "Template Path: $($Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath)" -Type Info
-                    Write-Line "Template Application SubFolders:" -Type Info
-                    $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.ApplicationFolderSubFolders.GetEnumerator() | Sort-Object -Property Value | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
-                }.GetNewClosure()
-            }
-            @{
-                ColumnNumber    = 6
-                Text            = 'Open Folder'
-                PNGFileName     = 'folder_go'
-                SizeType        = 'Small'
-                ToolTip         = 'Open the folder containing the templates.'
-                Function        = { Open-Folder -Path $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath }.GetNewClosure()
-            }
-            @{
-                ColumnNumber    = 7
-                Text            = 'Refresh'
-                PNGFileName     = 'arrow_refresh'
-                SizeType        = 'Small'
-                ToolTip         = 'Refresh the list of customer templates.'
-                Function        = { Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection -CustomerTemplates (Get-CustomerTemplates) }.GetNewClosure()
-            }
-        )
-        # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        }
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) { $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties = @{} }
+        # Create the TextBoxes
+        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.UserFullName          = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.UserEmailAddress     = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
-        # POST-EXECUTION
         # Return the GroupBox object
         $FeatureGroupBox
     }
