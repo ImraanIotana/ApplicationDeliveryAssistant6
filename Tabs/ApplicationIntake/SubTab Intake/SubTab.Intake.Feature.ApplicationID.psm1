@@ -106,17 +106,17 @@ function Import-FeatureIntakeApplicationID {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Generates an Application ID from Intake Custom Properties textboxes.
+    Creates the application folder structure for the generated Application ID.
 .DESCRIPTION
-    This function reads Vendor Name, Application Name, and Application Version from the Intake Custom Properties textboxes.
-    It removes all whitespace from each value, validates that all values are populated, and generates an Application ID string.
-    The generated ID is written to the supplied output textbox when one is provided.
+    This function creates the application folder for the current Application ID in the configured output folder.
+    It validates the output folder and Application ID, asks for confirmation before overwriting an existing folder,
+    creates the folder and its configured subfolders, and opens the output folder afterwards.
 .EXAMPLE
-    New-ApplicationIDFromTextBoxes -OutputTextBox $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID
+    New-ApplicationFolder
 .INPUTS
-    [System.Windows.Forms.TextBox]
+    [System.String]
 .OUTPUTS
-    No objects are returned to the pipeline. The result is written to the provided textbox.
+    No objects are returned to the pipeline. All output is written to the host.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -187,6 +187,28 @@ function New-ApplicationIDFromTextBoxes {
 ####################################################################################################
 
 
+####################################################################################################
+<#
+.SYNOPSIS
+    Generates an Application ID from Intake Custom Properties textboxes.
+.DESCRIPTION
+    This function reads Vendor Name, Application Name, and Application Version from the Intake Custom Properties textboxes.
+    It removes all whitespace from each value, validates that all values are populated, and generates an Application ID string.
+    The generated ID is written to the supplied output textbox when one is provided.
+.EXAMPLE
+    New-ApplicationIDFromTextBoxes -OutputTextBox $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID
+.INPUTS
+    [System.Windows.Forms.TextBox]
+.OUTPUTS
+    No objects are returned to the pipeline. The result is written to the provided textbox.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
 function New-ApplicationFolder {
     param (
         [Parameter(Mandatory=$false,HelpMessage='Destination folder where the export text file will be created.')]
@@ -233,10 +255,13 @@ function New-ApplicationFolder {
         [System.Collections.Generic.List[System.String]]$SubFolders = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.ApplicationFolderSubFolders.GetEnumerator() | ForEach-Object { $_.Value }
         # Create the subfolders in the new folder
         foreach ($SubFolder in $SubFolders) {
-            $SubFolderPath = Join-Path -Path $NewFolderPath -ChildPath $SubFolder
+            [System.String]$SubFolderPath = Join-Path -Path $NewFolderPath -ChildPath $SubFolder
             New-Item -Path $SubFolderPath -ItemType Directory -Force | Out-Null
         }
 
+        # Create the initial Word document in the Documentation subfolder from the selected template.
+        [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
+        New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
         # This function is still in development. The output folder is set to: $OutputFolder
         Write-Line "New-ApplicationFolder: This function is still in development. The output folder is set to: $OutputFolder"
@@ -249,6 +274,127 @@ function New-ApplicationFolder {
         Write-ErrorReport -ErrorRecord $_
     }
 }
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Creates a Word document from the selected customer template in the Documentation subfolder.
+.DESCRIPTION
+    Resolves the selected customer template from the Template Selection combobox, finds the configured Word template
+    below the application root folder, opens it in Word, and saves it as a .docx file in the Documentation subfolder
+    of the supplied application folder.
+.EXAMPLE
+    New-ApplicationIntakeDocument -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function New-ApplicationIntakeDocument {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The root folder of the created application package.')]
+        [System.String]$ApplicationFolderPath,
+
+        [Parameter(Mandatory=$true,HelpMessage='The selected customer template object from the Template Selection ComboBox.')]
+        [System.Object]$SelectedTemplate
+    )
+
+    try {
+        # VALIDATION
+        # Validate the target application folder path
+        if (Test-String -IsEmpty $ApplicationFolderPath) { throw 'The ApplicationFolderPath parameter is empty.' }
+        if (-not (Test-Path -LiteralPath $ApplicationFolderPath -PathType Container)) { throw "The application folder does not exist. ($ApplicationFolderPath)" }
+
+        # VALIDATION
+        # Ensure a template object is provided
+        if ($null -eq $SelectedTemplate) {
+            Write-Line 'No customer template is selected. Skipping document creation.' -Type Warning
+            return
+        }
+
+        # PREPARATION
+        # Read the configured Word template name from the selected customer template
+        [System.String]$WordTemplateName = $SelectedTemplate.Content.TemplateName
+        if (Test-String -IsEmpty $WordTemplateName) {
+            Write-Line 'The selected customer template does not define Content.TemplateName. Skipping document creation.' -Type Warning
+            return
+        }
+
+        # PREPARATION
+        # Read the application root folder used to locate templates
+        [System.String]$RootFolder = $Global:ApplicationObject.RootFolder
+        if (Test-String -IsEmpty $RootFolder) { throw 'Global ApplicationObject.RootFolder is empty.' }
+
+        # PREPARATION
+        # Search the template file from the application root folder.
+        [System.String]$ResolvedTemplatePath = $null
+        [System.IO.FileInfo]$TemplateFile = Get-ChildItem -LiteralPath $RootFolder -Recurse -File -Filter $WordTemplateName -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $TemplateFile) { $ResolvedTemplatePath = $TemplateFile.FullName }
+
+        if (Test-String -IsEmpty $ResolvedTemplatePath) {
+            Write-Line "The selected Word template could not be found in the application root folder. ($WordTemplateName)" -Type Fail
+            return
+        }
+
+        # PREPARATION
+        # Resolve the Documentation subfolder configured by the selected customer template
+        [System.String]$DocumentationRelativePath = $SelectedTemplate.ApplicationFolderSubFolders.Documentation
+        if (Test-String -IsEmpty $DocumentationRelativePath) {
+            Write-Line 'The selected customer template does not define ApplicationFolderSubFolders.Documentation. Skipping document creation.' -Type Warning
+            return
+        }
+
+        # EXECUTION
+        # Ensure the target Documentation subfolder exists
+        [System.String]$DocumentationFolderPath = Join-Path -Path $ApplicationFolderPath -ChildPath $DocumentationRelativePath
+        if (-not (Test-Path -LiteralPath $DocumentationFolderPath -PathType Container)) {
+            New-Item -Path $DocumentationFolderPath -ItemType Directory -Force | Out-Null
+        }
+
+        # PREPARATION
+        # Build the output document name using the generated Application ID
+        [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
+        if (Test-String -IsEmpty $ApplicationID) {
+            [System.String]$ApplicationID = 'ApplicationDossier'
+        }
+
+        [System.String]$OutputDocumentPath = Join-Path -Path $DocumentationFolderPath -ChildPath ('KPN Dossier ' + $ApplicationID + '.docx')
+
+        # EXECUTION
+        # Start Word, create a document from template and save it to the Documentation folder
+        [System.__ComObject]$WordApplication = New-Object -ComObject Word.Application
+        $WordApplication.Visible = $true
+
+        [System.__ComObject]$WordDocument = $WordApplication.Documents.Add($ResolvedTemplatePath)
+        $WordDocument.SaveAs2($OutputDocumentPath)
+
+        # POST-EXECUTION
+        # Close Word and report the created document path
+        $WordDocument.Close($false)
+        $WordApplication.Quit()
+        Write-Line "Created Word document from template: $OutputDocumentPath" -Type Success
+
+        # POST-EXECUTION
+        # Release COM objects to avoid stale Word processes
+        [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WordDocument)
+        [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WordApplication)
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
 ### END OF FUNCTION
 ####################################################################################################
 

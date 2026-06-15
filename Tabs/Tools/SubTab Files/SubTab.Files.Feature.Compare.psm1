@@ -103,6 +103,56 @@ function Import-FeatureCompareFiles {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Validates that a compare-file input points to an existing file.
+.DESCRIPTION
+    Checks whether the supplied path is populated and resolves to an existing file before continuing with compare operations.
+.EXAMPLE
+    Test-CompareFilePath -Path 'C:\File1.txt' -Label 'File 1'
+.INPUTS
+    [System.String]
+    [System.String]
+.OUTPUTS
+    [System.Boolean]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Test-CompareFilePath {
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The file path to validate.')]
+        [AllowEmptyString()]
+        [System.String]$Path,
+
+        [Parameter(Mandatory=$true,HelpMessage='The display label for the file path.')]
+        [System.String]$Label
+    )
+
+    if ([System.String]::IsNullOrWhiteSpace($Path)) {
+        Write-Line "$Label path is empty." -Type Fail
+        return $false
+    }
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        Write-Line "$Label does not exist, or could not be reached. ($Path)" -Type Fail
+        return $false
+    }
+
+    return $true
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Compares the file sizes of two files.
 .DESCRIPTION
     Retrieves and compares the file sizes of two specified files, writing the results to the host.
@@ -135,6 +185,16 @@ function Compare-FileSize {
     )
 
     try {
+        # PREPARATION - VALIDATE INPUT PATHS
+        if (-not (Test-CompareFilePath -Path $File1Path -Label 'File 1')) {
+            if ($PassThru) { return $false }
+            return
+        }
+        if (-not (Test-CompareFilePath -Path $File2Path -Label 'File 2')) {
+            if ($PassThru) { return $false }
+            return
+        }
+
         # EXECUTION - GET FILE SIZES
         # Get the size of File 1
         Write-Line "Getting size of File 1 ($File1Path)..."
@@ -217,6 +277,16 @@ function Compare-FileHash {
     )
 
     try {
+        # PREPARATION - VALIDATE INPUT PATHS
+        if (-not (Test-CompareFilePath -Path $File1Path -Label 'File 1')) {
+            if ($PassThru) { return $false }
+            return
+        }
+        if (-not (Test-CompareFilePath -Path $File2Path -Label 'File 2')) {
+            if ($PassThru) { return $false }
+            return
+        }
+
         # EXECUTION - GET FILE HASHES
         # Get the hash of File 1
         Write-Line "Getting hash of File 1 ($File1Path)..."
@@ -286,15 +356,29 @@ function Compare-Files {
         [System.String]$Algorithm = 'SHA256',
 
         [Parameter(Mandatory=$false,HelpMessage='The file size threshold in bytes used to trigger a confirmation before hash comparison. Defaults to 500MB.')]
-        [System.Int64]$LargeFileSizeThreshold = 500MB
+        [System.Int64]$LargeFileSizeThreshold = 500MB,
+
+        [Parameter(Mandatory=$false,HelpMessage='If specified, returns $true if the files are the same size and hash, otherwise $false.')]
+        [System.Management.Automation.SwitchParameter]$PassThru
     )
 
     try {
+        # PREPARATION - VALIDATE INPUT PATHS
+        if (-not (Test-CompareFilePath -Path $File1Path -Label 'File 1')) {
+            if ($PassThru) { return $false }
+            return
+        }
+        if (-not (Test-CompareFilePath -Path $File2Path -Label 'File 2')) {
+            if ($PassThru) { return $false }
+            return
+        }
+
         # EXECUTION - COMPARE FILE SIZES
         # Compare the sizes first; stop early if they differ
         [System.Boolean]$SizesMatch = Compare-FileSize -File1Path $File1Path -File2Path $File2Path -PassThru
         if (-not $SizesMatch) {
             Write-Line "Skipping hash comparison: files are different sizes."
+            if ($PassThru) { return $false }
             return
         }
 
@@ -303,13 +387,20 @@ function Compare-Files {
         [System.Int64]$File1Size = (Get-Item -LiteralPath $File1Path -ErrorAction Stop).Length
         if ($File1Size -gt $LargeFileSizeThreshold) {
             [System.Double]$ThresholdMB = [System.Math]::Round($LargeFileSizeThreshold / 1MB, 3)
-            if (-not (Get-UserConfirmation -Title 'Confirm Hash Large File' -Body "The file is larger than [$ThresholdMB MB].`nRetrieving the hash may take a while.`n`nDo you want to continue?" -Type 'Warning')) { return }
+            if (-not (Get-UserConfirmation -Title 'Confirm Hash Large File' -Body "The file is larger than [$ThresholdMB MB].`nRetrieving the hash may take a while.`n`nDo you want to continue?" -Type 'Warning')) {
+                if ($PassThru) { return $false }
+                return
+            }
         }
         # Compare the hashes
-        Compare-FileHash -File1Path $File1Path -File2Path $File2Path -Algorithm $Algorithm
+        [System.Boolean]$HashesMatch = Compare-FileHash -File1Path $File1Path -File2Path $File2Path -Algorithm $Algorithm -PassThru
+
+        # Return the result if PassThru is specified
+        if ($PassThru) { return $HashesMatch }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
+        if ($PassThru) { return $false }
     }
 }
 

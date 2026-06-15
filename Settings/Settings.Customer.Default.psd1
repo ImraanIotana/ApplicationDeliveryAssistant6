@@ -14,10 +14,15 @@
 
 @{
     # GENERAL SETTINGS
+
     # Set the Identity Property of the Customer
     Identity = 'Default'
 
     # APPLICATION INTAKE SETTINGS
+
+    # Set the default template name for the Application Intake
+    TemplateName = 'KPN Dossier Default.dotx'
+
     # Set the subfolders for the Application Folder
     ApplicationFolderSubFolders = @{
         Documentation   = '1. Documentation'
