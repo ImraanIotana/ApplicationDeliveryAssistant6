@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Tools tab into the main application.
+    Imports the Connections sub-tab into the Tools tab.
 .DESCRIPTION
-    This function imports the Tools tab into the main application by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the Connections sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-TabTools -ParentTabControl $Global:MainTabControl
+    Import-SubTabConnections -ParentTabControl $MySubTabControl
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabControl]
@@ -19,7 +19,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-TabTools {
+function Import-SubTabFiles {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -33,7 +33,7 @@ function Import-TabTools {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'TOOLS'
+            Title               = 'FILES'
             Version             = '6.0.0.0'
             BackGroundColor     = 'Blue'
         }
@@ -41,12 +41,8 @@ function Import-TabTools {
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
-        # Create the SubTabControl and add it to the TabPage
-        [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
-
-        # Import the SubTabs
-        Import-SubTabFiles -InputObject $InputObject -ParentTabControl $SubTabControl
-        Import-SubTabConnections -InputObject $InputObject -ParentTabControl $SubTabControl
+        # Import the Features
+        $null = Import-FeatureFileCompare -InputObject $InputObject -ParentTabPage $ParentTabPage
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

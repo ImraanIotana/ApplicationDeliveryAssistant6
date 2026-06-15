@@ -90,7 +90,7 @@ function Import-FeatureSystemFolderLauncher {
         [System.Collections.Hashtable[]]$ButtonPropertiesArray2 = @(
             @{
                 ColumnNumber    = 1
-                Text            = 'My Output Folder'
+                Text            = 'Output Folder'
                 PNGFileName     = 'folder_table'
                 SizeType        = 'Large'
                 Function        = { Open-Folder -Path (Get-OutputFolder) }
