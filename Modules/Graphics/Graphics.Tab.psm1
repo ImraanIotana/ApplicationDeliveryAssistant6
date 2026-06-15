@@ -219,6 +219,9 @@ function New-TabPage {
         # Write the message
         if ($Version) { Write-Line "Importing Tab $Title $Version" }
 
+        # Ensure selected tabs are visually highlighted
+        Enable-TabControlHighlightStyle -TabControl $ParentTabControl
+
         # EXECUTION - CREATE THE TABPAGE
         # Create a new TabPage
         [System.Windows.Forms.TabPage]$NewTabPage = New-Object System.Windows.Forms.TabPage
@@ -236,6 +239,80 @@ function New-TabPage {
         # EXECUTION - RETURN THE NEW TABPAGE
         # Return the output
         $NewTabPage
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Enables custom tab-header coloring for a TabControl.
+.DESCRIPTION
+    This function configures a TabControl for owner-draw and paints selected/unselected tabs using different colors.
+.EXAMPLE
+    Enable-TabControlHighlightStyle -TabControl $Global:MainTabControl
+.INPUTS
+    [System.Windows.Forms.TabControl]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Enable-TabControlHighlightStyle {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The TabControl to style.')]
+        [System.Windows.Forms.TabControl]$TabControl
+    )
+
+    try {
+        # Configure owner draw once to avoid duplicate DrawItem handlers
+        if ($TabControl.DrawMode -ne [System.Windows.Forms.TabDrawMode]::OwnerDrawFixed) {
+            $TabControl.DrawMode = [System.Windows.Forms.TabDrawMode]::OwnerDrawFixed
+            $TabControl.Add_DrawItem({
+                param ($Sender, $EventArgs)
+
+                [System.Windows.Forms.TabPage]$CurrentTabPage = $Sender.TabPages[$EventArgs.Index]
+                [System.Drawing.Rectangle]$TabBounds = $EventArgs.Bounds
+                [System.Boolean]$IsSelected = ($Sender.SelectedIndex -eq $EventArgs.Index)
+
+                [System.Drawing.Color]$BackColor = if ($IsSelected) { [System.Drawing.Color]::White } else { [System.Drawing.Color]::Gainsboro }
+                [System.Drawing.Color]$TextColor = if ($IsSelected) { [System.Drawing.Color]::Black } else { [System.Drawing.Color]::DimGray }
+
+                [System.Drawing.SolidBrush]$BackgroundBrush = New-Object System.Drawing.SolidBrush($BackColor)
+                [System.Windows.Forms.TextFormatFlags]$TextFlags = [System.Windows.Forms.TextFormatFlags]::HorizontalCenter -bor [System.Windows.Forms.TextFormatFlags]::VerticalCenter -bor [System.Windows.Forms.TextFormatFlags]::SingleLine -bor [System.Windows.Forms.TextFormatFlags]::EndEllipsis
+
+                try {
+                    $EventArgs.Graphics.FillRectangle($BackgroundBrush, $TabBounds)
+                    [System.Windows.Forms.TextRenderer]::DrawText($EventArgs.Graphics, $CurrentTabPage.Text, $Sender.Font, $TabBounds, $TextColor, $TextFlags)
+                    if ($IsSelected) {
+                        $EventArgs.Graphics.DrawRectangle([System.Drawing.Pens]::DarkGray, $TabBounds.X, $TabBounds.Y, $TabBounds.Width - 1, $TabBounds.Height - 1)
+                    }
+                    else {
+                        # For unselected tabs, avoid a full rectangle to prevent harsh bottom seams.
+                        $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gray, $TabBounds.X, $TabBounds.Y, $TabBounds.Right - 1, $TabBounds.Y)
+                        $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gray, $TabBounds.X, $TabBounds.Y, $TabBounds.X, $TabBounds.Bottom - 2)
+                        $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gray, $TabBounds.Right - 1, $TabBounds.Y, $TabBounds.Right - 1, $TabBounds.Bottom - 2)
+                        $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gainsboro, $TabBounds.X, $TabBounds.Bottom - 1, $TabBounds.Right - 1, $TabBounds.Bottom - 1)
+                    }
+                    if ($IsSelected -and $Sender.Focused) { $EventArgs.DrawFocusRectangle() }
+                }
+                finally {
+                    $BackgroundBrush.Dispose()
+                }
+            })
+        }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
