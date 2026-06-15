@@ -30,19 +30,22 @@ function Import-SubTabFiles {
     )
 
     try {
+        # PREPARATION
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'FILES'
             Version             = '6.0.0.0'
-            BackGroundColor     = 'Blue'
+            BackGroundColor     = 'DarkBlue'
         }
 
+        # EXECUTION
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('CompareFiles')) { $Global:Graphics.TextBoxes.CompareFiles = @{} }
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
-
         # Import the Features
-        $null = Import-FeatureFileCompare -InputObject $InputObject -ParentTabPage $ParentTabPage
+        $null = Import-FeatureCompareFiles -InputObject $InputObject -ParentTabPage $ParentTabPage
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
