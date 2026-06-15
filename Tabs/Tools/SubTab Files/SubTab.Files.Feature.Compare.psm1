@@ -74,8 +74,7 @@ function Import-FeatureCompareFiles {
                 PNGFileName     = 'price_comparison'
                 SizeType        = 'Medium'
                 Function        = {
-                    # TEST
-                    Write-Line "TEST: Comparing files: $($Global:Graphics.TextBoxes.CompareFiles.FilePath1.Text) and $($Global:Graphics.TextBoxes.CompareFiles.FilePath2.Text)..."
+                    Compare-Files -File1Path $Global:Graphics.TextBoxes.CompareFiles.FilePath1.Text -File2Path $Global:Graphics.TextBoxes.CompareFiles.FilePath2.Text
                 }
             }
         )
@@ -91,6 +90,223 @@ function Import-FeatureCompareFiles {
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 3
         # Return the GroupBox object
         $FeatureGroupBox
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Compares the file sizes of two files.
+.DESCRIPTION
+    Retrieves and compares the file sizes of two specified files, writing the results to the host.
+.EXAMPLE
+    Compare-FileSize -File1Path 'C:\File1.txt' -File2Path 'C:\File2.txt'
+.INPUTS
+    [System.String]
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Compare-FileSize {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The path of the first file.')]
+        [System.String]$File1Path,
+
+        [Parameter(Mandatory=$true,HelpMessage='The path of the second file.')]
+        [System.String]$File2Path,
+
+        [Parameter(Mandatory=$false,HelpMessage='If specified, returns $true if the files are the same size, otherwise $false.')]
+        [System.Management.Automation.SwitchParameter]$PassThru
+    )
+
+    try {
+        # EXECUTION - GET FILE SIZES
+        # Get the size of File 1
+        Write-Line "Getting size of File 1 ($File1Path)..."
+        [System.IO.FileInfo]$File1 = Get-Item -LiteralPath $File1Path -ErrorAction Stop
+        [System.Int64]$File1Size = $File1.Length
+        # Get the size of File 2
+        Write-Line "Getting size of File 2 ($File2Path)..."
+        [System.IO.FileInfo]$File2 = Get-Item -LiteralPath $File2Path -ErrorAction Stop
+        [System.Int64]$File2Size = $File2.Length
+
+        # POST-EXECUTION - COMPARE SIZES
+        # Report the sizes and compare them
+        [System.Double]$File1SizeMB = [System.Math]::Round($File1Size / 1MB, 3)
+        [System.Double]$File2SizeMB = [System.Math]::Round($File2Size / 1MB, 3)
+        Write-Line "File 1 size: [$File1SizeMB MB]."
+        Write-Line "File 2 size: [$File2SizeMB MB]."
+
+        [System.Boolean]$SizesMatch = $File1Size -eq $File2Size
+        if ($SizesMatch) {
+            Write-Line "Result: Both files are the same size ([$File1SizeMB MB])."
+        }
+        elseif ($File1Size -gt $File2Size) {
+            [System.Double]$DifferenceMB = [System.Math]::Round(($File1Size - $File2Size) / 1MB, 3)
+            Write-Line "Result: File 1 is larger by [$DifferenceMB MB]."
+        }
+        else {
+            [System.Double]$DifferenceMB = [System.Math]::Round(($File2Size - $File1Size) / 1MB, 3)
+            Write-Line "Result: File 2 is larger by [$DifferenceMB MB]."
+        }
+
+        # Return the result if PassThru is specified
+        if ($PassThru) { return $SizesMatch }
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+        # Return false on error if PassThru is specified
+        if ($PassThru) { return $false }
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Compares the file hashes of two files.
+.DESCRIPTION
+    Retrieves and compares the file hashes of two specified files, writing the results to the host.
+.EXAMPLE
+    Compare-FileHash -File1Path 'C:\File1.txt' -File2Path 'C:\File2.txt'
+.INPUTS
+    [System.String]
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Compare-FileHash {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The path of the first file.')]
+        [System.String]$File1Path,
+
+        [Parameter(Mandatory=$true,HelpMessage='The path of the second file.')]
+        [System.String]$File2Path,
+
+        [Parameter(Mandatory=$false,HelpMessage='The hashing algorithm to use. Defaults to SHA256.')]
+        [System.String]$Algorithm = 'SHA256',
+
+        [Parameter(Mandatory=$false,HelpMessage='If specified, returns $true if the files have the same hash, otherwise $false.')]
+        [System.Management.Automation.SwitchParameter]$PassThru
+    )
+
+    try {
+        # EXECUTION - GET FILE HASHES
+        # Get the hash of File 1
+        Write-Line "Getting hash of File 1 ($File1Path)..."
+        [System.String]$File1Hash = (Get-FileHash -LiteralPath $File1Path -Algorithm $Algorithm -ErrorAction Stop).Hash
+        # Get the hash of File 2
+        Write-Line "Getting hash of File 2 ($File2Path)..."
+        [System.String]$File2Hash = (Get-FileHash -LiteralPath $File2Path -Algorithm $Algorithm -ErrorAction Stop).Hash
+
+        # POST-EXECUTION - COMPARE HASHES
+        # Report the hashes and compare them
+        Write-Line "File 1 hash ($Algorithm): [$File1Hash]."
+        Write-Line "File 2 hash ($Algorithm): [$File2Hash]."
+
+        [System.Boolean]$HashesMatch = $File1Hash -eq $File2Hash
+        if ($HashesMatch) {
+            Write-Line "Result: Both files have the same hash ([$File1Hash])."
+        }
+        else {
+            Write-Line "Result: The files have different hashes."
+        }
+
+        # Return the result if PassThru is specified
+        if ($PassThru) { return $HashesMatch }
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+        # Return false on error if PassThru is specified
+        if ($PassThru) { return $false }
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Compares two files by size and hash.
+.DESCRIPTION
+    Compares two files by first checking their sizes. If the sizes differ, the comparison stops early. If the sizes match, the file hashes are also compared.
+.EXAMPLE
+    Compare-Files -File1Path 'C:\File1.txt' -File2Path 'C:\File2.txt'
+.INPUTS
+    [System.String]
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Compare-Files {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The path of the first file.')]
+        [System.String]$File1Path,
+
+        [Parameter(Mandatory=$true,HelpMessage='The path of the second file.')]
+        [System.String]$File2Path,
+
+        [Parameter(Mandatory=$false,HelpMessage='The hashing algorithm to use. Defaults to SHA256.')]
+        [System.String]$Algorithm = 'SHA256',
+
+        [Parameter(Mandatory=$false,HelpMessage='The file size threshold in bytes used to trigger a confirmation before hash comparison. Defaults to 500MB.')]
+        [System.Int64]$LargeFileSizeThreshold = 500MB
+    )
+
+    try {
+        # EXECUTION - COMPARE FILE SIZES
+        # Compare the sizes first; stop early if they differ
+        [System.Boolean]$SizesMatch = Compare-FileSize -File1Path $File1Path -File2Path $File2Path -PassThru
+        if (-not $SizesMatch) {
+            Write-Line "Skipping hash comparison: files are different sizes."
+            return
+        }
+
+        # EXECUTION - COMPARE FILE HASHES
+        # If the file sizes is large, prompt the user for confirmation before proceeding with the hash comparison
+        [System.Int64]$File1Size = (Get-Item -LiteralPath $File1Path -ErrorAction Stop).Length
+        if ($File1Size -gt $LargeFileSizeThreshold) {
+            [System.Double]$ThresholdMB = [System.Math]::Round($LargeFileSizeThreshold / 1MB, 3)
+            if (-not (Get-UserConfirmation -Title 'Confirm Hash Large File' -Body "The file is larger than [$ThresholdMB MB].`nRetrieving the hash may take a while.`n`nDo you want to continue?" -Type 'Warning')) { return }
+        }
+        # Compare the hashes
+        Compare-FileHash -File1Path $File1Path -File2Path $File2Path -Algorithm $Algorithm
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

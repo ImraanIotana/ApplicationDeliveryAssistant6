@@ -302,8 +302,12 @@ function Enable-TabControlHighlightStyle {
                     else {
                         # For unselected tabs, avoid a full rectangle to prevent harsh bottom seams.
                         $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gray, $TabBounds.X, $TabBounds.Y, $TabBounds.Right - 1, $TabBounds.Y)
-                        $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gray, $TabBounds.X, $TabBounds.Y, $TabBounds.X, $TabBounds.Bottom - 2)
-                        $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gray, $TabBounds.Right - 1, $TabBounds.Y, $TabBounds.Right - 1, $TabBounds.Bottom - 2)
+                        if ($EventArgs.Index -eq 0) {
+                            $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gray, $TabBounds.X, $TabBounds.Y, $TabBounds.X, $TabBounds.Bottom - 2)
+                        }
+                        if ($EventArgs.Index -eq ($Sender.TabPages.Count - 1)) {
+                            $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gray, $TabBounds.Right - 1, $TabBounds.Y, $TabBounds.Right - 1, $TabBounds.Bottom - 2)
+                        }
                         $EventArgs.Graphics.DrawLine([System.Drawing.Pens]::Gainsboro, $TabBounds.X, $TabBounds.Bottom - 1, $TabBounds.Right - 1, $TabBounds.Bottom - 1)
                     }
                     if ($IsSelected -and $Sender.Focused) { $EventArgs.DrawFocusRectangle() }
