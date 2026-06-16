@@ -43,7 +43,7 @@ function Import-FeatureIntakeApplicationDetection {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'APPLICATION DETECTION'
+            Title           = 'APPLICATION DETECTION AND BITNESS'
             Color           = $Color
             NumberOfRows    = 1
             GroupBoxAbove   = $GroupBoxAbove

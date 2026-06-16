@@ -177,6 +177,10 @@ function New-ApplicationIDFromTextBoxes {
         # EXECUTION
         # Set the text to the textbox
         if ($OutputTextBox) { $OutputTextBox.Text = $ApplicationID }
+
+        # test
+        #Write-Line "The bitness of the detection file is $(Get-FileBitness -Path $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text)"
+        #Write-Line "For Document: $(Get-FileBitness -Path $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text -ForDocument)"
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -263,8 +267,8 @@ function New-ApplicationFolder {
         [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
-        # Write
-        Write-Line "The new Applaciotnf older has been create ($ApplicationID)"
+        # Write a message to the host indicating that the new application folder has been created
+        Write-Line "The new application folder has been created. ($ApplicationID)"
 
         # POST-EXECUTION
         # Open the OutputFolder
@@ -274,6 +278,7 @@ function New-ApplicationFolder {
         Write-ErrorReport -ErrorRecord $_
     }
 }
+
 ### END OF FUNCTION
 ####################################################################################################
 
@@ -541,6 +546,7 @@ function Get-DocumentReplacementMap {
         '[CUSTOMAPPLICATIONVERSION]' = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion.Text
         # Other Intake Properties
         '[INSTALLATIONFOLDER]'       = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
+        '[BITNESS]'                  = (Get-FileBitness -Path $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text -ForDocument)
         # User properties
         '[USERFULLNAME]'             = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName.Text
         '[USEREMAILADDRESS]'         = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress.Text

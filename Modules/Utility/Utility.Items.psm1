@@ -103,6 +103,128 @@ function Open-Folder {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Returns the detected bitness of a file path.
+.DESCRIPTION
+    This function accepts a file path string and returns the bitness as text.
+    For EXE files, it reads the PE header Machine field.
+    For MSI files, bitness detection is currently in development.
+    Use -ForDocument to include a second line with the source detection file path.
+.EXAMPLE
+    Get-FileBitness -Path 'C:\Program Files\Demo\demoapp.exe'
+.EXAMPLE
+    Get-FileBitness -Path 'C:\Program Files\Demo\demoapp.exe' -ForDocument
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Get-FileBitness {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The full path to an EXE or MSI file.')]
+        [AllowEmptyString()]
+        [System.String]$Path,
+
+        [Parameter(Mandatory=$false,HelpMessage='When supplied, returns a document-friendly multi-line output that includes the detection file path.')]
+        [System.Management.Automation.SwitchParameter]$ForDocument
+    )
+
+    # VALIDATION
+    # Validate that the supplied string is populated
+    if (Test-String -IsEmpty $Path) { return 'The Path string is empty.' }
+    # Validate that the supplied path points to an existing file
+    if (-not (Test-Path -Path $Path -PathType Leaf)) { return "The file does not exist, or could not be reached. ($Path)" }
+
+    # PREPARATION
+    # Read and normalize the file extension for branch selection
+    [System.String]$Extension = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
+
+    # EXECUTION
+    [System.String]$BitnessText = switch ($Extension) {
+        '.exe' {
+            try {
+                # Parse the PE header to determine the target machine architecture
+                [System.Byte[]]$Bytes = Get-Content -Path $Path -Encoding Byte -ReadCount 0
+                [System.Int32]$Pe = [System.BitConverter]::ToInt32($Bytes, 0x3C)
+                [System.UInt16]$Machine = [System.BitConverter]::ToUInt16($Bytes, $Pe + 4)
+
+                # Translate PE machine values to user-friendly bitness text
+                switch ($Machine) {
+                    0x014c  { '32bit (x86)' ; break }
+                    0x8664  { '64bit (x64)' ; break }
+                    default { 'Unknown/other format' ; break }
+                }
+            }
+            catch {
+                # Return a readable status instead of throwing to the caller
+                "Unable to read executable format. ($Path)"
+            }
+        }
+        '.msi' {
+            try {
+                # Open the MSI database through Windows Installer COM
+                [System.__ComObject]$Installer = New-Object -ComObject WindowsInstaller.Installer
+                [System.Object]$Database = $Installer.GetType().InvokeMember('OpenDatabase', 'InvokeMethod', $null, $Installer, @($Path, 0))
+
+                # Read the Summary Information template property (PID_TEMPLATE = 7)
+                [System.Object]$Summary = $Database.SummaryInformation(0)
+                [System.String]$Template = [System.String]$Summary.Property(7)
+
+                # Translate template values to user-friendly bitness text
+                switch -Regex ($Template.ToLowerInvariant()) {
+                    'arm64'                         { '64bit (ARM64)' ; break }
+                    '(^|;)\s*(x64|amd64)\s*(;|$)'   { '64bit (x64)' ; break }
+                    '(^|;)\s*(intel|x86)\s*(;|$)'   { '32bit (x86)' ; break }
+                    default                         { "Unknown/other format ($Template)" ; break }
+                }
+            }
+            catch {
+                # Return a readable status instead of throwing to the caller
+                "Unable to read MSI format. ($Path)"
+            }
+            finally {
+                # Release COM objects in reverse order to avoid lingering handles
+                if ($null -ne $Summary)     { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Summary) }
+                if ($null -ne $Database)    { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Database) }
+                if ($null -ne $Installer)   { [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Installer) }
+            }
+        }
+        default {
+            # Inform the caller when the extension is outside supported types
+            "Unsupported file extension. ($Extension)"
+        }
+    }
+
+    # POST-PROCESSING
+    # If the -ForDocument switch is supplied, include a second line with the source detection file path for document output
+    [System.String]$TextToOutput = switch ($ForDocument.IsPresent) {
+        $true {
+            "{0}{1}(Based on detection file: {2})" -f $BitnessText, [char]11, $Path
+        }
+        $false {
+            $BitnessText
+        }
+    }
+
+    # Return the final output text
+    return $TextToOutput
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Opens a standard file selection dialog and returns the selected file path.
 .DESCRIPTION
     This function opens a Windows file picker so the user can select a file path.
@@ -265,3 +387,5 @@ function Select-Folder {
 
 ### END OF FUNCTION
 ####################################################################################################
+
+

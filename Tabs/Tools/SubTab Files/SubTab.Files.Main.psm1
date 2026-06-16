@@ -42,10 +42,14 @@ function Import-SubTabFiles {
         # EXECUTION
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
         if (-not $Global:Graphics.TextBoxes.ContainsKey('CompareFiles')) { $Global:Graphics.TextBoxes.CompareFiles = @{} }
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('Tools'))        { $Global:Graphics.TextBoxes.Tools = @{} }
+        if (-not $Global:Graphics.TextBoxes.Tools.ContainsKey('Files'))       { $Global:Graphics.TextBoxes.Tools.Files = @{} }
+        if (-not $Global:Graphics.TextBoxes.Tools.Files.ContainsKey('FileBitness')) { $Global:Graphics.TextBoxes.Tools.Files.FileBitness = @{} }
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
         # Import the Features
-        $null = Import-FeatureCompareFiles -InputObject $InputObject -ParentTabPage $ParentTabPage
+        $CompareFilesGroupBox   = Import-FeatureCompareFiles    -InputObject $InputObject -ParentTabPage $ParentTabPage
+        $null                   = Import-FeatureFileBitness     -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $CompareFilesGroupBox  
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
