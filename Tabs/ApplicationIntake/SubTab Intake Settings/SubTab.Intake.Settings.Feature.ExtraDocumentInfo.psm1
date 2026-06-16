@@ -71,11 +71,9 @@ function Import-FeatureExtraDocumentInformation {
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
 
         }
-        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) { $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties = @{} }
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.UserFullName      = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.UserEmailAddress  = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName      = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress  = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox

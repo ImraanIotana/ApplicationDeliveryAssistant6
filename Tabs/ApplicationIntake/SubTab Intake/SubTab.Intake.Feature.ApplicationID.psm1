@@ -263,8 +263,8 @@ function New-ApplicationFolder {
         [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
-        # This function is still in development. The output folder is set to: $OutputFolder
-        Write-Line "New-ApplicationFolder: This function is still in development. The output folder is set to: $OutputFolder"
+        # Write
+        Write-Line "The new Applaciotnf older has been create ($ApplicationID)"
 
         # POST-EXECUTION
         # Open the OutputFolder
@@ -371,27 +371,179 @@ function New-ApplicationIntakeDocument {
 
         [System.String]$OutputDocumentPath = Join-Path -Path $DocumentationFolderPath -ChildPath ('KPN Dossier ' + $ApplicationID + '.docx')
 
+        # PREPARATION
+        # Read values for Word bookmark population.
+        [System.String]$ApplicationName = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationName.Text
+        [System.String]$ApplicationVersion = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion.Text
+        if (Test-String -IsEmpty $ApplicationName) { [System.String]$ApplicationName = $ApplicationID }
+        if (Test-String -IsEmpty $ApplicationVersion) { [System.String]$ApplicationVersion = 'UnknownVersion' }
+
         # EXECUTION
-        # Start Word, create a document from template and save it to the Documentation folder
-        [System.__ComObject]$WordApplication = New-Object -ComObject Word.Application
-        $WordApplication.Visible = $true
-
-        [System.__ComObject]$WordDocument = $WordApplication.Documents.Add($ResolvedTemplatePath)
-        $WordDocument.SaveAs2($OutputDocumentPath)
+        # Create the intake document from template and fill known bookmarks.
+        New-AppDocumentation -TemplatePath $ResolvedTemplatePath -OutputPath $OutputDocumentPath -AppName $ApplicationName -Version $ApplicationVersion
 
         # POST-EXECUTION
-        # Close Word and report the created document path
-        $WordDocument.Close($false)
-        $WordApplication.Quit()
-        Write-Line "Created Word document from template: $OutputDocumentPath" -Type Success
-
-        # POST-EXECUTION
-        # Release COM objects to avoid stale Word processes
-        [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WordDocument)
-        [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WordApplication)
+        # Report the created document path.
+        Write-Line "Created Word document from template: $OutputDocumentPath"
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Creates an application documentation Word file from a template and replaces placeholder text.
+.DESCRIPTION
+    Opens a Word template as a new document, replaces known placeholder text values, and saves the result
+    to the supplied output path as a .docx document.
+.EXAMPLE
+    New-AppDocumentation -TemplatePath 'C:\Templates\Dossier.dotx' -OutputPath 'C:\Out\Dossier.docx' -AppName 'Contoso App' -Version '1.0.0'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function New-AppDocumentation {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [System.String]$TemplatePath,
+
+        [Parameter(Mandatory=$true)]
+        [System.String]$OutputPath,
+
+        [Parameter(Mandatory=$true)]
+        [System.String]$AppName,
+
+        [Parameter(Mandatory=$true)]
+        [System.String]$Version
+    )
+
+    [System.Object]$Word = $null
+    [System.Object]$Document = $null
+
+    try {
+        # VALIDATION
+        if (Test-String -IsEmpty $TemplatePath) { throw 'The TemplatePath parameter is empty.' }
+        if (Test-String -IsEmpty $OutputPath) { throw 'The OutputPath parameter is empty.' }
+        if (-not (Test-Path -LiteralPath $TemplatePath -PathType Leaf)) { throw "Template not found. ($TemplatePath)" }
+
+        # PREPARATION
+        # Start Word in the background and create a new document from the template.
+        $Word = New-Object -ComObject Word.Application
+        $Word.Visible = $false
+        $Document = $Word.Documents.Add($TemplatePath)
+
+        # PREPARATION
+        # Map placeholder text to replacement values.
+        [System.Collections.Hashtable]$ReplaceMap = Get-DocumentReplacementMap
+
+        # EXECUTION
+        # Replace placeholder text in the whole document body.
+        foreach ($Key in $ReplaceMap.Keys) {
+            [System.Object]$Find = $Document.Content.Find
+            [void]$Find.ClearFormatting()
+            [void]$Find.Replacement.ClearFormatting()
+            [void]$Find.Execute(
+                [ref]$Key,
+                [ref]$false,
+                [ref]$false,
+                [ref]$false,
+                [ref]$false,
+                [ref]$false,
+                [ref]$true,
+                [ref]1,
+                [ref]$false,
+                [ref]$ReplaceMap[$Key],
+                [ref]2
+            )
+        }
+
+        # EXECUTION
+        # Save the generated document.
+        [System.String]$ResolvedOutputPath = [System.IO.Path]::GetFullPath($OutputPath)
+        [System.String]$OutputDirectory = [System.IO.Path]::GetDirectoryName($ResolvedOutputPath)
+        if (-not (Test-Path -LiteralPath $OutputDirectory -PathType Container)) {
+            New-Item -Path $OutputDirectory -ItemType Directory -Force | Out-Null
+        }
+        $Document.SaveAs2($ResolvedOutputPath)
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+    finally {
+        # POST-EXECUTION
+        # Ensure COM objects are closed and released.
+        if ($Document) {
+            $Document.Close($false)
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Document)
+        }
+        if ($Word) {
+            $Word.Quit()
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Word)
+        }
+
+        Remove-Variable Document -ErrorAction SilentlyContinue
+        Remove-Variable Word -ErrorAction SilentlyContinue
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Builds the placeholder-to-value map for Word document replacement.
+.DESCRIPTION
+    Returns a hashtable that maps the supported document placeholder tokens to their current values
+    from the Intake textboxes. This map is used by New-AppDocumentation to perform Find/Replace updates
+    in the generated Word document.
+.EXAMPLE
+    Get-DocumentReplacementMap
+.INPUTS
+    None.
+.OUTPUTS
+    [System.Collections.Hashtable]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Get-DocumentReplacementMap {
+    # EXECUTION
+    # Build a static replacement map from the corresponding textbox values.
+    return @{
+        # Formal Application Properties
+        '[FORMALVENDORNAME]'         = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.VendorName.Text
+        '[FORMALAPPLICATIONNAME]'    = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationName.Text
+        '[FORMALAPPLICATIONVERSION]' = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion.Text
+        # Custom Application Properties
+        '[CUSTOMVENDORNAME]'         = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.VendorName.Text
+        '[CUSTOMAPPLICATIONNAME]'    = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationName.Text
+        '[CUSTOMAPPLICATIONVERSION]' = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion.Text
+        # Other Intake Properties
+        '[INSTALLATIONFOLDER]'       = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
+        # User properties
+        '[USERFULLNAME]'             = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName.Text
+        '[USEREMAILADDRESS]'         = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress.Text
     }
 }
 

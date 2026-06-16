@@ -47,6 +47,11 @@ function Import-SubTabIntakeSettings {
         [System.String]$MiddleColor3    = 'Gold'
         [System.String]$BottomColor     = 'GreenYellow'
 
+        # EXECUTION
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeSettings')) { $Global:Graphics.TextBoxes.IntakeSettings = @{} }
+        if (-not $Global:Graphics.TextBoxes.IntakeSettings.ContainsKey('ExtraDocumentInformation')) { $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation = @{} }
+
         # EXECUTION - TABPAGE
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
