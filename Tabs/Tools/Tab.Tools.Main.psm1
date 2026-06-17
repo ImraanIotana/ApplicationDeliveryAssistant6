@@ -37,6 +37,8 @@ function Import-TabTools {
             Version             = '6.0.0.0'
             BackGroundColor     = 'Blue'
         }
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ContainsKey('Tools')) { $Global:Graphics.TextBoxes.Tools = @{} }
 
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties

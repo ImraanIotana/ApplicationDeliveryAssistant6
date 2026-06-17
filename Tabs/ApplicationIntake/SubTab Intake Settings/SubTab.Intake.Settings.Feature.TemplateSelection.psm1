@@ -118,10 +118,11 @@ function Import-FeatureIntakeTemplateSelection {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Gets customer templates from the Settings folder.
+    Gets customer templates from the Customer folder.
 .DESCRIPTION
-    This function retrieves customer template files from the Settings folder, imports their content,
-    and returns a custom object for each template to populate the Template Selection ComboBox.
+    This function retrieves customer template files from the Customer folder and its subfolders,
+    imports their content, and returns a custom object for each template to populate the
+    Template Selection ComboBox.
 .EXAMPLE
     Get-CustomerTemplates
 .INPUTS
@@ -138,7 +139,7 @@ function Import-FeatureIntakeTemplateSelection {
 ####################################################################################################
 function Get-CustomerTemplates {
     param (
-        $FolderToSearch = (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Settings')
+        $FolderToSearch = (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
     )
     
     # VALIDATION
@@ -149,8 +150,8 @@ function Get-CustomerTemplates {
     }
 
     # EXECUTION
-    # Get all .psd1 files in the specified folder that start with 'Settings.Customer.'
-    [System.IO.FileInfo[]]$TemplateFiles = Get-ChildItem -Path $FolderToSearch -Filter '*.psd1' -File |
+    # Get all .psd1 files in the specified folder and subfolders that start with 'Settings.Customer.'
+    [System.IO.FileInfo[]]$TemplateFiles = Get-ChildItem -Path $FolderToSearch -Filter '*.psd1' -File -Recurse |
         Where-Object { $_.BaseName.StartsWith('Settings.Customer.') } |
         Sort-Object -Property Name
     # Return an empty array if no template files are found

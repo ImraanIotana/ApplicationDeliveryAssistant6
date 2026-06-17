@@ -41,9 +41,8 @@ function Import-FeatureFileBitness {
             Title           = 'FILE BITNESS'
             Color           = 'Cyan'
             NumberOfRows    = 2
+            GroupBoxAbove   = $GroupBoxAbove
         }
-        # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
-        if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
 
         # PREPARATION - TEXTBOXES
         # Set the TextBox properties
@@ -58,15 +57,13 @@ function Import-FeatureFileBitness {
 
         # PREPARATION - BUTTONS
         # Set the Button properties
-        [System.Collections.Hashtable[]]$ButtonPropertiesArray1 = @(
+        [System.Collections.Hashtable[]]$ActionButtons = @(
             @{
                 ColumnNumber    = 1
                 Text            = 'Analyze'
                 PNGFileName     = 'microscope'
                 SizeType        = 'Medium'
-                Function        = {
-                    Write-Line (Get-FileBitness -Path $Global:Graphics.TextBoxes.Tools.Files.FileBitness.FilePath.Text)
-                }
+                Function        = { Get-FileBitness -Path $Global:Graphics.TextBoxes.Tools.Files.FileBitness.FilePath.Text -OutHost }
             }
         )
 
@@ -75,9 +72,10 @@ function Import-FeatureFileBitness {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
         # Create the TextBox
+        if (-not $Global:Graphics.TextBoxes.Tools.Files.ContainsKey('FileBitness')) { $Global:Graphics.TextBoxes.Tools.Files.FileBitness = @{} }
         $Global:Graphics.TextBoxes.Tools.Files.FileBitness.FilePath = New-TextBox @FileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 2
+        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ActionButtons -ParentGroupBox $FeatureGroupBox -RowNumber 2
         # Return the GroupBox object
         $FeatureGroupBox
     }

@@ -227,6 +227,8 @@ function New-ApplicationFolder {
         if (-not (Test-Path -Path $OutputFolder -PathType Container)) { New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null }
 
         # PREPARATION
+        # Set the ApplicationID
+        New-ApplicationIDFromTextBoxes -OutputTextBox $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID
         # Get the Application ID from the ApplicationID TextBox
         [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
         # If the Application ID is empty, throw an error
@@ -248,7 +250,11 @@ function New-ApplicationFolder {
             [System.String]$Body    = "This will create a NEW Application Folder with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
         }
         # If the user did not confirm, return
-        if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
+        if (Get-UserConfirmation -Title $Title -Body $Body) {
+                Write-Line "Creating application folder: $NewFolderPath. One moment please..."
+            } else {
+                return
+            }
 
         # EXECUTION
         # Remove the existing folder if it exists
@@ -312,7 +318,10 @@ function New-ApplicationIntakeDocument {
         [System.String]$ApplicationFolderPath,
 
         [Parameter(Mandatory=$true,HelpMessage='The selected customer template object from the Template Selection ComboBox.')]
-        [System.Object]$SelectedTemplate
+        [System.Object]$SelectedTemplate,
+
+        [Parameter(Mandatory=$false,HelpMessage='The folder where Word templates are searched.')]
+        [System.String]$FolderToSearch = (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
     )
 
     try {
@@ -336,19 +345,19 @@ function New-ApplicationIntakeDocument {
             return
         }
 
-        # PREPARATION
-        # Read the application root folder used to locate templates
-        [System.String]$RootFolder = $Global:ApplicationObject.RootFolder
-        if (Test-String -IsEmpty $RootFolder) { throw 'Global ApplicationObject.RootFolder is empty.' }
+        # VALIDATION
+        # Ensure the template search folder is available.
+        if (Test-String -IsEmpty $FolderToSearch) { throw 'The FolderToSearch parameter is empty.' }
+        if (-not (Test-Path -LiteralPath $FolderToSearch -PathType Container)) { throw "Template search folder not found. ($FolderToSearch)" }
 
         # PREPARATION
-        # Search the template file from the application root folder.
+        # Search the template file from the configured template search folder.
         [System.String]$ResolvedTemplatePath = $null
-        [System.IO.FileInfo]$TemplateFile = Get-ChildItem -LiteralPath $RootFolder -Recurse -File -Filter $WordTemplateName -ErrorAction SilentlyContinue | Select-Object -First 1
+        [System.IO.FileInfo]$TemplateFile = Get-ChildItem -LiteralPath $FolderToSearch -Recurse -File -Filter $WordTemplateName -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($null -ne $TemplateFile) { $ResolvedTemplatePath = $TemplateFile.FullName }
 
         if (Test-String -IsEmpty $ResolvedTemplatePath) {
-            Write-Line "The selected Word template could not be found in the application root folder. ($WordTemplateName)" -Type Fail
+            Write-Line "The selected Word template could not be found in the template search folder. ($WordTemplateName)" -Type Fail
             return
         }
 
@@ -376,16 +385,9 @@ function New-ApplicationIntakeDocument {
 
         [System.String]$OutputDocumentPath = Join-Path -Path $DocumentationFolderPath -ChildPath ('KPN Dossier ' + $ApplicationID + '.docx')
 
-        # PREPARATION
-        # Read values for Word bookmark population.
-        [System.String]$ApplicationName = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationName.Text
-        [System.String]$ApplicationVersion = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion.Text
-        if (Test-String -IsEmpty $ApplicationName) { [System.String]$ApplicationName = $ApplicationID }
-        if (Test-String -IsEmpty $ApplicationVersion) { [System.String]$ApplicationVersion = 'UnknownVersion' }
-
         # EXECUTION
-        # Create the intake document from template and fill known bookmarks.
-        New-AppDocumentation -TemplatePath $ResolvedTemplatePath -OutputPath $OutputDocumentPath -AppName $ApplicationName -Version $ApplicationVersion
+        # Create the intake document from template and fill the fields
+        New-AppDocumentation -TemplatePath $ResolvedTemplatePath -OutputPath $OutputDocumentPath
 
         # POST-EXECUTION
         # Report the created document path.
@@ -408,7 +410,7 @@ function New-ApplicationIntakeDocument {
     Opens a Word template as a new document, replaces known placeholder text values, and saves the result
     to the supplied output path as a .docx document.
 .EXAMPLE
-    New-AppDocumentation -TemplatePath 'C:\Templates\Dossier.dotx' -OutputPath 'C:\Out\Dossier.docx' -AppName 'Contoso App' -Version '1.0.0'
+    New-AppDocumentation -TemplatePath 'C:\Templates\Dossier.dotx' -OutputPath 'C:\Out\Dossier.docx'
 .INPUTS
     [System.String]
 .OUTPUTS
@@ -428,13 +430,7 @@ function New-AppDocumentation {
         [System.String]$TemplatePath,
 
         [Parameter(Mandatory=$true)]
-        [System.String]$OutputPath,
-
-        [Parameter(Mandatory=$true)]
-        [System.String]$AppName,
-
-        [Parameter(Mandatory=$true)]
-        [System.String]$Version
+        [System.String]$OutputPath
     )
 
     [System.Object]$Word = $null
@@ -484,6 +480,7 @@ function New-AppDocumentation {
         if (-not (Test-Path -LiteralPath $OutputDirectory -PathType Container)) {
             New-Item -Path $OutputDirectory -ItemType Directory -Force | Out-Null
         }
+
         $Document.SaveAs2($ResolvedOutputPath)
     }
     catch {
@@ -500,7 +497,7 @@ function New-AppDocumentation {
             $Word.Quit()
             [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Word)
         }
-
+        # Clean up variables to avoid accidental reuse and reduce memory footprint.
         Remove-Variable Document -ErrorAction SilentlyContinue
         Remove-Variable Word -ErrorAction SilentlyContinue
     }

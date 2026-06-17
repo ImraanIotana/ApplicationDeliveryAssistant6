@@ -109,10 +109,13 @@ function Open-Folder {
     For EXE files, it reads the PE header Machine field.
     For MSI files, bitness detection is currently in development.
     Use -ForDocument to include a second line with the source detection file path.
+    Use -OutHost to write a sentence to the host and return nothing to the pipeline.
 .EXAMPLE
     Get-FileBitness -Path 'C:\Program Files\Demo\demoapp.exe'
 .EXAMPLE
     Get-FileBitness -Path 'C:\Program Files\Demo\demoapp.exe' -ForDocument
+.EXAMPLE
+    Get-FileBitness -Path 'C:\Program Files\Demo\demoapp.exe' -OutHost
 .INPUTS
     [System.String]
 .OUTPUTS
@@ -134,7 +137,10 @@ function Get-FileBitness {
         [System.String]$Path,
 
         [Parameter(Mandatory=$false,HelpMessage='When supplied, returns a document-friendly multi-line output that includes the detection file path.')]
-        [System.Management.Automation.SwitchParameter]$ForDocument
+        [System.Management.Automation.SwitchParameter]$ForDocument,
+
+        [Parameter(Mandatory=$false,HelpMessage='When supplied, outputs a sentence to the host and returns nothing to the pipeline.')]
+        [System.Management.Automation.SwitchParameter]$OutHost
     )
 
     # VALIDATION
@@ -214,12 +220,16 @@ function Get-FileBitness {
         }
     }
 
-    # Return the final output text
-    return $TextToOutput
-}
+    # OUTPUT
+    # When -OutHost is supplied, write a sentence to the host and return nothing to the pipeline.
+    if ($OutHost.IsPresent) {
+        Write-Line "The bitness of the file ($Path) is: $BitnessText"
+    } else {
+        # Return the final output text to the pipeline
+        $TextToOutput
+    }
 
-### END OF FUNCTION
-####################################################################################################
+}
 
 
 ####################################################################################################

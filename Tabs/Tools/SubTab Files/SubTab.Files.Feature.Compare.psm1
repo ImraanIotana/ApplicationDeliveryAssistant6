@@ -50,7 +50,7 @@ function Import-FeatureCompareFiles {
         [System.Collections.Hashtable]$File1TextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Select File 1'
-            PropertyName    = 'TextBoxes.Files.FilePath1'
+            PropertyName    = 'TextBoxes.Tools.Files.CompareFiles.FilePath1'
             ToolTip         = 'The path of the first file to compare'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
@@ -59,7 +59,7 @@ function Import-FeatureCompareFiles {
         [System.Collections.Hashtable]$File2TextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Select File 2'
-            PropertyName    = 'TextBoxes.Files.FilePath2'
+            PropertyName    = 'TextBoxes.Tools.Files.CompareFiles.FilePath2'
             ToolTip         = 'The path of the second file to compare'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
@@ -74,7 +74,7 @@ function Import-FeatureCompareFiles {
                 PNGFileName     = 'price_comparison'
                 SizeType        = 'Medium'
                 Function        = {
-                    Compare-Files -File1Path $Global:Graphics.TextBoxes.CompareFiles.FilePath1.Text -File2Path $Global:Graphics.TextBoxes.CompareFiles.FilePath2.Text
+                    Compare-Files -File1Path $Global:Graphics.TextBoxes.Tools.Files.CompareFiles.FilePath1.Text -File2Path $Global:Graphics.TextBoxes.Tools.Files.CompareFiles.FilePath2.Text
                 }
             }
         )
@@ -84,8 +84,9 @@ function Import-FeatureCompareFiles {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.CompareFiles.FilePath1 = New-TextBox @File1TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.CompareFiles.FilePath2 = New-TextBox @File2TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        if (-not $Global:Graphics.TextBoxes.Tools.Files.ContainsKey('CompareFiles')) { $Global:Graphics.TextBoxes.Tools.Files.CompareFiles = @{} }
+        $Global:Graphics.TextBoxes.Tools.Files.CompareFiles.FilePath1 = New-TextBox @File1TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.Tools.Files.CompareFiles.FilePath2 = New-TextBox @File2TextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         # Add the Buttons
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray1 -ParentGroupBox $FeatureGroupBox -RowNumber 3
         # Return the GroupBox object
