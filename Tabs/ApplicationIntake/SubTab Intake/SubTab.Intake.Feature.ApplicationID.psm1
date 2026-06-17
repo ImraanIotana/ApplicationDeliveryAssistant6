@@ -251,10 +251,10 @@ function New-ApplicationFolder {
         }
         # If the user did not confirm, return
         if (Get-UserConfirmation -Title $Title -Body $Body) {
-                Write-Line "Creating application folder: $NewFolderPath. One moment please..."
-            } else {
-                return
-            }
+            Write-Line "Creating application folder: $NewFolderPath. One moment please..."
+        } else {
+            return
+        }
 
         # EXECUTION
         # Remove the existing folder if it exists
@@ -272,6 +272,7 @@ function New-ApplicationFolder {
         # Create the initial Word document in the Documentation subfolder from the selected template.
         [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
+        New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
         # Write a message to the host indicating that the new application folder has been created
         Write-Line "The new application folder has been created. ($ApplicationID)"
@@ -279,6 +280,175 @@ function New-ApplicationFolder {
         # POST-EXECUTION
         # Open the OutputFolder
         Open-Folder -Path $OutputFolder
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Creates a metadata JSON file with all current Intake values.
+.DESCRIPTION
+    Collects the current Application Intake information from the UI controls, converts it to a
+    JSON payload, and saves it to the Metadata subfolder under 9. Archive in the supplied
+    application folder.
+.EXAMPLE
+    New-MetaDataFile -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0' -SelectedTemplate $Template
+.INPUTS
+    [System.String]
+    [System.Object]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function New-MetaDataFile {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The root folder of the created application package.')]
+        [System.String]$ApplicationFolderPath,
+
+        [Parameter(Mandatory=$true,HelpMessage='The selected customer template object from the Template Selection ComboBox.')]
+        [System.Object]$SelectedTemplate
+    )
+
+    try {
+        # VALIDATION
+        # Validate the target application folder path
+        if (Test-String -IsEmpty $ApplicationFolderPath) { throw 'The ApplicationFolderPath parameter is empty.' }
+        if (-not (Test-Path -LiteralPath $ApplicationFolderPath -PathType Container)) { throw "The application folder does not exist. ($ApplicationFolderPath)" }
+
+        # VALIDATION
+        # Ensure a template object is provided
+        if ($null -eq $SelectedTemplate) {
+            Write-Line 'No customer template is selected. Skipping metadata file creation.' -Type Warning
+            return
+        }
+
+        # PREPARATION
+        # Build metadata output path in 9. Archive\Metadata.
+        [System.String]$MetadataRelativePath = Join-Path -Path '9. Archive' -ChildPath 'Metadata'
+        [System.String]$MetadataFolderPath = Join-Path -Path $ApplicationFolderPath -ChildPath $MetadataRelativePath
+        if (-not (Test-Path -LiteralPath $MetadataFolderPath -PathType Container)) {
+            New-Item -Path $MetadataFolderPath -ItemType Directory -Force | Out-Null
+        }
+
+        # PREPARATION
+        # Build a safe file name based on the generated Application ID.
+        [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
+        if (Test-String -IsEmpty $ApplicationID) {
+            [System.String]$ApplicationID = 'ApplicationDossier'
+        }
+        [System.String]$SafeApplicationID = ($ApplicationID -replace '[\\/:*?""<>|]', '_')
+        [System.String]$MetadataFilePath = Join-Path -Path $MetadataFolderPath -ChildPath ("Metadata.$SafeApplicationID.json")
+
+        # PREPARATION
+        # Convert UI controls to serializable values.
+        [ScriptBlock]$ConvertControlValue = {
+            param (
+                [Parameter(Mandatory=$false)]
+                [System.Object]$Value
+            )
+
+            if ($null -eq $Value) { return $null }
+            if ($Value -is [System.String] -or $Value -is [System.ValueType]) { return $Value }
+
+            if ($Value -is [System.Windows.Forms.TextBox]) {
+                return $Value.Text
+            }
+
+            if ($Value -is [System.Windows.Forms.ComboBox]) {
+                return [PSCustomObject]@{
+                    Text         = $Value.Text
+                    SelectedItem = $Value.SelectedItem
+                    SelectedValue= $Value.SelectedValue
+                }
+            }
+
+            if ($Value -is [System.Collections.IDictionary]) {
+                [System.Collections.Specialized.OrderedDictionary]$Result = [ordered]@{}
+                foreach ($Key in ($Value.Keys | Sort-Object)) {
+                    $Result[$Key] = & $ConvertControlValue -Value $Value[$Key]
+                }
+                return [PSCustomObject]$Result
+            }
+
+            if ($Value -is [System.Collections.IEnumerable] -and -not ($Value -is [System.String])) {
+                [System.Collections.Generic.List[System.Object]]$Items = @()
+                foreach ($Item in $Value) {
+                    $Items.Add((& $ConvertControlValue -Value $Item))
+                }
+                return $Items
+            }
+
+            if ($Value.PSObject -and $Value.PSObject.Properties.Count -gt 0) {
+                [System.Collections.Specialized.OrderedDictionary]$Result = [ordered]@{}
+                foreach ($Property in $Value.PSObject.Properties) {
+                    if ($Property.IsGettable) {
+                        $Result[$Property.Name] = & $ConvertControlValue -Value $Property.Value
+                    }
+                }
+                return [PSCustomObject]$Result
+            }
+
+            return $Value.ToString()
+        }
+
+        # EXECUTION
+        # Build a compact template object without the duplicated Content property.
+        Write-Line "Creating metadata JSON file: $MetadataFilePath"
+        [System.Object]$SelectedTemplateForMetaData = (& $ConvertControlValue -Value $SelectedTemplate)
+        if ($null -ne $SelectedTemplateForMetaData -and $SelectedTemplateForMetaData.PSObject.Properties['Content']) {
+            [void]$SelectedTemplateForMetaData.PSObject.Properties.Remove('Content')
+        }
+
+        # EXECUTION
+        # Build the metadata payload from the current Intake state.
+        [PSCustomObject]$MetaDataObject = [PSCustomObject][ordered]@{
+            # General properties
+            CreatedOn                   = Get-TimeStamp -ForHost
+            ApplicationID               = $ApplicationID
+            # Formal properties
+            FormalVendorName            = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.VendorName.Text
+            FormalApplicationName       = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationName.Text
+            FormalApplicationVersion    = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion.Text
+            # Custom properties
+            CustomVendorName            = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.VendorName.Text
+            CustomApplicationName       = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationName.Text
+            CustomApplicationVersion    = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion.Text
+            # Security properties
+            InstallationFolder          = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
+            ADGroupName                 = $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupName.Text
+            ADGroupSID                  = $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text
+            # Other properties
+            DetectionFile               = $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text
+            DetectionFileVersion        = Get-Item -LiteralPath $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text -ErrorAction SilentlyContinue | Select-Object -ExpandProperty VersionInfo -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FileVersion -ErrorAction SilentlyContinue
+            Bitness                     = Get-FileBitness -Path $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text
+            # Extra document information
+            UserFullName                = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName.Text
+            UserEmailAddress            = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress.Text
+            SelectedTemplate            = $SelectedTemplateForMetaData
+        }
+
+        # EXECUTION
+        # Serialize metadata and write it to disk.
+        [System.String]$MetaDataJson = $MetaDataObject | ConvertTo-Json -Depth 20
+        Set-Content -Path $MetadataFilePath -Value $MetaDataJson -Encoding UTF8
+
+        # POST-EXECUTION
+        # Report the created metadata file path.
+        Write-Line "Created metadata JSON file: $MetadataFilePath"
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -444,6 +614,7 @@ function New-AppDocumentation {
 
         # PREPARATION
         # Start Word in the background and create a new document from the template.
+        Write-Line "Created Word document, one moment please..."
         $Word = New-Object -ComObject Word.Application
         $Word.Visible = $false
         $Document = $Word.Documents.Add($TemplatePath)

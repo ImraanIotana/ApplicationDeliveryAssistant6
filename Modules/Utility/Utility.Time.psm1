@@ -22,13 +22,12 @@ function Get-TimeStamp {
     [CmdletBinding()]
     [OutputType([System.String])]
     param (
-        [Parameter(Mandatory=$true,ParameterSetName='ForFileName',HelpMessage='Returns the timestamp in a format suitable for filenames.')]
+        [Parameter(Mandatory=$false,ParameterSetName='ForFileName',HelpMessage='Returns the timestamp in a format suitable for filenames.')]
         [System.Management.Automation.SwitchParameter]$ForFileName,
 
-        [Parameter(Mandatory=$true,ParameterSetName='ForHost',HelpMessage='Returns the timestamp in a format suitable for display.')]
+        [Parameter(Mandatory=$false,ParameterSetName='ForHost',HelpMessage='Returns the timestamp in a format suitable for display.')]
         [System.Management.Automation.SwitchParameter]$ForHost
     )
-
 
     # PROPERTIES
     # Get the UTC TimeStamp
