@@ -23,6 +23,10 @@
     # Set the default template name for the Application Intake
     TemplateName = 'KPN Dossier Default.dotx'
 
+    # Set the name of the Universal Deployment Framework (UDF) zip file
+    UDFName = 'UniversalDeploymentFramework.zip'
+
+
     # Set the subfolders for the Application Folder
     ApplicationFolderSubFolders = @{
         Documentation   = '1. Documentation'

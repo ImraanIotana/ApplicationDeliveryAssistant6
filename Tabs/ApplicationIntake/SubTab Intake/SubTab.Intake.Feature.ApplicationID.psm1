@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Detection feature into the Intake sub-tab.
+    Imports the Application ID feature into the Intake sub-tab.
 .DESCRIPTION
-    This function imports the Application Detection feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Application ID feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureIntakeApplicationDetection -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureIntakeApplicationID -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
@@ -177,10 +177,6 @@ function New-ApplicationIDFromTextBoxes {
         # EXECUTION
         # Set the text to the textbox
         if ($OutputTextBox) { $OutputTextBox.Text = $ApplicationID }
-
-        # test
-        #Write-Line "The bitness of the detection file is $(Get-FileBitness -Path $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text)"
-        #Write-Line "For Document: $(Get-FileBitness -Path $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text -ForDocument)"
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -271,8 +267,10 @@ function New-ApplicationFolder {
 
         # Create the initial Word document in the Documentation subfolder from the selected template.
         [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
+        Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
+        New-ApplicationShortcutInformation -ApplicationFolderPath $NewFolderPath -SkipConfirmation
 
         # Write a message to the host indicating that the new application folder has been created
         Write-Line "The new application folder has been created. ($ApplicationID)"
@@ -280,6 +278,211 @@ function New-ApplicationFolder {
         # POST-EXECUTION
         # Open the OutputFolder
         Open-Folder -Path $OutputFolder
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Copies and extracts the configured UDF zip into the Work subfolder.
+.DESCRIPTION
+    Resolves UDFName from the selected customer template, locates the zip file below the configured
+    customer folder, and extracts it into the Work subfolder (8. Work) of the supplied application folder.
+.EXAMPLE
+    Copy-UDF -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0' -SelectedTemplate $Template
+.INPUTS
+    [System.String]
+    [System.Object]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Copy-UDF {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The root folder of the created application package.')]
+        [System.String]$ApplicationFolderPath,
+
+        [Parameter(Mandatory=$true,HelpMessage='The selected customer template object from the Template Selection ComboBox.')]
+        [System.Object]$SelectedTemplate,
+
+        [Parameter(Mandatory=$false,HelpMessage='The folder where UDF zip files are searched.')]
+        [System.String]$FolderToSearch = (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
+    )
+
+    try {
+        # VALIDATION
+        # Validate the target application folder path
+        if (Test-String -IsEmpty $ApplicationFolderPath) { throw 'The ApplicationFolderPath parameter is empty.' }
+        if (-not (Test-Path -LiteralPath $ApplicationFolderPath -PathType Container)) { throw "The application folder does not exist. ($ApplicationFolderPath)" }
+
+        # VALIDATION
+        # Ensure a template object is provided
+        if ($null -eq $SelectedTemplate) {
+            Write-Line 'No customer template is selected. Skipping UDF copy.' -Type Warning
+            return
+        }
+
+        # PREPARATION
+        # Read the configured UDF zip file name from the selected customer template.
+        [System.String]$UDFName = $SelectedTemplate.Content.UDFName
+        if (Test-String -IsEmpty $UDFName) {
+            Write-Line 'The selected customer template does not define Content.UDFName. Skipping UDF copy.' -Type Warning
+            return
+        }
+
+        # VALIDATION
+        # Ensure the UDF search folder is available.
+        if (Test-String -IsEmpty $FolderToSearch) { throw 'The FolderToSearch parameter is empty.' }
+        if (-not (Test-Path -LiteralPath $FolderToSearch -PathType Container)) { throw "UDF search folder not found. ($FolderToSearch)" }
+
+        # PREPARATION
+        # Find the configured UDF zip file in the customer folder tree.
+        [System.String]$ResolvedUDFPath = $null
+        [System.IO.FileInfo]$UDFFile = Get-ChildItem -LiteralPath $FolderToSearch -Recurse -File -Filter $UDFName -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $UDFFile) { $ResolvedUDFPath = $UDFFile.FullName }
+
+        if (Test-String -IsEmpty $ResolvedUDFPath) {
+            Write-Line "The selected UDF zip could not be found in the search folder. ($UDFName)" -Type Warning
+            return
+        }
+
+        # PREPARATION
+        # Resolve the Work subfolder from template, defaulting to 8. Work.
+        [System.String]$WorkRelativePath = $SelectedTemplate.ApplicationFolderSubFolders.Work
+        if (Test-String -IsEmpty $WorkRelativePath) {
+            [System.String]$WorkRelativePath = '8. Work'
+        }
+
+        # EXECUTION
+        # Ensure the target Work subfolder exists.
+        [System.String]$WorkFolderPath = Join-Path -Path $ApplicationFolderPath -ChildPath $WorkRelativePath
+        if (-not (Test-Path -LiteralPath $WorkFolderPath -PathType Container)) {
+            New-Item -Path $WorkFolderPath -ItemType Directory -Force | Out-Null
+        }
+
+        # EXECUTION
+        # Extract the UDF archive contents into the Work folder.
+        Write-Line "Extracting UDF archive to Work folder: $WorkFolderPath"
+        Expand-Archive -LiteralPath $ResolvedUDFPath -DestinationPath $WorkFolderPath -Force
+
+        # EXECUTION
+        # Rename the extracted folder to the ApplicationID
+        [System.String]$ArchiveFolderName = [System.IO.Path]::GetFileNameWithoutExtension($UDFName)
+        [System.String]$ExtractedFolderPath = Join-Path -Path $WorkFolderPath -ChildPath $ArchiveFolderName
+        if (Test-Path -LiteralPath $ExtractedFolderPath -PathType Container) {
+            [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
+            if (Test-String -IsEmpty $ApplicationID) {
+                [System.String]$ApplicationID = 'ApplicationDossier'
+            }
+            [System.String]$NewUDFFolderPath = Join-Path -Path $WorkFolderPath -ChildPath $ApplicationID
+            if (Test-Path -LiteralPath $NewUDFFolderPath -PathType Container) {
+                Remove-Item -Path $NewUDFFolderPath -Recurse -Force
+            }
+            try {
+                Rename-Item -LiteralPath $ExtractedFolderPath -NewName $ApplicationID -Force -ErrorAction Stop
+            }
+            catch {
+                Write-Line "Rename of extracted UDF folder failed; applying copy fallback. Source: $ExtractedFolderPath" -Type Warning
+                Copy-Item -LiteralPath $ExtractedFolderPath -Destination $NewUDFFolderPath -Recurse -Force -ErrorAction Stop
+                Remove-Item -LiteralPath $ExtractedFolderPath -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        # POST-EXECUTION
+        # Report the resolved UDF source and target path.
+        Write-Line "Extracted UDF archive: $ResolvedUDFPath"
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Exports shortcut information for the selected Intake shortcut to the application archive.
+.DESCRIPTION
+    This function reads the selected shortcut or shortcut folder from the Intake Application Shortcuts combobox
+    and exports its details to a text file under 9. Archive\Shortcuts in the supplied application folder.
+.EXAMPLE
+    New-ApplicationShortcutInformation -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function New-ApplicationShortcutInformation {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The root folder of the created application package.')]
+        [System.String]$ApplicationFolderPath,
+
+        [Parameter(Mandatory=$false,HelpMessage='If set, confirmation prompts will be skipped.')]
+        [System.Management.Automation.SwitchParameter]$SkipConfirmation
+    )
+
+    try {
+        # VALIDATION
+        # Validate the target application folder path
+        if (Test-String -IsEmpty $ApplicationFolderPath) { throw 'The ApplicationFolderPath parameter is empty.' }
+        if (-not (Test-Path -LiteralPath $ApplicationFolderPath -PathType Container)) { throw "The application folder does not exist. ($ApplicationFolderPath)" }
+
+        # PREPARATION
+        # Resolve the selected shortcut/folder path from the Intake shortcut combobox.
+        [System.Object]$SelectedShortcut = $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
+        if ($null -eq $SelectedShortcut) {
+            Write-Line 'No shortcut is selected. Skipping shortcut information export.' -Type Warning
+            return
+        }
+
+        [System.String]$ShortcutPath = [System.String]$SelectedShortcut.FullPath
+        if (Test-String -IsEmpty $ShortcutPath) {
+            Write-Line 'The selected shortcut does not contain a valid path. Skipping shortcut information export.' -Type Warning
+            return
+        }
+
+        # CONFIRMATION
+        # Ask the user to confirm exporting the shortcut information.
+        [System.String]$Title = 'Confirm Export Shortcut Information'
+        [System.String]$Body = "Do you want to export the shortcut information?"
+        if (-not $SkipConfirmation -and -not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
+
+        # PREPARATION
+        # Build output folder path in 9. Archive\Shortcuts.
+        [System.String]$ShortcutsRelativePath = Join-Path -Path '9. Archive' -ChildPath 'Shortcuts'
+        [System.String]$ShortcutsFolderPath = Join-Path -Path $ApplicationFolderPath -ChildPath $ShortcutsRelativePath
+        if (-not (Test-Path -LiteralPath $ShortcutsFolderPath -PathType Container)) {
+            New-Item -Path $ShortcutsFolderPath -ItemType Directory -Force | Out-Null
+        }
+
+        # EXECUTION
+        # Export shortcut information to the archive shortcuts folder.
+        Export-ShortcutInformation -Path $ShortcutPath -ParentOutputFolder $ShortcutsFolderPath
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -351,7 +554,7 @@ function New-MetaDataFile {
             [System.String]$ApplicationID = 'ApplicationDossier'
         }
         [System.String]$SafeApplicationID = ($ApplicationID -replace '[\\/:*?""<>|]', '_')
-        [System.String]$MetadataFilePath = Join-Path -Path $MetadataFolderPath -ChildPath ("Metadata.$SafeApplicationID.json")
+        [System.String]$MetadataFilePath = Join-Path -Path $MetadataFolderPath -ChildPath ("Metadata_$SafeApplicationID.json")
 
         # PREPARATION
         # Convert UI controls to serializable values.
@@ -361,13 +564,16 @@ function New-MetaDataFile {
                 [System.Object]$Value
             )
 
+            # Preserve nulls and primitive values as-is.
             if ($null -eq $Value) { return $null }
             if ($Value -is [System.String] -or $Value -is [System.ValueType]) { return $Value }
 
+            # Reduce TextBox controls to the user-entered text value.
             if ($Value -is [System.Windows.Forms.TextBox]) {
                 return $Value.Text
             }
 
+            # Keep key ComboBox selection details in a compact object.
             if ($Value -is [System.Windows.Forms.ComboBox]) {
                 return [PSCustomObject]@{
                     Text         = $Value.Text
@@ -376,6 +582,7 @@ function New-MetaDataFile {
                 }
             }
 
+            # Convert hashtables/dictionaries recursively with stable key ordering.
             if ($Value -is [System.Collections.IDictionary]) {
                 [System.Collections.Specialized.OrderedDictionary]$Result = [ordered]@{}
                 foreach ($Key in ($Value.Keys | Sort-Object)) {
@@ -384,6 +591,7 @@ function New-MetaDataFile {
                 return [PSCustomObject]$Result
             }
 
+            # Convert arrays and other enumerables recursively.
             if ($Value -is [System.Collections.IEnumerable] -and -not ($Value -is [System.String])) {
                 [System.Collections.Generic.List[System.Object]]$Items = @()
                 foreach ($Item in $Value) {
@@ -392,6 +600,7 @@ function New-MetaDataFile {
                 return $Items
             }
 
+            # Convert arbitrary objects by walking gettable properties only.
             if ($Value.PSObject -and $Value.PSObject.Properties.Count -gt 0) {
                 [System.Collections.Specialized.OrderedDictionary]$Result = [ordered]@{}
                 foreach ($Property in $Value.PSObject.Properties) {
@@ -409,6 +618,7 @@ function New-MetaDataFile {
         # Build a compact template object without the duplicated Content property.
         Write-Line "Creating metadata JSON file: $MetadataFilePath"
         [System.Object]$SelectedTemplateForMetaData = (& $ConvertControlValue -Value $SelectedTemplate)
+        # Drop the heavy Content node to keep metadata focused and small.
         if ($null -ne $SelectedTemplateForMetaData -and $SelectedTemplateForMetaData.PSObject.Properties['Content']) {
             [void]$SelectedTemplateForMetaData.PSObject.Properties.Remove('Content')
         }
@@ -612,9 +822,15 @@ function New-AppDocumentation {
         if (Test-String -IsEmpty $OutputPath) { throw 'The OutputPath parameter is empty.' }
         if (-not (Test-Path -LiteralPath $TemplatePath -PathType Leaf)) { throw "Template not found. ($TemplatePath)" }
 
+        # CONFIRMATION
+        # Ask the user to confirm creating the Word document.
+        [System.String]$Title = 'Confirm Word Document'
+        [System.String]$Body = "Do you want to create the Word document?"
+        if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
+        
         # PREPARATION
         # Start Word in the background and create a new document from the template.
-        Write-Line "Created Word document, one moment please..."
+        Write-Line "Creating Word document, one moment please..."
         $Word = New-Object -ComObject Word.Application
         $Word.Visible = $false
         $Document = $Word.Documents.Add($TemplatePath)

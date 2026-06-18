@@ -16,12 +16,15 @@
     # GENERAL SETTINGS
 
     # Set the Identity Property of the Customer
-    Identity = 'KPNSGD'
+    Identity = 'KPN - SGD'
 
     # APPLICATION INTAKE SETTINGS
 
     # Set the default template name for the Application Intake
     TemplateName = 'KPN Dossier KPNSGD.dotx'
+
+    # Set the name of the Universal Deployment Framework (UDF) zip file
+    UDFName = 'UniversalDeploymentFramework.zip'
 
     # Set the subfolders for the Application Folder
     ApplicationFolderSubFolders = @{

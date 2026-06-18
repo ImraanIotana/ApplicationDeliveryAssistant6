@@ -168,7 +168,7 @@ function Get-CustomerTemplates {
 
         # Create a custom object for each template file
         [PSCustomObject]@{
-            ComboBoxName = $TemplateName
+            ComboBoxName = $TemplateContent.Identity
             TemplatePath = $TemplateFile.FullName
             TemplateName = $TemplateName
             FileName     = $TemplateFile.Name
