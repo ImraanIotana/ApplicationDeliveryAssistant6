@@ -231,6 +231,9 @@ function Get-FileBitness {
 
 }
 
+### END OF FUNCTION
+####################################################################################################
+
 
 ####################################################################################################
 <#
@@ -364,14 +367,22 @@ function Select-Folder {
         # VALIDATION
         # Validate and normalize the initial directory
         if (Test-String -IsEmpty $InitialDirectory) {
-            # Default back to the root of the current drive
-            $InitialDirectory = $ENV:SystemDrive
-            #Write-Line "The provided InitialDirectory string is empty. It will be set to the root of the current drive. ($InitialDirectory)"
+            # If the textbox already contains an existing folder, reuse that as the initial directory.
+            [System.String]$TextBoxFolderPath = $null
+            if ($null -ne $TextBox) {
+                $TextBoxFolderPath = [System.String]$TextBox.Text
+            }
+            if ((Test-String -IsPopulated $TextBoxFolderPath) -and (Test-Path -Path $TextBoxFolderPath -PathType Container)) {
+                $InitialDirectory = $TextBoxFolderPath
+            }
+            else {
+                # Default back to the root of the current drive
+                $InitialDirectory = $ENV:SystemDrive
+            }
         }
         elseif (-not (Test-Path -Path $InitialDirectory -PathType Container)) {
             # If the path is invalid, default back to the root of the current drive
             $InitialDirectory = $ENV:SystemDrive
-            #Write-Line "The provided InitialDirectory could not be reached. It will be set to the root of the current drive. ($InitialDirectory)"
         }
 
         # EXECUTION - CREATE FOLDER DIALOG
@@ -385,7 +396,6 @@ function Select-Folder {
         # Show the folder dialog and capture the selected folder path
         if ($FolderDialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             [System.String]$SelectedFolder = $FolderDialog.SelectedPath
-            #Write-Line "Selected folder: $SelectedFolder"
             # If a TextBox was provided, write the selected folder path back to it
             if ($null -ne $TextBox) { $TextBox.Text = $SelectedFolder }
         }

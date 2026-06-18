@@ -48,10 +48,7 @@ function Import-SubTabAppLockerCreation {
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
         # Import the Features
-        $null = Import-FeatureAppLockerCreation -InputObject $InputObject -ParentTabPage $ParentTabPage
-        #$CompareFilesGroupBox   = Import-FeatureCompareFiles    -InputObject $InputObject -ParentTabPage $ParentTabPage
-        #$FileBitnessGroupBox    = Import-FeatureFileBitness     -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $CompareFilesGroupBox  
-        #$null                   = Import-FeatureShortcutExport  -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $FileBitnessGroupBox
+        $null = Import-FeatureAppLockerCreation -InputObject $InputObject -ParentTabPage $ParentTabPage -Color 'GreenYellow'
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

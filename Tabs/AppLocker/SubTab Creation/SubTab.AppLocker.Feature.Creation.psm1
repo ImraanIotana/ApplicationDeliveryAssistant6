@@ -43,7 +43,7 @@ function Import-FeatureAppLockerCreation {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLICATION SECURITY'
-            Color           = 'GreenYellow'
+            Color           = $Color
             NumberOfRows    = 5
             GroupBoxAbove   = $GroupBoxAbove
         }
@@ -115,12 +115,12 @@ function Import-FeatureAppLockerCreation {
             ToolTip         = 'Create the AppLocker files for the selected folder.'
             Function        = { Write-Line "This function is still under development." }.GetNewClosure()
         }
-
-        # Add the Buttons
+        # Create the Buttons
         New-Button @InstallFolderButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 1
         New-Button @ADGroupDefaultButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 3
         New-Button @CreateButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 4
         
+        # OUTPUT
         # Return the GroupBox object
         $FeatureGroupBox
     }
