@@ -320,7 +320,7 @@ function Copy-UDF {
         [System.Object]$SelectedTemplate,
 
         [Parameter(Mandatory=$false,HelpMessage='The folder where UDF zip files are searched.')]
-        [System.String]$FolderToSearch = (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
+        [System.String]$FolderToSearch = $Global:ApplicationObject.RootFolder
     )
 
     try {
@@ -375,31 +375,28 @@ function Copy-UDF {
         }
 
         # EXECUTION
-        # Extract the UDF archive contents into the Work folder.
-        Write-Line "Extracting UDF archive to Work folder: $WorkFolderPath"
-        Expand-Archive -LiteralPath $ResolvedUDFPath -DestinationPath $WorkFolderPath -Force
+        # Extract the UDF archive contents directly into the ApplicationID folder.
+        [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
+        if (Test-String -IsEmpty $ApplicationID) {
+            [System.String]$ApplicationID = 'ApplicationDossier'
+        }
+        [System.String]$NewUDFFolderPath = Join-Path -Path $WorkFolderPath -ChildPath $ApplicationID
+        if (Test-Path -LiteralPath $NewUDFFolderPath -PathType Container) {
+            Remove-Item -Path $NewUDFFolderPath -Recurse -Force
+        }
+        New-Item -Path $NewUDFFolderPath -ItemType Directory -Force | Out-Null
 
-        # EXECUTION
-        # Rename the extracted folder to the ApplicationID
+        Write-Line "Extracting UDF archive to folder: $NewUDFFolderPath"
+        Expand-Archive -LiteralPath $ResolvedUDFPath -DestinationPath $NewUDFFolderPath -Force
+
+        # Normalize one nested top-level folder if archive was packaged with a root directory.
         [System.String]$ArchiveFolderName = [System.IO.Path]::GetFileNameWithoutExtension($UDFName)
-        [System.String]$ExtractedFolderPath = Join-Path -Path $WorkFolderPath -ChildPath $ArchiveFolderName
-        if (Test-Path -LiteralPath $ExtractedFolderPath -PathType Container) {
-            [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
-            if (Test-String -IsEmpty $ApplicationID) {
-                [System.String]$ApplicationID = 'ApplicationDossier'
+        [System.String]$NestedArchiveFolderPath = Join-Path -Path $NewUDFFolderPath -ChildPath $ArchiveFolderName
+        if (Test-Path -LiteralPath $NestedArchiveFolderPath -PathType Container) {
+            Get-ChildItem -LiteralPath $NestedArchiveFolderPath -Force | ForEach-Object {
+                Move-Item -LiteralPath $_.FullName -Destination $NewUDFFolderPath -Force
             }
-            [System.String]$NewUDFFolderPath = Join-Path -Path $WorkFolderPath -ChildPath $ApplicationID
-            if (Test-Path -LiteralPath $NewUDFFolderPath -PathType Container) {
-                Remove-Item -Path $NewUDFFolderPath -Recurse -Force
-            }
-            try {
-                Rename-Item -LiteralPath $ExtractedFolderPath -NewName $ApplicationID -Force -ErrorAction Stop
-            }
-            catch {
-                Write-Line "Rename of extracted UDF folder failed; applying copy fallback. Source: $ExtractedFolderPath" -Type Warning
-                Copy-Item -LiteralPath $ExtractedFolderPath -Destination $NewUDFFolderPath -Recurse -Force -ErrorAction Stop
-                Remove-Item -LiteralPath $ExtractedFolderPath -Recurse -Force -ErrorAction SilentlyContinue
-            }
+            Remove-Item -LiteralPath $NestedArchiveFolderPath -Recurse -Force -ErrorAction SilentlyContinue
         }
 
         # POST-EXECUTION

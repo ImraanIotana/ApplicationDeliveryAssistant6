@@ -495,9 +495,9 @@ function Export-ShortcutInformation {
                 $StartMenuLocationShort = "[USER]$($ShortcutPath.Substring($UserStartMenuFolder.Length))"
             }
 
-            # Root-level Start Menu shortcuts are normalized to [ROOT].
-            if ($StartMenuLocationShort -match '^\[(SYSTEM|USER)\]\\[^\\]+$') {
-                $StartMenuLocationShort = $StartMenuLocationShort -replace '^\[(SYSTEM|USER)\]', '[ROOT]'
+            # Normalize all Start Menu roots to [ROOT] for consistent export output.
+            if (Test-String -IsPopulated $StartMenuLocationShort) {
+                $StartMenuLocationShort = $StartMenuLocationShort -replace '^\[(SYSTEM|USER)\]', '[STARMENUROOT]'
             }
 
             [System.String]$TargetPath = ''

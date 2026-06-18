@@ -59,7 +59,6 @@ function Import-FeatureIntakeTemplateSelection {
             PropertyName        = 'ComboBoxes.ApplicationIntake.TemplateSelection'
             ToolTip             = 'The list of customer templates to select from.'
             SizeType            = 'Medium'
-            TextColor           = $Color
             CustomerTemplates   = Get-CustomerTemplates
             DefaultValue        = 'Default'
         }

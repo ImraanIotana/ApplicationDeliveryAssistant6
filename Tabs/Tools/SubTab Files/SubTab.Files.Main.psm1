@@ -46,7 +46,8 @@ function Import-SubTabFiles {
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
         # Import the Features
         $CompareFilesGroupBox   = Import-FeatureCompareFiles    -InputObject $InputObject -ParentTabPage $ParentTabPage
-        $null                   = Import-FeatureFileBitness     -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $CompareFilesGroupBox  
+        $FileBitnessGroupBox    = Import-FeatureFileBitness     -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $CompareFilesGroupBox  
+        $null                   = Import-FeatureShortcutExport  -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $FileBitnessGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
