@@ -75,10 +75,7 @@ function Import-FeatureIntakeApplicationDetection {
                 PNGFileName     = 'magnifier'
                 SizeType        = 'Small'
                 ToolTip         = 'Browse for the detection file or MSI of the application.'
-                Function        = {
-                    [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
-                    Select-File -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile -Type Executable
-                }.GetNewClosure()
+                Function        = { Select-File -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile -Type Executable }.GetNewClosure()
             }
         )
         # Add the Buttons

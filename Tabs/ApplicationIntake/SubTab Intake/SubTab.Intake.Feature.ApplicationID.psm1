@@ -444,6 +444,14 @@ function New-ApplicationShortcutInformation {
     )
 
     try {
+        # CONFIRMATION
+        # Ask the user to confirm exporting the shortcut information.
+        if (-not $SkipConfirmation) {
+            [System.String]$Title = 'Confirm Export Shortcut Information'
+            [System.String]$Body = "Do you want to export the shortcut information?"
+            if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
+        }
+
         # VALIDATION
         # Validate the target application folder path
         if (Test-String -IsEmpty $ApplicationFolderPath) { throw 'The ApplicationFolderPath parameter is empty.' }
@@ -463,12 +471,6 @@ function New-ApplicationShortcutInformation {
             return
         }
 
-        # CONFIRMATION
-        # Ask the user to confirm exporting the shortcut information.
-        [System.String]$Title = 'Confirm Export Shortcut Information'
-        [System.String]$Body = "Do you want to export the shortcut information?"
-        if (-not $SkipConfirmation -and -not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
-
         # PREPARATION
         # Build output folder path in 9. Archive\Shortcuts.
         [System.String]$ShortcutsRelativePath = Join-Path -Path '9. Archive' -ChildPath 'Shortcuts'
@@ -479,7 +481,7 @@ function New-ApplicationShortcutInformation {
 
         # EXECUTION
         # Export shortcut information to the archive shortcuts folder.
-        Export-ShortcutInformation -Path $ShortcutPath -ParentOutputFolder $ShortcutsFolderPath
+        Export-ShortcutInformation -Path $ShortcutPath -ParentOutputFolder $ShortcutsFolderPath -SkipConfirmation
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

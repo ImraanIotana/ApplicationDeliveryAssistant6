@@ -102,6 +102,7 @@ function Import-FeatureAppLockerCreation {
             SizeType        = 'Small'
             ToolTip         = 'Set the Active Directory group and SID to their default values.'
             Function        = {
+                # This button is not a true "default" button as the default values are not hardcoded but rather set in the TextBox properties.
                 Reset-TextBox -TextBox $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupName
                 Reset-TextBox -TextBox $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupSID -Force
             }.GetNewClosure()

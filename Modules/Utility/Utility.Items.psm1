@@ -279,14 +279,22 @@ function Select-File {
         # VALIDATION
         # Validate and normalize the initial directory
         if (Test-String -IsEmpty $InitialDirectory) {
-            # Default back to the root of the current drive
-            $InitialDirectory = $ENV:SystemDrive
-            #Write-Line "The provided InitialDirectory string is empty. It will be set to the root of the current drive. ($InitialDirectory)"
+            # If the textbox already contains an existing file, reuse its parent folder as the initial directory.
+            [System.String]$TextBoxFilePath = $null
+            if ($null -ne $TextBox) {
+                $TextBoxFilePath = [System.String]$TextBox.Text
+            }
+            if ((Test-String -IsPopulated $TextBoxFilePath) -and (Test-Path -Path $TextBoxFilePath -PathType Leaf)) {
+                $InitialDirectory = Split-Path -Path $TextBoxFilePath -Parent
+            }
+            else {
+                # Default back to the root of the current drive
+                $InitialDirectory = $ENV:SystemDrive
+            }
         }
         elseif (-not (Test-Path -Path $InitialDirectory -PathType Container)) {
             # If the path is invalid, default back to the root of the current drive
             $InitialDirectory = $ENV:SystemDrive
-            #Write-Line "The provided InitialDirectory could not be reached. It will be set to the root of the current drive. ($InitialDirectory)"
         }
 
         # PREPARATION

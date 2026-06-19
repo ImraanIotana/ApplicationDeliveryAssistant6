@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Connections sub-tab into the Tools tab.
+    Imports the Creation sub-tab into the AppLocker tab.
 .DESCRIPTION
-    This function imports the Connections sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the Creation sub-tab into the AppLocker tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-SubTabConnections -ParentTabControl $MySubTabControl
+    Import-SubTabAppLockerCreation -InputObject $InputObject -ParentTabControl $MySubTabControl
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabControl]
@@ -15,8 +15,8 @@
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
-    Creation Date   : May 2026
-    Last Update     : May 2026
+    Creation Date   : June 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Import-SubTabAppLockerCreation {

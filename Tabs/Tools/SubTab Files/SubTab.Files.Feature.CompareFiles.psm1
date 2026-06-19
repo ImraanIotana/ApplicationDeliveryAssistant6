@@ -41,9 +41,8 @@ function Import-FeatureCompareFiles {
             Title           = 'COMPARE FILES'
             Color           = 'Cyan'
             NumberOfRows    = 3
+            GroupBoxAbove   = $GroupBoxAbove
         }
-        # If the GroupBoxAbove parameter is provided, set the GroupBoxAbove property
-        if ($PSBoundParameters.ContainsKey('GroupBoxAbove')) { $FeatureProperties.GroupBoxAbove = $GroupBoxAbove }
 
         # PREPARATION - TEXTBOXES
         # Set the TextBox properties
@@ -78,7 +77,6 @@ function Import-FeatureCompareFiles {
                 }
             }
         )
-
 
         # EXECUTION
         # Create the GroupBox
@@ -292,25 +290,24 @@ function Compare-FileHash {
         # Get the hash of File 1
         Write-Line "Getting hash of File 1 ($File1Path)..."
         [System.String]$File1Hash = (Get-FileHash -LiteralPath $File1Path -Algorithm $Algorithm -ErrorAction Stop).Hash
+        Write-Line "File 1 hash ($Algorithm): [$File1Hash]."
         # Get the hash of File 2
         Write-Line "Getting hash of File 2 ($File2Path)..."
         [System.String]$File2Hash = (Get-FileHash -LiteralPath $File2Path -Algorithm $Algorithm -ErrorAction Stop).Hash
-
-        # POST-EXECUTION - COMPARE HASHES
-        # Report the hashes and compare them
-        Write-Line "File 1 hash ($Algorithm): [$File1Hash]."
         Write-Line "File 2 hash ($Algorithm): [$File2Hash]."
 
-        [System.Boolean]$HashesMatch = $File1Hash -eq $File2Hash
-        if ($HashesMatch) {
-            Write-Line "Result: Both files have the same hash ([$File1Hash])."
+        # POST-EXECUTION - COMPARE HASHES
+        # Report the comparison result
+        [System.Boolean]$FileHashesAreEqual = $File1Hash -eq $File2Hash
+        if ($FileHashesAreEqual) {
+            Write-Line "Result: Both files have the same hash ([$File1Hash])." -Type Info
         }
         else {
-            Write-Line "Result: The files have different hashes."
+            Write-Line "Result: The files have different hashes." -Type Info
         }
 
         # Return the result if PassThru is specified
-        if ($PassThru) { return $HashesMatch }
+        if ($PassThru) { return $FileHashesAreEqual }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -394,10 +391,10 @@ function Compare-Files {
             }
         }
         # Compare the hashes
-        [System.Boolean]$HashesMatch = Compare-FileHash -File1Path $File1Path -File2Path $File2Path -Algorithm $Algorithm -PassThru
+        [System.Boolean]$FileHashesAreEqual = Compare-FileHash -File1Path $File1Path -File2Path $File2Path -Algorithm $Algorithm -PassThru
 
         # Return the result if PassThru is specified
-        if ($PassThru) { return $HashesMatch }
+        if ($PassThru) { return $FileHashesAreEqual }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

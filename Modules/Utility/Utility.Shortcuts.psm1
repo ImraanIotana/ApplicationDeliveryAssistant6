@@ -399,12 +399,23 @@ function Export-ShortcutInformation {
         [System.String]$ParentOutputFolder = (Get-OutputFolder),
 
         [Parameter(Mandatory=$false,HelpMessage='Open the output folder after export.')]
-        [System.Management.Automation.SwitchParameter]$OpenOutputFolder
+        [System.Management.Automation.SwitchParameter]$OpenOutputFolder,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and export immediately.')]
+        [System.Management.Automation.SwitchParameter]$SkipConfirmation
     )
 
     [System.Object]$WScriptShell = $null
 
     try {
+        # CONFIRMATION
+        # Ask for confirmation only when -SkipConfirmation is not specified.
+        if (-not $SkipConfirmation) {
+            [System.String]$Title   = 'Export Shortcut Information'
+            [System.String]$Body    = "This will export shortcut information for the following path:`n`n$Path`n`nDo you want to continue?"
+            if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
+        }
+
         # PREPARATION
         # Input
         [System.String]$InputPath = $Path
