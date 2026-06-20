@@ -37,6 +37,7 @@ function Import-FeatureAppLockerCreation {
     )
 
     try {
+        # Build the AppLocker creation UI and wire up its controls.
         # EXECUTION - GROUPBOX
         # Feature properties
         [System.Collections.Hashtable]$FeatureProperties = @{
@@ -106,7 +107,10 @@ function Import-FeatureAppLockerCreation {
             PNGFileName     = 'shield'
             SizeType        = 'Large'
             ToolTip         = 'Create the AppLocker files for the selected folder.'
-            Function        = { Write-Line "This function is still under development." }.GetNewClosure()
+            Function        = {
+                # Use the AppLocker Creation inputs to generate policy files and report.
+                New-AppLockerFile -Path $Global:Graphics.TextBoxes.AppLocker.Creation.InstallationFolder.Text -ADGroupSID $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupSID.Text
+            }.GetNewClosure()
         }
         # Create the Buttons
         New-Button @ADGroupDefaultButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 3
@@ -115,6 +119,84 @@ function Import-FeatureAppLockerCreation {
         # OUTPUT
         # Return the GroupBox object
         $FeatureGroupBox
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Creates the AppLocker policy report for a selected folder.
+.DESCRIPTION
+    This function creates the AppLocker policy report and lists the executables and DLLs that were scanned.
+.EXAMPLE
+    New-AppLockerPolicyReport -FolderToScan 'C:\Demo\MyFolder' -ReportFilePath 'C:\Demo\AppLockerReport.txt' -ApplicationID 'MyFolder'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function New-AppLockerPolicyReport {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The folder to scan for executables and dlls.')]
+        [System.String]
+        $FolderToScan,
+
+        [Parameter(Mandatory=$true,HelpMessage='The file path where the report will be written.')]
+        [System.String]
+        $ReportFilePath,
+
+        [Parameter(Mandatory=$true,HelpMessage='The Application ID.')]
+        [System.String]
+        $ApplicationID
+    )
+
+    try {
+        # Capture the current timestamp and build the fixed report lines.
+        [System.String]$TimeStamp           = [System.String](Get-TimeStamp -ForHost)
+        [System.String]$IntroductoryLine    = ('AppLocker Information for the application: {0}' -f $ApplicationID)
+        [System.String]$TimeStampLine       = ('Generated on: {0}' -f $TimeStamp)
+        [System.String]$SeperationLine      = [System.String]'========================='
+
+        # Write the report header.
+        Write-Host 'Creating the AppLocker Policy Report...' -ForegroundColor DarkGray
+        Add-Content -Path $ReportFilePath -Value $IntroductoryLine
+        Add-Content -Path $ReportFilePath -Value $TimeStampLine
+        Add-Content -Path $ReportFilePath -Value ''
+        Add-Content -Path $ReportFilePath -Value $SeperationLine
+        Add-Content -Path $ReportFilePath -Value ''
+        Add-Content -Path $ReportFilePath -Value 'AppLocker Policy XML files have been created for the following files:'
+        Add-Content -Path $ReportFilePath -Value ''
+
+        # Scan and list executable files.
+        [System.IO.FileSystemInfo[]]$ExecutableFiles = Get-ChildItem -Path $FolderToScan -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.exe' }
+        Add-Content -Path $ReportFilePath -Value $SeperationLine
+        Add-Content -Path $ReportFilePath -Value ('Number of Exe-files: {0}' -f $ExecutableFiles.Count)
+        Add-Content -Path $ReportFilePath -Value $SeperationLine
+        foreach ($ExecutableFile in $ExecutableFiles) { Add-Content -Path $ReportFilePath -Value $ExecutableFile.FullName }
+
+        Add-Content -Path $ReportFilePath -Value ''
+
+        # Scan and list DLL files.
+        [System.IO.FileSystemInfo[]]$DllFiles = Get-ChildItem -Path $FolderToScan -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.dll' }
+        Add-Content -Path $ReportFilePath -Value $SeperationLine
+        Add-Content -Path $ReportFilePath -Value ('Number of DLL-files: {0}' -f $DllFiles.Count)
+        Add-Content -Path $ReportFilePath -Value $SeperationLine
+        foreach ($DllFile in $DllFiles) { Add-Content -Path $ReportFilePath -Value $DllFile.FullName }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -173,71 +255,61 @@ function New-AppLockerFile {
     )
 
     try {
-        ####################################################################################################
-        ### PREPARATION ###
+        # PREPARATION
+        # Resolve the output folders and inputs before generating files.
 
+        # Set the parent output folder and ensure it exists.
         [System.String]$ParentOutputFolder = $OutputFolder
         if (Test-String -IsEmpty $ParentOutputFolder) { $ParentOutputFolder = Get-OutputFolder }
         if (-not (Test-Path -Path $ParentOutputFolder -PathType Container)) { New-Item -Path $ParentOutputFolder -ItemType Directory -Force | Out-Null }
 
+        # Validate the source folder that will be scanned.
         [System.String]$FolderToScan = $Path
         if (Test-String -IsEmpty $FolderToScan) { Write-Warning 'The Installation Folder field is empty. No AppLocker file will be created.' ; return }
 
+        # Confirm the action with the user unless it was skipped.
         if (-not $SkipConfirmation) {
             [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title 'Create AppLocker Policy' -Body 'Would you like to create the AppLocker Policy files?'
             if (-not $UserHasConfirmed) { return }
         }
 
+        # Apply defaults for any missing identifiers.
         if (Test-String -IsEmpty $ADGroupSID) { Write-Warning 'The AD Group SID is empty. The group EVERYONE will be used instead.' ; $ADGroupSID = 'S-1-1-0' }
         if (Test-String -IsEmpty $ApplicationID) { $ApplicationID = Split-Path -Path $FolderToScan -Leaf }
 
-        [System.String]$AppLockerFolderName = [System.String](Get-ApplicationSubfolders).AppLockerFolder
+        # Build the final output folder structure for this application.
+        # Resolve AppLocker subfolder from the selected template and fall back to the default path.
+        [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
+        [System.String]$AppLockerFolderName = [System.String]$SelectedTemplate.ApplicationFolderSubFolders.AppLocker
+        if (Test-String -IsEmpty $AppLockerFolderName) {
+            $AppLockerFolderName = '4. Security\AppLocker'
+            Write-Line 'Could not resolve ApplicationFolderSubFolders.AppLocker from the selected template. Using default path: 4. Security\AppLocker' -Type Warning
+        }
         [System.String]$NewApplicationFolder = Join-Path -Path $ParentOutputFolder -ChildPath $ApplicationID
         [System.String]$OutputFolder = Join-Path -Path $NewApplicationFolder -ChildPath $AppLockerFolderName
 
+        # Ensure the AppLocker output folder exists.
         if (-not (Test-Path -Path $OutputFolder -PathType Container)) { New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null }
 
+        # Precompute the report and policy output file paths.
         [System.String]$ReportFilePath = Join-Path -Path $OutputFolder -ChildPath ('AppLockerReport_{0}.txt' -f $ApplicationID)
         [System.String]$AppLockerPolicyHashFilePath = Join-Path -Path $OutputFolder -ChildPath ('AppLockerPolicyHash_{0}.xml' -f $ApplicationID)
         [System.String]$AppLockerPolicyPathFilePath = Join-Path -Path $OutputFolder -ChildPath ('AppLockerPolicyPath_{0}.xml' -f $ApplicationID)
         [System.String]$AppLockerPolicyPublisherFilePath = Join-Path -Path $OutputFolder -ChildPath ('AppLockerPolicyPublisher_{0}.xml' -f $ApplicationID)
-        [System.String]$TimeStamp = [System.String](Get-TimeStamp -ForLogging)
-        [System.String]$IntroductoryLine = ('AppLocker Information for the application: {0}' -f $ApplicationID)
-        [System.String]$TimeStampLine = ('Generated on: {0}' -f $TimeStamp)
-        [System.String]$SeperationLine = [System.String]'========================='
 
-        ####################################################################################################
-        ### EXECUTION ###
 
-        Write-Host 'Creating the AppLocker Policy Report...' -ForegroundColor DarkGray
-        Add-Content -Path $ReportFilePath -Value $IntroductoryLine
-        Add-Content -Path $ReportFilePath -Value $TimeStampLine
-        Add-Content -Path $ReportFilePath -Value ''
-        Add-Content -Path $ReportFilePath -Value $SeperationLine
-        Add-Content -Path $ReportFilePath -Value ''
-        Add-Content -Path $ReportFilePath -Value 'AppLocker Policy XML files have been created for the following files:'
-        Add-Content -Path $ReportFilePath -Value ''
-
-        [System.IO.FileSystemInfo[]]$ExecutableFiles = Get-ChildItem -Path $FolderToScan -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.exe' }
-        Add-Content -Path $ReportFilePath -Value $SeperationLine
-        Add-Content -Path $ReportFilePath -Value ('Number of Exe-files: {0}' -f $ExecutableFiles.Count)
-        Add-Content -Path $ReportFilePath -Value $SeperationLine
-        foreach ($ExecutableFile in $ExecutableFiles) { Add-Content -Path $ReportFilePath -Value $ExecutableFile.FullName }
-
-        Add-Content -Path $ReportFilePath -Value ''
-
-        [System.IO.FileSystemInfo[]]$DllFiles = Get-ChildItem -Path $FolderToScan -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.dll' }
-        Add-Content -Path $ReportFilePath -Value $SeperationLine
-        Add-Content -Path $ReportFilePath -Value ('Number of DLL-files: {0}' -f $DllFiles.Count)
-        Add-Content -Path $ReportFilePath -Value $SeperationLine
-        foreach ($DllFile in $DllFiles) { Add-Content -Path $ReportFilePath -Value $DllFile.FullName }
-
+        # EXECUTION
+        # Create the AppLocker policy files
         Write-Host 'Creating the AppLocker Policy files. One moment please...' -ForegroundColor DarkGray
         Get-AppLockerFileInformation -Directory $FolderToScan -Recurse | New-AppLockerPolicy -RuleType Hash -User $ADGroupSID -RuleNamePrefix $ApplicationID -Optimize -XML > $AppLockerPolicyHashFilePath -IgnoreMissingFileInformation -InformationAction SilentlyContinue
         Get-AppLockerFileInformation -Directory $FolderToScan -Recurse | New-AppLockerPolicy -RuleType Path -User $ADGroupSID -RuleNamePrefix $ApplicationID -Optimize -XML > $AppLockerPolicyPathFilePath -IgnoreMissingFileInformation -InformationAction SilentlyContinue
         Get-AppLockerFileInformation -Directory $FolderToScan -Recurse | New-AppLockerPolicy -RuleType Publisher -User $ADGroupSID -RuleNamePrefix $ApplicationID -Optimize -XML > $AppLockerPolicyPublisherFilePath -IgnoreMissingFileInformation -InformationAction SilentlyContinue
-
         Write-Line "The AppLocker policy files have been created for folder: ($FolderToScan)" -Type Success
+
+        # Create the AppLocker policy report
+        New-AppLockerPolicyReport -FolderToScan $FolderToScan -ReportFilePath $ReportFilePath -ApplicationID $ApplicationID
+
+        # Open the output folder
         Open-Folder -Path $ParentOutputFolder
     }
     catch {
@@ -247,5 +319,4 @@ function New-AppLockerFile {
 
 ### END OF FUNCTION
 ####################################################################################################
-
 
