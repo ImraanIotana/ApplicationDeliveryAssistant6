@@ -68,7 +68,7 @@ function Import-FeatureShortcutExport {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected shortcut or folder.'
-                Function        = { Write-ShortcutInformation -Path $Global:Graphics.ComboBoxes.Tools.ExportShortcut.SelectedItem.FullPath }.GetNewClosure()
+                Function        = { Write-ShortcutInformationToHost -Path $Global:Graphics.ComboBoxes.Tools.ExportShortcut.SelectedItem.FullPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -95,7 +95,7 @@ function Import-FeatureShortcutExport {
                 PNGFileName     = 'table_export'
                 SizeType        = 'Medium'
                 ToolTip         = 'Export the selected shortcut to a text file.'
-                Function        = { Export-ShortcutInformation -Path $Global:Graphics.ComboBoxes.Tools.ExportShortcut.SelectedItem.FullPath -OpenOutputFolder }.GetNewClosure()
+                Function        = { Export-UniversalShortcutInformation -ShortcutItem $Global:Graphics.ComboBoxes.Tools.ExportShortcut.SelectedItem -OpenOutputFolder }.GetNewClosure()
             }
         )
         # Add the Buttons

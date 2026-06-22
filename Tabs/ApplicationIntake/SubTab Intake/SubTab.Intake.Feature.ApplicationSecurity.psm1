@@ -88,7 +88,7 @@ function Import-FeatureApplicationSecurity {
         $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID           = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
-        # Set the Small Buttons properties
+        # Set the Button properties
         [System.Collections.Hashtable]$InstallFolderButton = @{
             ColumnNumber    = 5
             Text            = 'Browse Folder'
@@ -100,7 +100,6 @@ function Import-FeatureApplicationSecurity {
                 Select-Folder -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder
             }.GetNewClosure()
         }
-        
         [System.Collections.Hashtable]$ADGroupDefaultButton = @{
             ColumnNumber    = 7
             Text            = 'Default'
@@ -112,11 +111,9 @@ function Import-FeatureApplicationSecurity {
                 Reset-TextBox -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID -Force
             }.GetNewClosure()
         }
-
-        # Add the Buttons
+        # Create the Buttons
         New-Button @InstallFolderButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 1
         New-Button @ADGroupDefaultButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 3
-        #New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
         
         # Return the GroupBox object
         $FeatureGroupBox

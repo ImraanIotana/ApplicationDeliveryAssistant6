@@ -236,9 +236,9 @@ function Export-ShortcutImage {
     If the path is a folder, all shortcut files (*.lnk and *.url) in that folder (recursive) are processed.
     All output is written to the host.
 .EXAMPLE
-    Write-ShortcutInformation -Path 'C:\Users\Public\Desktop\MyApp.lnk'
+    Write-ShortcutInformationToHost -Path 'C:\Users\Public\Desktop\MyApp.lnk'
 .EXAMPLE
-    Write-ShortcutInformation -Path 'C:\Users\Public\Desktop'
+    Write-ShortcutInformationToHost -Path 'C:\Users\Public\Desktop'
 .INPUTS
     [System.String]
 .OUTPUTS
@@ -251,7 +251,7 @@ function Export-ShortcutImage {
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Write-ShortcutInformation {
+function Write-ShortcutInformationToHost {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The shortcut file or folder path to inspect.')]
@@ -364,39 +364,54 @@ function Write-ShortcutInformation {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Exports shortcut details from a shortcut file or folder to a text report.
+    Universal shortcut export function for path-based and UI-based workflows.
 .DESCRIPTION
-    This function reads shortcut information from a supplied path.
-    If the path is a shortcut file, only that item is exported.
-    If the path is a folder, all shortcut files (*.lnk and *.url) in that folder (recursive) are exported.
-    The output is written to a text file inside a dedicated export folder.
-    It also exports shortcut icons to PNG files in the same folder.
+    This function exports shortcut details from either:
+    - A direct path (file or folder),
+    - A selected shortcut object (with FullPath), or
+    - A shortcut ComboBox (using SelectedItem.FullPath).
+
+    It can export to a generic output folder or to an application archive location
+    (9. Archive\Shortcuts) when ApplicationFolderPath is supplied.
 .EXAMPLE
-    Export-ShortcutInformation -Path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Acrobat Reader.lnk'
+    Export-UniversalShortcutInformation -Path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Acrobat Reader.lnk'
 .EXAMPLE
-    Export-ShortcutInformation -Path 'C:\Users\MyName\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Accessories' -OpenOutputFolder
+    Export-UniversalShortcutInformation -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem -OpenOutputFolder
+.EXAMPLE
+    Export-UniversalShortcutInformation -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0' -ShortcutComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts -SkipConfirmation
 .INPUTS
     [System.String]
+    [System.Object]
+    [System.Windows.Forms.ComboBox]
 .OUTPUTS
     No objects are returned to the pipeline. All output is written to the host.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
-    Creation Date   : August 2025
+    Creation Date   : June 2026
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Export-ShortcutInformation {
-    [CmdletBinding()]
+function Export-UniversalShortcutInformation {
+    [CmdletBinding(DefaultParameterSetName='ByPath')]
     param (
-        [Parameter(Mandatory=$true,HelpMessage='The shortcut file or folder path to export.')]
+        [Parameter(Mandatory=$true,ParameterSetName='ByPath',HelpMessage='The shortcut file or folder path to export.')]
         [AllowEmptyString()]
         [System.String]$Path,
+
+        [Parameter(Mandatory=$true,ParameterSetName='ByShortcutItem',HelpMessage='Shortcut item that contains the FullPath property.')]
+        [System.Object]$ShortcutItem,
+
+        [Parameter(Mandatory=$true,ParameterSetName='ByComboBox',HelpMessage='Shortcut ComboBox; the SelectedItem.FullPath value will be exported.')]
+        [System.Windows.Forms.ComboBox]$ShortcutComboBox,
 
         [Parameter(Mandatory=$false,HelpMessage='Destination folder where the export output will be created.')]
         [Alias('OutputFolder')]
         [System.String]$ParentOutputFolder = (Get-OutputFolder),
+
+        [Parameter(Mandatory=$false,HelpMessage='The root folder of the created application package. When supplied, output is written to 9. Archive\\Shortcuts.')]
+        [System.String]$ApplicationFolderPath,
 
         [Parameter(Mandatory=$false,HelpMessage='Open the output folder after export.')]
         [System.Management.Automation.SwitchParameter]$OpenOutputFolder,
@@ -417,9 +432,45 @@ function Export-ShortcutInformation {
         }
 
         # PREPARATION
-        # Input
-        [System.String]$InputPath = $Path
+        # Resolve input path from parameter set.
+        [System.String]$InputPath = ''
+        switch ($PSCmdlet.ParameterSetName) {
+            'ByPath' {
+                $InputPath = $Path
+            }
+            'ByShortcutItem' {
+                if ($null -eq $ShortcutItem) {
+                    Write-Line 'No shortcut is selected. Skipping shortcut information export.' -Type Warning
+                    return
+                }
+                $InputPath = [System.String]$ShortcutItem.FullPath
+            }
+            'ByComboBox' {
+                if ($null -eq $ShortcutComboBox -or $null -eq $ShortcutComboBox.SelectedItem) {
+                    Write-Line 'No shortcut is selected. Skipping shortcut information export.' -Type Warning
+                    return
+                }
+                $InputPath = [System.String]$ShortcutComboBox.SelectedItem.FullPath
+            }
+            default {
+                throw "Unsupported parameter set: $($PSCmdlet.ParameterSetName)"
+            }
+        }
+
+        if (Test-String -IsEmpty $InputPath) {
+            Write-Line 'The selected shortcut does not contain a valid path. Skipping shortcut information export.' -Type Warning
+            return
+        }
+
         [System.String]$OutputRootFolder = $ParentOutputFolder
+        if (Test-String -IsPopulated $ApplicationFolderPath) {
+            if (-not (Test-Path -LiteralPath $ApplicationFolderPath -PathType Container)) {
+                throw "The application folder does not exist. ($ApplicationFolderPath)"
+            }
+            [System.String]$ShortcutsRelativePath = Join-Path -Path '9. Archive' -ChildPath 'Shortcuts'
+            $OutputRootFolder = Join-Path -Path $ApplicationFolderPath -ChildPath $ShortcutsRelativePath
+        }
+
         [System.String]$SystemStartMenuFolder = Join-Path -Path $env:ProgramData -ChildPath 'Microsoft\Windows\Start Menu\Programs'
         [System.String]$UserStartMenuFolder = Join-Path -Path $env:APPDATA -ChildPath 'Microsoft\Windows\Start Menu\Programs'
 
@@ -594,6 +645,103 @@ function Export-ShortcutInformation {
         if ($null -ne $WScriptShell -and [System.Runtime.InteropServices.Marshal]::IsComObject($WScriptShell)) {
             [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WScriptShell)
         }
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Exports shortcut details from a shortcut file or folder to a text report.
+.DESCRIPTION
+    Compatibility wrapper around Export-UniversalShortcutInformation.
+.EXAMPLE
+    Export-ShortcutInformation -Path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Acrobat Reader.lnk'
+.EXAMPLE
+    Export-ShortcutInformation -Path 'C:\Users\MyName\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Accessories' -OpenOutputFolder
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : August 2025
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Export-ShortcutInformation {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The shortcut file or folder path to export.')]
+        [AllowEmptyString()]
+        [System.String]$Path,
+
+        [Parameter(Mandatory=$false,HelpMessage='Destination folder where the export output will be created.')]
+        [Alias('OutputFolder')]
+        [System.String]$ParentOutputFolder = (Get-OutputFolder),
+
+        [Parameter(Mandatory=$false,HelpMessage='Open the output folder after export.')]
+        [System.Management.Automation.SwitchParameter]$OpenOutputFolder,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and export immediately.')]
+        [System.Management.Automation.SwitchParameter]$SkipConfirmation
+    )
+
+    Export-UniversalShortcutInformation -Path $Path -ParentOutputFolder $ParentOutputFolder -OpenOutputFolder:$OpenOutputFolder -SkipConfirmation:$SkipConfirmation
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Exports shortcut information for the selected Intake shortcut to the application archive.
+.DESCRIPTION
+    Compatibility wrapper around Export-UniversalShortcutInformation for application archive export.
+.EXAMPLE
+    New-ApplicationShortcutInformation -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. All output is written to the host.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function New-ApplicationShortcutInformation {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The root folder of the created application package.')]
+        [System.String]$ApplicationFolderPath,
+
+        [Parameter(Mandatory=$false,HelpMessage='If set, confirmation prompts will be skipped.')]
+        [System.Management.Automation.SwitchParameter]$SkipConfirmation
+    )
+
+    try {
+        # CONFIRMATION
+        # Ask the user to confirm exporting the shortcut information.
+        if (-not $SkipConfirmation) {
+            [System.String]$Title = 'Confirm Export Shortcut Information'
+            [System.String]$Body = "Do you want to export the shortcut information?"
+            if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
+        }
+
+        Export-UniversalShortcutInformation -ApplicationFolderPath $ApplicationFolderPath -ShortcutComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts -SkipConfirmation
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
     }
 }
 

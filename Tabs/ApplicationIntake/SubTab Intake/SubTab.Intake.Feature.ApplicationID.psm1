@@ -267,10 +267,10 @@ function New-ApplicationFolder {
 
         # Create the initial Word document in the Documentation subfolder from the selected template.
         [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
-        Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
-        New-ApplicationShortcutInformation -ApplicationFolderPath $NewFolderPath -SkipConfirmation
+        Export-UniversalShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem -SkipConfirmation
+        Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
         # Write a message to the host indicating that the new application folder has been created
         Write-Line "The new application folder has been created. ($ApplicationID)"
@@ -402,86 +402,6 @@ function Copy-UDF {
         # POST-EXECUTION
         # Report the resolved UDF source and target path.
         Write-Line "Extracted UDF archive: $ResolvedUDFPath"
-    }
-    catch {
-        Write-ErrorReport -ErrorRecord $_
-    }
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
-    Exports shortcut information for the selected Intake shortcut to the application archive.
-.DESCRIPTION
-    This function reads the selected shortcut or shortcut folder from the Intake Application Shortcuts combobox
-    and exports its details to a text file under 9. Archive\Shortcuts in the supplied application folder.
-.EXAMPLE
-    New-ApplicationShortcutInformation -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0'
-.INPUTS
-    [System.String]
-.OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : June 2026
-    Last Update     : June 2026
-#>
-####################################################################################################
-function New-ApplicationShortcutInformation {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The root folder of the created application package.')]
-        [System.String]$ApplicationFolderPath,
-
-        [Parameter(Mandatory=$false,HelpMessage='If set, confirmation prompts will be skipped.')]
-        [System.Management.Automation.SwitchParameter]$SkipConfirmation
-    )
-
-    try {
-        # CONFIRMATION
-        # Ask the user to confirm exporting the shortcut information.
-        if (-not $SkipConfirmation) {
-            [System.String]$Title = 'Confirm Export Shortcut Information'
-            [System.String]$Body = "Do you want to export the shortcut information?"
-            if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
-        }
-
-        # VALIDATION
-        # Validate the target application folder path
-        if (Test-String -IsEmpty $ApplicationFolderPath) { throw 'The ApplicationFolderPath parameter is empty.' }
-        if (-not (Test-Path -LiteralPath $ApplicationFolderPath -PathType Container)) { throw "The application folder does not exist. ($ApplicationFolderPath)" }
-
-        # PREPARATION
-        # Resolve the selected shortcut/folder path from the Intake shortcut combobox.
-        [System.Object]$SelectedShortcut = $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
-        if ($null -eq $SelectedShortcut) {
-            Write-Line 'No shortcut is selected. Skipping shortcut information export.' -Type Warning
-            return
-        }
-
-        [System.String]$ShortcutPath = [System.String]$SelectedShortcut.FullPath
-        if (Test-String -IsEmpty $ShortcutPath) {
-            Write-Line 'The selected shortcut does not contain a valid path. Skipping shortcut information export.' -Type Warning
-            return
-        }
-
-        # PREPARATION
-        # Build output folder path in 9. Archive\Shortcuts.
-        [System.String]$ShortcutsRelativePath = Join-Path -Path '9. Archive' -ChildPath 'Shortcuts'
-        [System.String]$ShortcutsFolderPath = Join-Path -Path $ApplicationFolderPath -ChildPath $ShortcutsRelativePath
-        if (-not (Test-Path -LiteralPath $ShortcutsFolderPath -PathType Container)) {
-            New-Item -Path $ShortcutsFolderPath -ItemType Directory -Force | Out-Null
-        }
-
-        # EXECUTION
-        # Export shortcut information to the archive shortcuts folder.
-        Export-ShortcutInformation -Path $ShortcutPath -ParentOutputFolder $ShortcutsFolderPath -SkipConfirmation
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

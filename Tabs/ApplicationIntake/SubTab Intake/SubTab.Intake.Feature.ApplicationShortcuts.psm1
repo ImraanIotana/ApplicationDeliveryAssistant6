@@ -73,7 +73,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected shortcut or folder.'
-                Function        = { Write-ShortcutInformation -Path $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem.FullPath }.GetNewClosure()
+                Function        = { Write-ShortcutInformationToHost -Path $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem.FullPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -89,7 +89,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'table_export'
                 SizeType        = 'Small'
                 ToolTip         = 'Export the selected shortcut to a text file.'
-                Function        = { Export-ShortcutInformation -Path $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem.FullPath -OpenOutputFolder }.GetNewClosure()
+                Function        = { Export-UniversalShortcutInformation -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem -OpenOutputFolder }.GetNewClosure()
             }
         )
         # Add the Buttons
