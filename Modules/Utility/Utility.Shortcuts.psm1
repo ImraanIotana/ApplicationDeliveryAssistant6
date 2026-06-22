@@ -113,6 +113,117 @@ function Get-Shortcuts {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Retrieves properties of a shortcut file (.lnk or .url).
+.DESCRIPTION
+    This function reads properties from a shortcut file and returns a unified custom object.
+    If the file is a shell shortcut (.lnk), it reads the target path, working directory,
+    arguments, description, hotkey, icon location, window style, and extracts the icon file path.
+    If the file is an internet shortcut (.url), it reads the URL and icon file.
+.EXAMPLE
+    Get-ShortcutProperties -ShortcutFile (Get-Item 'C:\Demo\Acrobat.lnk')
+.INPUTS
+    [System.IO.FileInfo]
+.OUTPUTS
+    [PSCustomObject]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Get-ShortcutProperties {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The shortcut file to inspect.')]
+        [System.IO.FileInfo]$ShortcutFile,
+
+        [Parameter(Mandatory=$false,HelpMessage='An optional WScript.Shell COM object to reuse.')]
+        [System.Object]$WScriptShell
+    )
+
+    [System.String]$Extension = $ShortcutFile.Extension.ToLowerInvariant()
+    [System.Object]$Shell = $WScriptShell
+    [System.Boolean]$CreatedCom = $false
+
+    try {
+        if ($Extension -eq '.lnk') {
+            if ($null -eq $Shell) {
+                $Shell = New-Object -ComObject WScript.Shell
+                $CreatedCom = $true
+            }
+            [System.Object]$ShellShortcut = $Shell.CreateShortcut($ShortcutFile.FullName)
+
+            [System.String]$IconFilePath = ''
+            [System.String]$IconLocation = [System.String]$ShellShortcut.IconLocation
+            if (Test-String -IsPopulated $IconLocation) {
+                # Extract first path element prior to optional comma / icon index
+                $IconFilePath = ($IconLocation -split ',')[0].Trim('"')
+            }
+
+            return [PSCustomObject]@{
+                Name             = $ShortcutFile.BaseName
+                Extension        = '.lnk'
+                Type             = 'Shell Shortcut (*.lnk)'
+                TargetPath       = [System.String]$ShellShortcut.TargetPath
+                WorkingDirectory = [System.String]$ShellShortcut.WorkingDirectory
+                Arguments        = [System.String]$ShellShortcut.Arguments
+                Description      = [System.String]$ShellShortcut.Description
+                Hotkey           = [System.String]$ShellShortcut.Hotkey
+                IconLocation     = [System.String]$ShellShortcut.IconLocation
+                WindowStyle      = [System.String]$ShellShortcut.WindowStyle
+                IconFilePath     = $IconFilePath
+            }
+        }
+        elseif ($Extension -eq '.url') {
+            [System.String[]]$ShortcutContent = Get-Content -LiteralPath $ShortcutFile.FullName -ErrorAction SilentlyContinue
+            [System.Collections.Hashtable]$InternetShortcutInformation = @{}
+
+            foreach ($ContentLine in $ShortcutContent) {
+                if ($ContentLine -match '^\s*([^=]+)=(.*)$') {
+                    $InternetShortcutInformation[$Matches[1].Trim()] = $Matches[2].Trim()
+                }
+            }
+
+            [System.String]$TargetPath = ''
+            [System.String]$IconFilePath = ''
+            if ($InternetShortcutInformation.ContainsKey('URL')) { $TargetPath = [System.String]$InternetShortcutInformation.URL }
+            if ($InternetShortcutInformation.ContainsKey('IconFile')) { $IconFilePath = [System.String]$InternetShortcutInformation.IconFile }
+
+            return [PSCustomObject]@{
+                Name             = $ShortcutFile.BaseName
+                Extension        = '.url'
+                Type             = 'Internet Shortcut (*.url)'
+                TargetPath       = $TargetPath
+                WorkingDirectory = ''
+                Arguments        = ''
+                Description      = ''
+                Hotkey           = ''
+                IconLocation     = ''
+                WindowStyle      = ''
+                IconFilePath     = $IconFilePath
+                InternetShortcutInformation = $InternetShortcutInformation
+            }
+        }
+    }
+    finally {
+        if ($CreatedCom -and $null -ne $Shell -and [System.Runtime.InteropServices.Marshal]::IsComObject($Shell)) {
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Shell)
+        }
+    }
+
+    return $null
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Exports the icon image for a shortcut properties object.
 .DESCRIPTION
     This function extracts an icon from a shortcut properties object and saves it as a PNG or ICO file.
@@ -262,6 +373,7 @@ function Write-ShortcutInformationToHost {
     # PREPARATION
     # Define a variable for the WScript.Shell COM object, which will be created only if at least one .lnk file needs to be processed
     [System.Object]$WScriptShell = $null
+    [System.String[]]$SupportedExtensions = @('.lnk','.url')
 
     try {
         # PREPARATION
@@ -278,20 +390,21 @@ function Write-ShortcutInformationToHost {
         # Resolve the path and collect shortcut files
         [System.IO.FileSystemInfo]$SelectedItem = Get-Item -LiteralPath $InputPath -ErrorAction Stop
         [System.IO.FileInfo[]]$ShortcutFiles = @()
-
+        # Collect all supported shortcut files.
         if ($SelectedItem.PSIsContainer) {
             Write-Line "Reading shortcut information from folder... ($($SelectedItem.FullName))"
             $ShortcutFiles = Get-ChildItem -LiteralPath $SelectedItem.FullName -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object { @('.lnk','.url') -contains $_.Extension.ToLowerInvariant() }
+            Where-Object { $SupportedExtensions -contains $_.Extension.ToLowerInvariant() }
         }
         else {
-            if (@('.lnk','.url') -notcontains $SelectedItem.Extension.ToLowerInvariant()) {
+            [System.String]$SelectedExtension = $SelectedItem.Extension.ToLowerInvariant()
+            if ($SupportedExtensions -notcontains $SelectedExtension) {
                 Write-Line "The selected file is not a supported shortcut type (*.lnk or *.url). ($($SelectedItem.FullName))" -Type Fail
                 return
             }
             $ShortcutFiles = @($SelectedItem)
         }
-
+        # Report a warning and exit when no shortcut files are found at the supplied path.
         if ($ShortcutFiles.Count -eq 0) {
             Write-Line "No shortcut files were found in the supplied path. ($InputPath)" -Type Warning
             return
@@ -305,43 +418,33 @@ function Write-ShortcutInformationToHost {
 
         # EXECUTION
         # Write information for each shortcut
-        foreach ($ShortcutFile in $ShortcutFiles | Sort-Object FullName) {
+        foreach ($ShortcutFile in ($ShortcutFiles | Sort-Object FullName)) {
             Write-Line ''
             Write-Line "Shortcut Path       : $($ShortcutFile.FullName)" -Type Special
             Write-Line "Shortcut Name       : $($ShortcutFile.BaseName)"
             Write-Line "Shortcut Extension  : $($ShortcutFile.Extension)"
             Write-Line "Last Write Time     : $($ShortcutFile.LastWriteTime)"
 
-            switch ($ShortcutFile.Extension.ToLowerInvariant()) {
-                '.lnk' {
-                    [System.Object]$ShellShortcut = $WScriptShell.CreateShortcut($ShortcutFile.FullName)
-                    Write-Line 'Shortcut Type       : Shell Shortcut (*.lnk)'
-                    Write-Line "Target Path         : $($ShellShortcut.TargetPath)"
-                    Write-Line "Arguments           : $($ShellShortcut.Arguments)"
-                    Write-Line "Working Directory   : $($ShellShortcut.WorkingDirectory)"
-                    Write-Line "Description         : $($ShellShortcut.Description)"
-                    Write-Line "HotKey              : $($ShellShortcut.Hotkey)"
-                    Write-Line "Icon Location       : $($ShellShortcut.IconLocation)"
-                    Write-Line "Window Style        : $($ShellShortcut.WindowStyle)"
+            [PSCustomObject]$Props = Get-ShortcutProperties -ShortcutFile $ShortcutFile -WScriptShell $WScriptShell
+            if ($null -eq $Props) { continue }
+
+            Write-Line "Shortcut Type       : $($Props.Type)"
+            if ($ShortcutFile.Extension.ToLowerInvariant() -eq '.lnk') {
+                Write-Line "Target Path         : $($Props.TargetPath)"
+                Write-Line "Arguments           : $($Props.Arguments)"
+                Write-Line "Working Directory   : $($Props.WorkingDirectory)"
+                Write-Line "Description         : $($Props.Description)"
+                Write-Line "HotKey              : $($Props.Hotkey)"
+                Write-Line "Icon Location       : $($Props.IconLocation)"
+                Write-Line "Window Style        : $($Props.WindowStyle)"
+            }
+            else {
+                if ($null -eq $Props.InternetShortcutInformation -or $Props.InternetShortcutInformation.Count -eq 0) {
+                    Write-Line 'No key/value information was found in this internet shortcut.' -Type Warning
                 }
-                '.url' {
-                    Write-Line 'Shortcut Type       : Internet Shortcut (*.url)'
-                    [System.String[]]$ShortcutContent = Get-Content -LiteralPath $ShortcutFile.FullName -ErrorAction SilentlyContinue
-                    [System.Collections.Hashtable]$InternetShortcutInformation = @{}
-
-                    foreach ($ContentLine in $ShortcutContent) {
-                        if ($ContentLine -match '^\s*([^=]+)=(.*)$') {
-                            $InternetShortcutInformation[$Matches[1].Trim()] = $Matches[2].Trim()
-                        }
-                    }
-
-                    if ($InternetShortcutInformation.Count -eq 0) {
-                        Write-Line 'No key/value information was found in this internet shortcut.' -Type Warning
-                    }
-                    else {
-                        foreach ($Key in $InternetShortcutInformation.Keys | Sort-Object) {
-                            Write-Line ("{0,-20}: {1}" -f $Key, $InternetShortcutInformation[$Key])
-                        }
+                else {
+                    foreach ($Key in $Props.InternetShortcutInformation.Keys | Sort-Object) {
+                        Write-Line ("{0,-20}: {1}" -f $Key, $Props.InternetShortcutInformation[$Key])
                     }
                 }
             }
@@ -449,16 +552,11 @@ function Export-UniversalShortcutInformation {
             }
         }
 
-        if (Test-String -IsEmpty $InputPath) {
-            Write-Line 'The selected shortcut does not contain a valid path. Skipping shortcut information export.' -Type Warning
-            return
-        }
-
         # CONFIRMATION
         # Ask for confirmation only when -SkipConfirmation is not specified.
         if (-not $SkipConfirmation) {
-            [System.String]$Title   = 'Export Shortcut Information'
-            [System.String]$Body    = "Would you like to export shortcut information for the following path?:`n`n$InputPath"
+            [System.String]$Title   = 'Confirm Export Shortcut Information'
+            [System.String]$Body    = "Would you like to EXPORT the SHORTCUT information for the following path?:`n`n$InputPath"
             if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
         }
 
@@ -475,8 +573,11 @@ function Export-UniversalShortcutInformation {
         [System.String]$UserStartMenuFolder = Join-Path -Path $env:APPDATA -ChildPath 'Microsoft\Windows\Start Menu\Programs'
 
         # VALIDATION
-        # Validate input strings and paths
-        if (Test-String -IsEmpty $InputPath) { Write-Line 'The Path string is empty.' -Type Fail ; return }
+        # Validate resolved input and output paths
+        if (Test-String -IsEmpty $InputPath) {
+            Write-Line 'The selected shortcut does not contain a valid path. Skipping shortcut information export.' -Type Warning
+            return
+        }
         if (-not (Test-Path -LiteralPath $InputPath)) { Write-Line "The supplied path could not be reached. ($InputPath)" -Type Fail ; return }
         if (Test-String -IsEmpty $OutputRootFolder) { throw 'The output folder is empty.' }
         if (-not (Test-Path -Path $OutputRootFolder)) { New-Item -Path $OutputRootFolder -ItemType Directory -Force | Out-Null }
@@ -492,13 +593,14 @@ function Export-UniversalShortcutInformation {
         if (Test-Path -LiteralPath $OutputFilePath) { Remove-Item -LiteralPath $OutputFilePath -Force }
 
         # Collect shortcut files
+        [System.String[]]$SupportedExtensions = @('.lnk','.url')
         [System.IO.FileInfo[]]$ShortcutFiles = @()
         if ($SelectedItem.PSIsContainer) {
             $ShortcutFiles = Get-ChildItem -LiteralPath $SelectedItem.FullName -Recurse -File -ErrorAction SilentlyContinue |
-            Where-Object { @('.lnk','.url') -contains $_.Extension.ToLowerInvariant() }
+            Where-Object { $SupportedExtensions -contains $_.Extension.ToLowerInvariant() }
         }
         else {
-            if (@('.lnk','.url') -notcontains $SelectedItem.Extension.ToLowerInvariant()) {
+            if ($SupportedExtensions -notcontains $SelectedItem.Extension.ToLowerInvariant()) {
                 Write-Line "The selected file is not a supported shortcut type (*.lnk or *.url). ($($SelectedItem.FullName))" -Type Fail
                 return
             }
@@ -517,29 +619,7 @@ function Export-UniversalShortcutInformation {
 
         # EXECUTION - HEADER
         # Write header
-        [System.String[]]$HeaderLines = @(
-            '******************************',
-            '*',
-            "* Shortcut Properties - $ItemBaseName",
-            '*',
-            "* Generated on: [$(Get-TimeStamp -ForHost)]",
-            "* Generated by: $env:UserName",
-            '*',
-            '******************************',
-            '',
-            '******************************',
-            '* The Shortcuts are formatted in the following way, to make it easier to copy/paste the information into a table.',
-            '******************************',
-            'BaseName',
-            'TargetPath',
-            'WorkingDirectory',
-            'Arguments',
-            'StartMenuLocation',
-            'IconFilePath',
-            '',
-            ''
-        )
-        Set-Content -Path $OutputFilePath -Value $HeaderLines -Encoding UTF8
+        Set-ShortcutReportHeader -OutputFilePath $OutputFilePath -ItemBaseName $ItemBaseName
 
         # EXECUTION - BODY (SHORTCUTS)
         # Write one section per shortcut
@@ -562,36 +642,8 @@ function Export-UniversalShortcutInformation {
                 $StartMenuLocationShort = $StartMenuLocationShort -replace '^\[(SYSTEM|USER)\]', '[STARMENUROOT]'
             }
 
-            [System.String]$TargetPath = ''
-            [System.String]$WorkingDirectory = ''
-            [System.String]$Arguments = ''
-            [System.String]$IconFilePath = ''
-
-            # Resolve shortcut details depending on shortcut file type.
-            if ($ShortcutFile.Extension.ToLowerInvariant() -eq '.lnk') {
-                [System.Object]$ShellShortcut = $WScriptShell.CreateShortcut($ShortcutPath)
-                $TargetPath = [System.String]$ShellShortcut.TargetPath
-                $WorkingDirectory = [System.String]$ShellShortcut.WorkingDirectory
-                $Arguments = [System.String]$ShellShortcut.Arguments
-
-                [System.String]$IconLocation = [System.String]$ShellShortcut.IconLocation
-                if (Test-String -IsPopulated $IconLocation) {
-                    $IconFilePath = ($IconLocation -split ',')[0].Trim('"')
-                }
-            }
-            else {
-                [System.String[]]$ShortcutContent = Get-Content -LiteralPath $ShortcutPath -ErrorAction SilentlyContinue
-                [System.Collections.Hashtable]$InternetShortcutInformation = @{}
-
-                foreach ($ContentLine in $ShortcutContent) {
-                    if ($ContentLine -match '^\s*([^=]+)=(.*)$') {
-                        $InternetShortcutInformation[$Matches[1].Trim()] = $Matches[2].Trim()
-                    }
-                }
-
-                if ($InternetShortcutInformation.ContainsKey('URL')) { $TargetPath = [System.String]$InternetShortcutInformation.URL }
-                if ($InternetShortcutInformation.ContainsKey('IconFile')) { $IconFilePath = [System.String]$InternetShortcutInformation.IconFile }
-            }
+            [PSCustomObject]$Props = Get-ShortcutProperties -ShortcutFile $ShortcutFile -WScriptShell $WScriptShell
+            if ($null -eq $Props) { continue }
 
             # Keep body rows value-only to make copy/paste into tables easy.
             [System.String[]]$ShortcutLines = @(
@@ -599,11 +651,11 @@ function Export-UniversalShortcutInformation {
                 "* Shortcut $ShortcutIndex of $($ShortcutFiles.Count)",
                 '******************************',
                 "$($ShortcutFile.BaseName)",
-                "$TargetPath",
-                "$WorkingDirectory",
-                "$Arguments",
+                "$($Props.TargetPath)",
+                "$($Props.WorkingDirectory)",
+                "$($Props.Arguments)",
                 "$StartMenuLocationShort",
-                "$IconFilePath",
+                "$($Props.IconFilePath)",
                 '******************************',
                 ''
             )
@@ -612,8 +664,8 @@ function Export-UniversalShortcutInformation {
             # Export icon image to the same output folder as the text report.
             [PSCustomObject]$ShortcutImageProperties = [PSCustomObject]@{
                 BaseName     = $ShortcutFile.BaseName
-                IconFilePath = $IconFilePath
-                TargetPath   = $TargetPath
+                IconFilePath = $Props.IconFilePath
+                TargetPath   = $Props.TargetPath
             }
             Export-ShortcutImage -InputObject $ShortcutImageProperties -OutputFolder $ActualOutputFolder -PNG
             Export-ShortcutImage -InputObject $ShortcutImageProperties -OutputFolder $ActualOutputFolder -ICO
@@ -621,14 +673,7 @@ function Export-UniversalShortcutInformation {
 
         # EXECUTION - FOOTER
         # Write footer
-        [System.String[]]$FooterLines = @(
-            '******************************',
-            '*',
-            '* End of file',
-            '*',
-            '******************************'
-        )
-        Add-Content -Path $OutputFilePath -Value $FooterLines -Encoding UTF8
+        Set-ShortcutReportFooter -OutputFilePath $OutputFilePath
 
         # Write a final message to the host indicating where the output was saved
         Write-Line "Shortcut information exported to the following file: $OutputFilePath"
@@ -646,6 +691,117 @@ function Export-UniversalShortcutInformation {
             [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WScriptShell)
         }
     }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Writes the standard header for a shortcut export report file.
+.DESCRIPTION
+    This function composes and writes the common header lines used by shortcut export reports
+    to the provided output file path.
+.EXAMPLE
+    Set-ShortcutReportHeader -OutputFilePath 'C:\Temp\_Shortcut Properties - Demo.txt' -ItemBaseName 'Demo'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. The report header is written to the output file.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Set-ShortcutReportHeader {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The output report file path where the header will be written.')]
+        [ValidateNotNullOrEmpty()]
+        [System.String]$OutputFilePath,
+
+        [Parameter(Mandatory=$true,HelpMessage='The base name of the shortcut item used in the header title.')]
+        [ValidateNotNullOrEmpty()]
+        [System.String]$ItemBaseName
+    )
+
+    # EXECUTION
+    # Write the report header in a fixed format for consistent exports.
+    [System.String[]]$HeaderLines = @(
+        '******************************',
+        '*',
+        "* Shortcut Properties - $ItemBaseName",
+        '*',
+        "* Generated on: [$(Get-TimeStamp -ForHost)]",
+        "* Generated by: $env:UserName",
+        '*',
+        '******************************',
+        '',
+        '******************************',
+        '* The Shortcuts are formatted in the following way, to make it easier to copy/paste the information into a table.',
+        '******************************',
+        'BaseName',
+        'TargetPath',
+        'WorkingDirectory',
+        'Arguments',
+        'StartMenuLocation',
+        'IconFilePath',
+        '',
+        ''
+    )
+
+    Set-Content -Path $OutputFilePath -Value $HeaderLines -Encoding UTF8
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Appends the standard footer for a shortcut export report file.
+.DESCRIPTION
+    This function composes and appends the common footer lines used by shortcut export reports
+    to the provided output file path.
+.EXAMPLE
+    Set-ShortcutReportFooter -OutputFilePath 'C:\Temp\_Shortcut Properties - Demo.txt'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline. The report footer is appended to the output file.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Set-ShortcutReportFooter {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The output report file path where the footer will be appended.')]
+        [ValidateNotNullOrEmpty()]
+        [System.String]$OutputFilePath
+    )
+
+    # EXECUTION
+    # Append the report footer in a fixed format for consistent exports.
+    [System.String[]]$FooterLines = @(
+        '******************************',
+        '*',
+        '* End of file',
+        '*',
+        '******************************'
+    )
+
+    Add-Content -Path $OutputFilePath -Value $FooterLines -Encoding UTF8
 }
 
 ### END OF FUNCTION
