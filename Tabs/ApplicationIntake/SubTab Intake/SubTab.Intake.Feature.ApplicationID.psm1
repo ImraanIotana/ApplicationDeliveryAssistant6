@@ -269,7 +269,7 @@ function New-ApplicationFolder {
         [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
-        Export-UniversalShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
+        Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
         Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
         # Write a message to the host indicating that the new application folder has been created

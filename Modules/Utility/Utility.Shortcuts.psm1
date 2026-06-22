@@ -159,7 +159,7 @@ function Get-ShortcutProperties {
             [System.String]$IconFilePath = ''
             [System.String]$IconLocation = [System.String]$ShellShortcut.IconLocation
             if (Test-String -IsPopulated $IconLocation) {
-                # Extract first path element prior to optional comma / icon index
+                # Extract icon file path, stripping away comma/index separator if present
                 $IconFilePath = ($IconLocation -split ',')[0].Trim('"')
             }
 
@@ -366,7 +366,7 @@ function Write-ShortcutInformationToHost {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The shortcut file or folder path to inspect.')]
-        [AllowEmptyString()]
+        [ValidateNotNullOrEmpty()]
         [System.String]$Path
     )
 
@@ -453,6 +453,8 @@ function Write-ShortcutInformationToHost {
     catch {
         Write-ErrorReport -ErrorRecord $_
     }
+    # POST-EXECUTION
+    # Release COM object if created within this function
     finally {
         if ($null -ne $WScriptShell -and [System.Runtime.InteropServices.Marshal]::IsComObject($WScriptShell)) {
             [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WScriptShell)
@@ -477,11 +479,11 @@ function Write-ShortcutInformationToHost {
     It can export to a generic output folder or to an application archive location
     (9. Archive\Shortcuts) when ApplicationFolderPath is supplied.
 .EXAMPLE
-    Export-UniversalShortcutInformation -Path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Acrobat Reader.lnk'
+    Export-ShortcutInformation -Path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Acrobat Reader.lnk'
 .EXAMPLE
-    Export-UniversalShortcutInformation -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem -OpenOutputFolder
+    Export-ShortcutInformation -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem -OpenOutputFolder
 .EXAMPLE
-    Export-UniversalShortcutInformation -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0' -ShortcutComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts -SkipConfirmation
+    Export-ShortcutInformation -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0' -ShortcutComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts -SkipConfirmation
 .INPUTS
     [System.String]
     [System.Object]
@@ -496,11 +498,11 @@ function Write-ShortcutInformationToHost {
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Export-UniversalShortcutInformation {
+function Export-ShortcutInformation {
     [CmdletBinding(DefaultParameterSetName='ByPath')]
     param (
         [Parameter(Mandatory=$true,ParameterSetName='ByPath',HelpMessage='The shortcut file or folder path to export.')]
-        [AllowEmptyString()]
+        [ValidateNotNullOrEmpty()]
         [System.String]$Path,
 
         [Parameter(Mandatory=$true,ParameterSetName='ByShortcutItem',HelpMessage='Shortcut item that contains the FullPath property.')]
@@ -623,9 +625,9 @@ function Export-UniversalShortcutInformation {
 
         # EXECUTION - BODY (SHORTCUTS)
         # Write one section per shortcut
-        [System.Int32]$ShortcutIndex = 0
+        [System.Int32]$ShortcutCounter = 0
         foreach ($ShortcutFile in $ShortcutFiles | Sort-Object FullName) {
-            $ShortcutIndex++
+            $ShortcutCounter++
             [System.String]$ShortcutPath = $ShortcutFile.FullName
 
             # Build a compact Start Menu-relative location string for table export.
@@ -648,7 +650,7 @@ function Export-UniversalShortcutInformation {
             # Keep body rows value-only to make copy/paste into tables easy.
             [System.String[]]$ShortcutLines = @(
                 '******************************',
-                "* Shortcut $ShortcutIndex of $($ShortcutFiles.Count)",
+                "* Shortcut $ShortcutCounter of $($ShortcutFiles.Count)",
                 '******************************',
                 "$($ShortcutFile.BaseName)",
                 "$($Props.TargetPath)",
@@ -676,7 +678,7 @@ function Export-UniversalShortcutInformation {
         Set-ShortcutReportFooter -OutputFilePath $OutputFilePath
 
         # Write a final message to the host indicating where the output was saved
-        Write-Line "Shortcut information exported to the following file: $OutputFilePath"
+        Write-Line "Shortcut information of file/folder ($InputPath) exported to the following file: $OutputFilePath"
 
         # POST-EXECUTION
         if ($OpenOutputFolder) {
@@ -686,6 +688,8 @@ function Export-UniversalShortcutInformation {
     catch {
         Write-ErrorReport -ErrorRecord $_
     }
+    # POST-EXECUTION
+    # Release COM object if created within this function
     finally {
         if ($null -ne $WScriptShell -and [System.Runtime.InteropServices.Marshal]::IsComObject($WScriptShell)) {
             [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($WScriptShell)

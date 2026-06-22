@@ -89,7 +89,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'table_export'
                 SizeType        = 'Small'
                 ToolTip         = 'Export the selected shortcut to a text file.'
-                Function        = { Export-UniversalShortcutInformation -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem -OpenOutputFolder }.GetNewClosure()
+                Function        = { Export-ShortcutInformation -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem -OpenOutputFolder }.GetNewClosure()
             }
         )
         # Add the Buttons
