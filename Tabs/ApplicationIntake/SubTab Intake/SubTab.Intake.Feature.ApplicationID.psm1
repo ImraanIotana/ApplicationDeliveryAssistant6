@@ -320,7 +320,10 @@ function Copy-UDF {
         [System.Object]$SelectedTemplate,
 
         [Parameter(Mandatory=$false,HelpMessage='The folder where UDF zip files are searched.')]
-        [System.String]$FolderToSearch = $Global:ApplicationObject.RootFolder
+        [System.String]$FolderToSearch = $Global:ApplicationObject.RootFolder,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and extract immediately.')]
+        [System.Management.Automation.SwitchParameter]$SkipConfirmation
     )
 
     try {
@@ -342,6 +345,14 @@ function Copy-UDF {
         if (Test-String -IsEmpty $UDFName) {
             Write-Line 'The selected customer template does not define Content.UDFName. Skipping UDF copy.' -Type Warning
             return
+        }
+
+        # CONFIRMATION
+        # Ask for confirmation only when -SkipConfirmation is not specified.
+        if (-not $SkipConfirmation) {
+            [System.String]$Title   = 'Copy UDF Archive'
+            [System.String]$Body    = "This will extract the UDF archive ($UDFName) into the application Work folder.`n`nDo you want to continue?"
+            if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
         }
 
         # VALIDATION

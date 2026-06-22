@@ -458,7 +458,7 @@ function Export-UniversalShortcutInformation {
         # Ask for confirmation only when -SkipConfirmation is not specified.
         if (-not $SkipConfirmation) {
             [System.String]$Title   = 'Export Shortcut Information'
-            [System.String]$Body    = "This will export shortcut information for the following path:`n`n$InputPath`n`nDo you want to continue?"
+            [System.String]$Body    = "Would you like to export shortcut information for the following path?:`n`n$InputPath"
             if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
         }
 
