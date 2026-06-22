@@ -423,14 +423,6 @@ function Export-UniversalShortcutInformation {
     [System.Object]$WScriptShell = $null
 
     try {
-        # CONFIRMATION
-        # Ask for confirmation only when -SkipConfirmation is not specified.
-        if (-not $SkipConfirmation) {
-            [System.String]$Title   = 'Export Shortcut Information'
-            [System.String]$Body    = "This will export shortcut information for the following path:`n`n$Path`n`nDo you want to continue?"
-            if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
-        }
-
         # PREPARATION
         # Resolve input path from parameter set.
         [System.String]$InputPath = ''
@@ -460,6 +452,14 @@ function Export-UniversalShortcutInformation {
         if (Test-String -IsEmpty $InputPath) {
             Write-Line 'The selected shortcut does not contain a valid path. Skipping shortcut information export.' -Type Warning
             return
+        }
+
+        # CONFIRMATION
+        # Ask for confirmation only when -SkipConfirmation is not specified.
+        if (-not $SkipConfirmation) {
+            [System.String]$Title   = 'Export Shortcut Information'
+            [System.String]$Body    = "This will export shortcut information for the following path:`n`n$InputPath`n`nDo you want to continue?"
+            if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
         }
 
         [System.String]$OutputRootFolder = $ParentOutputFolder
@@ -650,102 +650,4 @@ function Export-UniversalShortcutInformation {
 
 ### END OF FUNCTION
 ####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
-    Exports shortcut details from a shortcut file or folder to a text report.
-.DESCRIPTION
-    Compatibility wrapper around Export-UniversalShortcutInformation.
-.EXAMPLE
-    Export-ShortcutInformation -Path 'C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Acrobat Reader.lnk'
-.EXAMPLE
-    Export-ShortcutInformation -Path 'C:\Users\MyName\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Accessories' -OpenOutputFolder
-.INPUTS
-    [System.String]
-.OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : August 2025
-    Last Update     : June 2026
-#>
-####################################################################################################
-function Export-ShortcutInformation {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The shortcut file or folder path to export.')]
-        [AllowEmptyString()]
-        [System.String]$Path,
-
-        [Parameter(Mandatory=$false,HelpMessage='Destination folder where the export output will be created.')]
-        [Alias('OutputFolder')]
-        [System.String]$ParentOutputFolder = (Get-OutputFolder),
-
-        [Parameter(Mandatory=$false,HelpMessage='Open the output folder after export.')]
-        [System.Management.Automation.SwitchParameter]$OpenOutputFolder,
-
-        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and export immediately.')]
-        [System.Management.Automation.SwitchParameter]$SkipConfirmation
-    )
-
-    Export-UniversalShortcutInformation -Path $Path -ParentOutputFolder $ParentOutputFolder -OpenOutputFolder:$OpenOutputFolder -SkipConfirmation:$SkipConfirmation
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
-    Exports shortcut information for the selected Intake shortcut to the application archive.
-.DESCRIPTION
-    Compatibility wrapper around Export-UniversalShortcutInformation for application archive export.
-.EXAMPLE
-    New-ApplicationShortcutInformation -ApplicationFolderPath 'C:\Temp\Vendor_App_1.0'
-.INPUTS
-    [System.String]
-.OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : June 2026
-    Last Update     : June 2026
-#>
-####################################################################################################
-function New-ApplicationShortcutInformation {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The root folder of the created application package.')]
-        [System.String]$ApplicationFolderPath,
-
-        [Parameter(Mandatory=$false,HelpMessage='If set, confirmation prompts will be skipped.')]
-        [System.Management.Automation.SwitchParameter]$SkipConfirmation
-    )
-
-    try {
-        # CONFIRMATION
-        # Ask the user to confirm exporting the shortcut information.
-        if (-not $SkipConfirmation) {
-            [System.String]$Title = 'Confirm Export Shortcut Information'
-            [System.String]$Body = "Do you want to export the shortcut information?"
-            if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
-        }
-
-        Export-UniversalShortcutInformation -ApplicationFolderPath $ApplicationFolderPath -ShortcutComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts -SkipConfirmation
-    }
-    catch {
-        Write-ErrorReport -ErrorRecord $_
-    }
-}
-
-### END OF FUNCTION
-####################################################################################################
-
 
