@@ -40,6 +40,10 @@ function New-AppLockerFile {
         [System.String]
         $ApplicationID,
 
+        [Parameter(Mandatory=$false,HelpMessage='The selected template object.')]
+        [PSCustomObject]
+        $SelectedTemplate,
+
         [Parameter(Mandatory=$false,HelpMessage='Switch for skipping user confirmation.')]
         [Alias('SkipConfrmation')]
         [System.Management.Automation.SwitchParameter]
@@ -51,20 +55,20 @@ function New-AppLockerFile {
 
     try {
         # VALIDATION
-        # Validate the source folder that will be scanned.
+        # Validate the source folder that will be scanned
         if ((Test-String -IsEmpty $FolderToScan) -or (-not (Test-Path -Path $FolderToScan -PathType Container))) {
             Write-Line "The Folder Path is invalid or empty. No AppLocker file will be created. ($FolderToScan)" -Type Warning
             return
         }
 
         # PREPARATION
-        # Set the parent output folder and ensure it exists.
+        # Set the parent output folder and ensure it exists
         [System.String]$ParentOutputFolder = $OutputFolder
         if (Test-String -IsEmpty $ParentOutputFolder) { $ParentOutputFolder = Get-OutputFolder }
         if (-not (Test-Path -Path $ParentOutputFolder -PathType Container)) { New-Item -Path $ParentOutputFolder -ItemType Directory -Force | Out-Null }
 
         # CONFIRMATION
-        # Ask for confirmation only when -SkipConfirmation is not specified.
+        # Ask for confirmation only when -SkipConfirmation is not specified
         if (-not $SkipConfirmation) {
             [System.String]$Title   = 'Create AppLocker Policy'
             [System.String]$Body    = "Would you like to create the APPLOCKER POLICY files for the folder:`n`n$FolderToScan"
@@ -72,47 +76,48 @@ function New-AppLockerFile {
         }
 
         # PREPARATION
-        # Apply the fallback AD group before building any output paths.
+        # Apply the fallback AD group before building any output paths
         if (Test-String -IsEmpty $ADGroupSID) { $ADGroupSID = 'S-1-1-0' ; Write-Line "The AD Group SID is empty. The group EVERYONE will be used instead. ($ADGroupSID)" -Type Warning }
 
-        # Default to the standard AppLocker folder name unless the template overrides it.
+        # Default to the standard AppLocker folder name unless the template overrides it
         [System.String]$AppLockerFolderName = 'AppLockerPolicies'
 
-        # Use the template folder only when the caller supplied an explicit ApplicationID.
+        # Use the template folder only when the caller supplied an explicit ApplicationID
         if (Test-String -IsEmpty $ApplicationID) {
             $ApplicationID = Split-Path -Path $FolderToScan -Leaf
         }
         else {
-            # Else, if the ApplicationID is provided, attempt to resolve the AppLocker folder name from the selected template.
-            [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
+            # Else, if the ApplicationID is provided, attempt to resolve the AppLocker folder name from the selected template
+            if ($null -eq $SelectedTemplate) {
+                $SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
+            }
             [System.String]$ResolvedAppLockerFolderName = [System.String]$SelectedTemplate.ApplicationFolderSubFolders.AppLocker
             if (Test-String -IsPopulated $ResolvedAppLockerFolderName) {
                 $AppLockerFolderName = $ResolvedAppLockerFolderName
             }
             else {
-                # If the template does not provide a valid AppLocker folder name, log a warning and use the default.
+                # If the template does not provide a valid AppLocker folder name, log a warning and use the default
                 Write-Line "Could not resolve ApplicationFolderSubFolders.AppLocker from the selected template. Using default path: ($AppLockerFolderName)" -Type Warning
             }
         }
 
-        # Finalize the application-specific output root and AppLocker subfolder.
+        # Finalize the application-specific output root and AppLocker subfolder
         [System.String]$NewApplicationFolder = Join-Path -Path $ParentOutputFolder -ChildPath $ApplicationID
         [System.String]$OutputFolder = Join-Path -Path $NewApplicationFolder -ChildPath $AppLockerFolderName
 
-        # Ensure the AppLocker output folder exists.
+        # Ensure the AppLocker output folder exists
         if (-not (Test-Path -Path $OutputFolder -PathType Container)) { New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null }
 
-        # Precompute the report and policy output file paths.
+        # Precompute the report and policy output file paths
         [System.String]$ReportFilePath = Join-Path -Path $OutputFolder -ChildPath ('AppLockerReport_{0}.txt' -f $ApplicationID)
         [System.String]$AppLockerPolicyHashFilePath = Join-Path -Path $OutputFolder -ChildPath ('AppLockerPolicyHash_{0}.xml' -f $ApplicationID)
         [System.String]$AppLockerPolicyPathFilePath = Join-Path -Path $OutputFolder -ChildPath ('AppLockerPolicyPath_{0}.xml' -f $ApplicationID)
         [System.String]$AppLockerPolicyPublisherFilePath = Join-Path -Path $OutputFolder -ChildPath ('AppLockerPolicyPublisher_{0}.xml' -f $ApplicationID)
 
-
         # EXECUTION
         # Create the AppLocker policy files
         Write-Host 'Creating the AppLocker Policy files. One moment please...' -ForegroundColor DarkGray
-        # Collect file information per file so invalid binaries are skipped instead of aborting the whole run.
+        # Collect file information per file so invalid binaries are skipped instead of aborting the whole run
         [System.IO.FileInfo[]]$CandidatePolicyFiles = Get-ChildItem -Path $FolderToScan -File -Recurse -ErrorAction SilentlyContinue |
         Where-Object { $_.Extension -in @('.exe','.dll') }
         [System.Collections.Generic.List[System.Object]]$AppLockerFileInformation = [System.Collections.Generic.List[System.Object]]::new()
@@ -132,12 +137,13 @@ function New-AppLockerFile {
             return
         }
 
+        # Create the AppLocker policy files for Hash, Path, and Publisher rules
         $AppLockerFileInformation | New-AppLockerPolicy -RuleType Hash -User $ADGroupSID -RuleNamePrefix $ApplicationID -Optimize -XML > $AppLockerPolicyHashFilePath -IgnoreMissingFileInformation -InformationAction SilentlyContinue
-        Write-Line "The AppLocker policy files by hash have been created for folder: ($FolderToScan)" -Type Success
+        Write-Line "The AppLocker policy files by Hash have been created for folder: ($FolderToScan)" -Type Success
         $AppLockerFileInformation | New-AppLockerPolicy -RuleType Path -User $ADGroupSID -RuleNamePrefix $ApplicationID -Optimize -XML > $AppLockerPolicyPathFilePath -IgnoreMissingFileInformation -InformationAction SilentlyContinue
-        Write-Line "The AppLocker policy files by path have been created for folder: ($FolderToScan)" -Type Success
+        Write-Line "The AppLocker policy files by Path have been created for folder: ($FolderToScan)" -Type Success
         $AppLockerFileInformation | New-AppLockerPolicy -RuleType Publisher -User $ADGroupSID -RuleNamePrefix $ApplicationID -Optimize -XML > $AppLockerPolicyPublisherFilePath -IgnoreMissingFileInformation -InformationAction SilentlyContinue
-        Write-Line "The AppLocker policy files by publisher have been created for folder: ($FolderToScan)" -Type Success
+        Write-Line "The AppLocker policy files by Publisher have been created for folder: ($FolderToScan)" -Type Success
 
         # Create the AppLocker policy report
         New-AppLockerPolicyReport -FolderToScan $FolderToScan -ReportFilePath $ReportFilePath -ApplicationID $ApplicationID
@@ -193,14 +199,14 @@ function New-AppLockerPolicyReport {
     )
 
     try {
-        # Capture the current timestamp and build the fixed report lines.
+        # Capture the current timestamp and build the fixed report lines
         [System.String]$TimeStamp           = [System.String](Get-TimeStamp -ForHost)
         [System.String]$IntroductoryLine    = ('AppLocker Information for the application: {0}' -f $ApplicationID)
         [System.String]$TimeStampLine       = ('Generated on: {0}' -f $TimeStamp)
         [System.String]$EmptyLine           = [System.String]''
         [System.String]$SeperationLine      = [System.String]'========================='
 
-        # Write the report header.
+        # Write the report header
         Write-Line 'Creating the AppLocker Policy Report...'
         Add-Content -Path $ReportFilePath -Value $IntroductoryLine
         Add-Content -Path $ReportFilePath -Value $TimeStampLine
@@ -210,7 +216,7 @@ function New-AppLockerPolicyReport {
         Add-Content -Path $ReportFilePath -Value 'AppLocker Policy XML files have been created for the following files:'
         Add-Content -Path $ReportFilePath -Value $EmptyLine
 
-        # Scan and list executable files.
+        # Scan and list executable files
         [System.IO.FileSystemInfo[]]$ExecutableFiles = Get-ChildItem -Path $FolderToScan -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.exe' }
         Add-Content -Path $ReportFilePath -Value $SeperationLine
         Add-Content -Path $ReportFilePath -Value ('Number of Exe-files: {0}' -f $ExecutableFiles.Count)
@@ -219,7 +225,7 @@ function New-AppLockerPolicyReport {
 
         Add-Content -Path $ReportFilePath -Value $EmptyLine
 
-        # Scan and list DLL files.
+        # Scan and list DLL files
         [System.IO.FileSystemInfo[]]$DllFiles = Get-ChildItem -Path $FolderToScan -File -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq '.dll' }
         Add-Content -Path $ReportFilePath -Value $SeperationLine
         Add-Content -Path $ReportFilePath -Value ('Number of DLL-files: {0}' -f $DllFiles.Count)

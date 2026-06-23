@@ -43,6 +43,8 @@ function Import-FeatureFileBitness {
             NumberOfRows    = 2
             GroupBoxAbove   = $GroupBoxAbove
         }
+        # Create the GroupBox
+        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
         # PREPARATION - TEXTBOXES
         # Set the TextBox properties
@@ -54,6 +56,9 @@ function Import-FeatureFileBitness {
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
         }
+        # Create the TextBox
+        if (-not $Global:Graphics.TextBoxes.Tools.Files.ContainsKey('FileBitness')) { $Global:Graphics.TextBoxes.Tools.Files.FileBitness = @{} }
+        $Global:Graphics.TextBoxes.Tools.Files.FileBitness.FilePath = New-TextBox @FileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # PREPARATION - BUTTONS
         # Set the Button properties
@@ -66,16 +71,10 @@ function Import-FeatureFileBitness {
                 Function        = { Get-FileBitness -Path $Global:Graphics.TextBoxes.Tools.Files.FileBitness.FilePath.Text -OutHost }
             }
         )
-
-
-        # EXECUTION
-        # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
-        # Create the TextBox
-        if (-not $Global:Graphics.TextBoxes.Tools.Files.ContainsKey('FileBitness')) { $Global:Graphics.TextBoxes.Tools.Files.FileBitness = @{} }
-        $Global:Graphics.TextBoxes.Tools.Files.FileBitness.FilePath = New-TextBox @FileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        # Add the Buttons
+        # Create the Buttons
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ActionButtons -ParentGroupBox $FeatureGroupBox -RowNumber 2
+
+        # POST-EXECUTION
         # Return the GroupBox object
         $FeatureGroupBox
     }

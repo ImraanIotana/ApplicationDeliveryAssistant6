@@ -108,9 +108,10 @@ function Import-FeatureAppLockerCreation {
             SizeType        = 'Large'
             ToolTip         = 'Create the AppLocker files for the selected folder.'
             Function        = {
-                [System.String]$FolderToScan    = $Global:Graphics.TextBoxes.AppLocker.Creation.FolderPath.Text
-                [System.String]$ADGroupSID      = $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupSID.Text
-                New-AppLockerFile -FolderToScan $FolderToScan -ADGroupSID $ADGroupSID -OpenOutputFolder
+                [System.String]$FolderToScan        = $Global:Graphics.TextBoxes.AppLocker.Creation.FolderPath.Text
+                [System.String]$ADGroupSID          = $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupSID.Text
+                [System.Object]$SelectedTemplate    = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
+                New-AppLockerFile -FolderToScan $FolderToScan -ADGroupSID $ADGroupSID -SelectedTemplate $SelectedTemplate -OpenOutputFolder
             }.GetNewClosure()
         }
         # Create the Buttons

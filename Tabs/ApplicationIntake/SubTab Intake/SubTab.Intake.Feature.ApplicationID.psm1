@@ -270,7 +270,7 @@ function New-ApplicationFolder {
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
         Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
-        New-AppLockerFile -Path $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text -ADGroupSID $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text -ApplicationID $ApplicationID
+        New-AppLockerFile -Path $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text -ADGroupSID $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text -ApplicationID $ApplicationID -SelectedTemplate $SelectedTemplate
         Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
         # Write a message to the host indicating that the new application folder has been created
