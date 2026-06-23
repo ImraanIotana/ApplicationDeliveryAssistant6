@@ -221,6 +221,7 @@ function New-Button {
             'Copy'          = 'page_copy'
             'Paste'         = 'page_paste'
             'Clear'         = 'textfield_delete'
+            'Show'          = 'eye'
             'Default'       = 'arrow_undo'
         }
         # If no PNGFileName is provided, but the Text matches a default Text, then use the corresponding default Icon

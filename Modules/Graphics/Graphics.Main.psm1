@@ -65,7 +65,7 @@ function Initialize-Graphics {
         Import-TabApplicationIntake -InputObject $InputObject -ParentTabControl $ParentTabControl
         Import-TabTools -InputObject $InputObject -ParentTabControl $ParentTabControl
         Import-TabAppLocker -InputObject $InputObject -ParentTabControl $ParentTabControl
-        Import-TabFTP -InputObject $InputObject -ParentTabControl $ParentTabControl
+        #Import-TabFTP -InputObject $InputObject -ParentTabControl $ParentTabControl
         Import-TabApplicationSettings -InputObject $InputObject -ParentTabControl $ParentTabControl
         
     }

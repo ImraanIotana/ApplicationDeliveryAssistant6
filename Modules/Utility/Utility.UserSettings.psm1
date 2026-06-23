@@ -118,9 +118,13 @@ function Protect-UserSettingValue {
     # Do not double-encrypt values that are already marked as protected.
     if ($PlainText.StartsWith('DPAPI:')) { return $PlainText }
 
-    [System.Byte[]]$PlainBytes = [System.Text.Encoding]::UTF8.GetBytes($PlainText)
-    [System.Byte[]]$ProtectedBytes = [System.Security.Cryptography.ProtectedData]::Protect($PlainBytes,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-    'DPAPI:{0}' -f [System.Convert]::ToBase64String($ProtectedBytes)
+    # Handle empty values explicitly so round-tripping stays deterministic.
+    if ($PlainText -eq [System.String]::Empty) { return 'DPAPI:' }
+
+    # Use Windows SecureString serialization (DPAPI-backed on Windows for current user context).
+    [System.Security.SecureString]$SecureValue = ConvertTo-SecureString -String $PlainText -AsPlainText -Force
+    [System.String]$ProtectedText = ConvertFrom-SecureString -SecureString $SecureValue
+    'DPAPI:{0}' -f $ProtectedText
 }
 
 # END OF FUNCTION
@@ -161,9 +165,13 @@ function Unprotect-UserSettingValue {
     if (-not $StoredValue.StartsWith('DPAPI:')) { return $StoredValue }
 
     [System.String]$CipherText = $StoredValue.Substring(6)
-    [System.Byte[]]$ProtectedBytes = [System.Convert]::FromBase64String($CipherText)
-    [System.Byte[]]$PlainBytes = [System.Security.Cryptography.ProtectedData]::Unprotect($ProtectedBytes,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-    [System.Text.Encoding]::UTF8.GetString($PlainBytes)
+
+    # Empty marker represents an intentionally empty sensitive value.
+    if ($CipherText -eq [System.String]::Empty) { return [System.String]::Empty }
+
+    [System.Security.SecureString]$SecureValue = ConvertTo-SecureString -String $CipherText
+    # Convert SecureString back to plain text in-process for control binding.
+    (New-Object System.Management.Automation.PSCredential('u',$SecureValue)).GetNetworkCredential().Password
 }
 
 # END OF FUNCTION

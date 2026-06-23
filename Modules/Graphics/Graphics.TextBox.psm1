@@ -498,7 +498,7 @@ function Write-ClipBoardToTextBox {
     # Ask for confirmation only when the TextBox already contains a value that would be overwritten.
     if ((Test-String -IsPopulated $TextBox.Text) -and -not $Force) {
         [System.String]$Title   = 'Confirm Paste Clipboard Content'
-        [System.String]$Body    = "This will overwrite the current value:`n`n$($TextBox.Text)`n`nwith the following value:`n`n$ClipboardText`n`nDo you want to continue?"
+        [System.String]$Body    = "This will overwrite the current value with the following value:`n`n$ClipboardText`n`nDo you want to continue?"
         [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
         # If the user did not confirm, exit the function without making any changes to the TextBox.
         if (-not $UserHasConfirmed) { return }
