@@ -39,43 +39,52 @@ function Import-FeatureFTPCredentials {
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'CREDENTIALS'
-            Color           = 'Cyan'
-            NumberOfRows    = 2
+            Color           = 'Indigo'
+            NumberOfRows    = 3
             GroupBoxAbove   = $GroupBoxAbove
         }
 
         # PREPARATION - TEXTBOXES
-        # Set the TextBox properties
-        [System.Collections.Hashtable]$FileTextBoxProperties = @{
+        # Set the FTP Server URL TextBox properties
+        [System.Collections.Hashtable]$ServerURLTextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'Select File'
-            PropertyName    = 'TextBoxes.Tools.Files.FileBitness.FilePath'
-            ToolTip         = 'The path of the file to analyze'
+            Label           = 'FTP Server URL'
+            PropertyName    = 'TextBoxes.FTP.Credentials.ServerURL'
+            ToolTip         = 'The URL or IP address of the FTP server'
             SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
+            SmallButtons    = @(@(5,'Copy'),@(6,'Paste'),@(7,'Clear'))
         }
 
-        # PREPARATION - BUTTONS
-        # Set the Button properties
-        [System.Collections.Hashtable[]]$ActionButtons = @(
-            @{
-                ColumnNumber    = 1
-                Text            = 'Analyze'
-                PNGFileName     = 'microscope'
-                SizeType        = 'Medium'
-                Function        = { Get-FileBitness -Path $Global:Graphics.TextBoxes.Tools.Files.FileBitness.FilePath.Text -OutHost }
-            }
-        )
+        # Set the Username TextBox properties
+        [System.Collections.Hashtable]$UsernameTextBoxProperties = @{
+            RowNumber       = 2
+            Label           = 'Username'
+            PropertyName    = 'TextBoxes.FTP.Credentials.Username'
+            ToolTip         = 'The username for FTP authentication'
+            SizeType        = 'Medium'
+            SmallButtons    = @(@(5,'Copy'),@(6,'Paste'),@(7,'Clear'))
+        }
+
+        # Set the Password TextBox properties
+        [System.Collections.Hashtable]$PasswordTextBoxProperties = @{
+            RowNumber       = 3
+            Label           = 'Password'
+            PropertyName    = 'TextBoxes.FTP.Credentials.Password'
+            ToolTip         = 'The password for FTP authentication'
+            SizeType        = 'Medium'
+            UsePasswordChar = $true
+            SmallButtons    = @(@(5,'Show'),@(6,'Paste'),@(7,'Clear'))
+        }
 
 
         # EXECUTION
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
-        # Create the TextBox
-        if (-not $Global:Graphics.TextBoxes.Tools.Files.ContainsKey('FileBitness')) { $Global:Graphics.TextBoxes.Tools.Files.FileBitness = @{} }
-        $Global:Graphics.TextBoxes.Tools.Files.FileBitness.FilePath = New-TextBox @FileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        # Add the Buttons
-        New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ActionButtons -ParentGroupBox $FeatureGroupBox -RowNumber 2
+        # Create the TextBoxes
+        if (-not $Global:Graphics.TextBoxes.FTP.ContainsKey('Credentials')) { $Global:Graphics.TextBoxes.FTP.Credentials = @{} }
+        $Global:Graphics.TextBoxes.FTP.Credentials.ServerURL = New-TextBox @ServerURLTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.FTP.Credentials.Username = New-TextBox @UsernameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.FTP.Credentials.Password = New-TextBox @PasswordTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
         # Return the GroupBox object
         $FeatureGroupBox
     }

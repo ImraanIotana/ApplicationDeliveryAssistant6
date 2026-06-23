@@ -49,6 +49,130 @@ function Initialize-UserSettings {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Determines whether a User Setting property should be stored as protected data.
+.DESCRIPTION
+    This function returns true for setting names that represent secrets, such as passwords.
+.EXAMPLE
+    Test-UserSettingIsSensitive -PropertyName 'TextBoxes.FTP.Credentials.Password'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.Boolean]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Test-UserSettingIsSensitive {
+    [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The User Setting property name.')]
+        [System.String]$PropertyName
+    )
+
+    # Consider any setting containing "Password" as sensitive.
+    $PropertyName -match '(?i)password'
+}
+
+# END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Encrypts plain text using DPAPI for the current user.
+.DESCRIPTION
+    This function protects text with CurrentUser scope and returns a string prefixed with DPAPI:
+    so callers can detect whether a setting is already protected.
+.EXAMPLE
+    Protect-UserSettingValue -PlainText 'secret'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Protect-UserSettingValue {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The plain text value to protect.')]
+        [AllowNull()]
+        [System.String]$PlainText
+    )
+
+    # Keep null values null so callers can clear settings without side effects.
+    if ($null -eq $PlainText) { return $null }
+
+    # Do not double-encrypt values that are already marked as protected.
+    if ($PlainText.StartsWith('DPAPI:')) { return $PlainText }
+
+    [System.Byte[]]$PlainBytes = [System.Text.Encoding]::UTF8.GetBytes($PlainText)
+    [System.Byte[]]$ProtectedBytes = [System.Security.Cryptography.ProtectedData]::Protect($PlainBytes,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+    'DPAPI:{0}' -f [System.Convert]::ToBase64String($ProtectedBytes)
+}
+
+# END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Decrypts a DPAPI-protected User Setting value.
+.DESCRIPTION
+    This function returns the decrypted plain text when the input starts with DPAPI:.
+    If the value is not prefixed, it is treated as legacy plain text and returned unchanged.
+.EXAMPLE
+    Unprotect-UserSettingValue -StoredValue $ValueFromRegistry
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Unprotect-UserSettingValue {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The value read from the registry.')]
+        [AllowNull()]
+        [System.String]$StoredValue
+    )
+
+    if ($null -eq $StoredValue) { return $null }
+    if (-not $StoredValue.StartsWith('DPAPI:')) { return $StoredValue }
+
+    [System.String]$CipherText = $StoredValue.Substring(6)
+    [System.Byte[]]$ProtectedBytes = [System.Convert]::FromBase64String($CipherText)
+    [System.Byte[]]$PlainBytes = [System.Security.Cryptography.ProtectedData]::Unprotect($ProtectedBytes,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+    [System.Text.Encoding]::UTF8.GetString($PlainBytes)
+}
+
+# END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Sets a specific User Setting value in the registry.
 .DESCRIPTION
     This function writes a single User Setting value to the configured User Settings registry path.
@@ -93,8 +217,14 @@ function Set-UserSetting {
         }
 
         # EXECUTION
+        # Protect sensitive values before writing to the registry.
+        [System.String]$ValueToStore = if (Test-UserSettingIsSensitive -PropertyName $PropertyName) {
+            Protect-UserSettingValue -PlainText $PropertyValue
+        } else {
+            $PropertyValue
+        }
         # Set the value of the requested User Setting in the registry
-        Set-ItemProperty -Path $UserSettingsRegistryPath -Name $PropertyName -Value $PropertyValue -Force -ErrorAction Stop
+        Set-ItemProperty -Path $UserSettingsRegistryPath -Name $PropertyName -Value $ValueToStore -Force -ErrorAction Stop
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -162,6 +292,18 @@ function Get-UserSetting {
             # The property does not exist in the registry
             [System.String]$UserSettingValue = $null
         }
+        # Decrypt sensitive values. Legacy plain text values are returned unchanged.
+        if (Test-UserSettingIsSensitive -PropertyName $PropertyName) {
+            [System.String]$UnprotectedValue = Unprotect-UserSettingValue -StoredValue $UserSettingValue
+
+            # If a legacy plain text value is detected, rewrite it as protected data.
+            if ((Test-String -IsPopulated $UserSettingValue) -and -not $UserSettingValue.StartsWith('DPAPI:')) {
+                Set-UserSetting -InputObject $InputObject -PropertyName $PropertyName -PropertyValue $UnprotectedValue
+            }
+
+            return $UnprotectedValue
+        }
+
         # Return the value of the requested User Setting
         $UserSettingValue
     }

@@ -118,6 +118,9 @@ function New-TextBox {
         [Parameter(Mandatory=$false,HelpMessage='The small buttons array that will be added to the object.')]
         [System.Object[][]]$SmallButtons,
 
+        [Parameter(Mandatory=$false,HelpMessage='Display password characters as asterisks in the TextBox.')]
+        [System.Management.Automation.SwitchParameter]$UsePasswordChar,
+
         [Parameter(Mandatory=$false,HelpMessage='The ToolTip text to display when hovering over the TextBox.')]
         [System.String]$ToolTip,
 
@@ -177,6 +180,12 @@ function New-TextBox {
     $NewTextBox.ReadOnly = switch ($Type) {
         'Input'     { $false }
         'Output'    { $true }
+    }
+
+    # PASSWORD CHARACTER MASKING
+    # Set the UseSystemPasswordChar property
+    if ($UsePasswordChar) {
+        $NewTextBox.UseSystemPasswordChar = $true
     }
 
     # LABEL
@@ -240,6 +249,7 @@ function New-TextBox {
                     'Paste'         { { Write-ClipBoardToTextBox -TextBox $NewTextBox }.GetNewClosure() }
                     'Default'       { { Reset-TextBox -TextBox $NewTextBox }.GetNewClosure() }
                     'Clear'         { { Clear-TextBox -TextBox $NewTextBox }.GetNewClosure() }
+                    'Show'          { { Switch-PasswordVisibility -TextBox $NewTextBox }.GetNewClosure() }
                 }
                 # Create a hashtable for each button with its properties, to be used as input for the New-ButtonLine function.
                 [System.Collections.Hashtable]$ButtonHashtable = @{
@@ -533,6 +543,48 @@ function New-TextBoxSubKey {
 
     # Create the requested TextBoxes subkey only when it has not already been initialized.
     if (-not $Global:Graphics.TextBoxes.ContainsKey($Name)) { $Global:Graphics.TextBoxes.$Name = @{} }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Toggles the visibility of password characters in a TextBox.
+.DESCRIPTION
+    This function toggles the UseSystemPasswordChar property of a TextBox to show or hide password characters.
+    It also writes a status message to the host showing the current visibility state.
+.EXAMPLE
+    Switch-PasswordVisibility -TextBox $MyPasswordTextBox
+.INPUTS
+    [System.Windows.Forms.TextBox]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Switch-PasswordVisibility {
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The password TextBox to toggle.')]
+        [System.Windows.Forms.TextBox]$TextBox
+    )
+
+    # EXECUTION
+    # Toggle the UseSystemPasswordChar property
+    $TextBox.UseSystemPasswordChar = -not $TextBox.UseSystemPasswordChar
+    
+    # Determine the current visibility state
+    [System.String]$VisibilityState = if ($TextBox.UseSystemPasswordChar) { 'masked' } else { 'visible' }
+    
+    # Write a status message
+    Write-Line "The password in TextBox ($($TextBox.Tag.Label)) is now $VisibilityState."
 }
 
 ### END OF FUNCTION
