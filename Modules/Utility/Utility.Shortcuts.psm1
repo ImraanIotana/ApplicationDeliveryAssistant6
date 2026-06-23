@@ -515,7 +515,7 @@ function Export-ShortcutInformation {
         [Alias('OutputFolder')]
         [System.String]$ParentOutputFolder = (Get-OutputFolder),
 
-        [Parameter(Mandatory=$false,HelpMessage='The root folder of the created application package. When supplied, output is written to 9. Archive\\Shortcuts.')]
+        [Parameter(Mandatory=$false,HelpMessage='The root folder of the created application package. When supplied, output is written to ..\9. Archive\Shortcuts.')]
         [System.String]$ApplicationFolderPath,
 
         [Parameter(Mandatory=$false,HelpMessage='Open the output folder after export.')]
@@ -530,27 +530,23 @@ function Export-ShortcutInformation {
     try {
         # PREPARATION
         # Resolve input path from parameter set.
-        [System.String]$InputPath = ''
-        switch ($PSCmdlet.ParameterSetName) {
+        [System.String]$InputPath = switch ($PSCmdlet.ParameterSetName) {
             'ByPath' {
-                $InputPath = $Path
+                $Path
             }
             'ByShortcutItem' {
                 if ($null -eq $ShortcutItem) {
                     Write-Line 'No shortcut is selected. Skipping shortcut information export.' -Type Warning
                     return
                 }
-                $InputPath = [System.String]$ShortcutItem.FullPath
+                [System.String]$ShortcutItem.FullPath
             }
             'ByComboBox' {
                 if ($null -eq $ShortcutComboBox -or $null -eq $ShortcutComboBox.SelectedItem) {
                     Write-Line 'No shortcut is selected. Skipping shortcut information export.' -Type Warning
                     return
                 }
-                $InputPath = [System.String]$ShortcutComboBox.SelectedItem.FullPath
-            }
-            default {
-                throw "Unsupported parameter set: $($PSCmdlet.ParameterSetName)"
+                [System.String]$ShortcutComboBox.SelectedItem.FullPath
             }
         }
 
@@ -558,7 +554,7 @@ function Export-ShortcutInformation {
         # Ask for confirmation only when -SkipConfirmation is not specified.
         if (-not $SkipConfirmation) {
             [System.String]$Title   = 'Confirm Export Shortcut Information'
-            [System.String]$Body    = "Would you like to EXPORT the SHORTCUT information for the following path?:`n`n$InputPath"
+            [System.String]$Body    = "Would you like to EXPORT the SHORTCUT information for the following path:`n`n$InputPath"
             if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
         }
 
@@ -621,64 +617,18 @@ function Export-ShortcutInformation {
 
         # EXECUTION - HEADER
         # Write header
-        Set-ShortcutReportHeader -OutputFilePath $OutputFilePath -ItemBaseName $ItemBaseName
+        Write-ShortcutReportHeader -OutputFilePath $OutputFilePath -ItemBaseName $ItemBaseName
 
         # EXECUTION - BODY (SHORTCUTS)
         # Write one section per shortcut
-        [System.Int32]$ShortcutCounter = 0
-        foreach ($ShortcutFile in $ShortcutFiles | Sort-Object FullName) {
-            $ShortcutCounter++
-            [System.String]$ShortcutPath = $ShortcutFile.FullName
-
-            # Build a compact Start Menu-relative location string for table export.
-            [System.String]$StartMenuLocationShort = ''
-            if ($ShortcutPath.StartsWith($SystemStartMenuFolder,[System.StringComparison]::OrdinalIgnoreCase)) {
-                $StartMenuLocationShort = "[SYSTEM]$($ShortcutPath.Substring($SystemStartMenuFolder.Length))"
-            }
-            elseif ($ShortcutPath.StartsWith($UserStartMenuFolder,[System.StringComparison]::OrdinalIgnoreCase)) {
-                $StartMenuLocationShort = "[USER]$($ShortcutPath.Substring($UserStartMenuFolder.Length))"
-            }
-
-            # Normalize all Start Menu roots to [ROOT] for consistent export output.
-            if (Test-String -IsPopulated $StartMenuLocationShort) {
-                $StartMenuLocationShort = $StartMenuLocationShort -replace '^\[(SYSTEM|USER)\]', '[STARMENUROOT]'
-            }
-
-            [PSCustomObject]$Props = Get-ShortcutProperties -ShortcutFile $ShortcutFile -WScriptShell $WScriptShell
-            if ($null -eq $Props) { continue }
-
-            # Keep body rows value-only to make copy/paste into tables easy.
-            [System.String[]]$ShortcutLines = @(
-                '******************************',
-                "* Shortcut $ShortcutCounter of $($ShortcutFiles.Count)",
-                '******************************',
-                "$($ShortcutFile.BaseName)",
-                "$($Props.TargetPath)",
-                "$($Props.WorkingDirectory)",
-                "$($Props.Arguments)",
-                "$StartMenuLocationShort",
-                "$($Props.IconFilePath)",
-                '******************************',
-                ''
-            )
-            Add-Content -Path $OutputFilePath -Value $ShortcutLines -Encoding UTF8
-
-            # Export icon image to the same output folder as the text report.
-            [PSCustomObject]$ShortcutImageProperties = [PSCustomObject]@{
-                BaseName     = $ShortcutFile.BaseName
-                IconFilePath = $Props.IconFilePath
-                TargetPath   = $Props.TargetPath
-            }
-            Export-ShortcutImage -InputObject $ShortcutImageProperties -OutputFolder $ActualOutputFolder -PNG
-            Export-ShortcutImage -InputObject $ShortcutImageProperties -OutputFolder $ActualOutputFolder -ICO
-        }
+        Write-ShortcutReportBody -ShortcutFiles $ShortcutFiles -SystemStartMenuFolder $SystemStartMenuFolder -UserStartMenuFolder $UserStartMenuFolder -OutputFilePath $OutputFilePath -ActualOutputFolder $ActualOutputFolder -WScriptShell $WScriptShell
 
         # EXECUTION - FOOTER
         # Write footer
-        Set-ShortcutReportFooter -OutputFilePath $OutputFilePath
+        Write-ShortcutReportFooter -OutputFilePath $OutputFilePath
 
         # Write a final message to the host indicating where the output was saved
-        Write-Line "Shortcut information of file/folder ($InputPath) exported to the following file: $OutputFilePath"
+        Write-Line "Shortcut information of file/folder ($InputPath) exported to the following file: $OutputFilePath" -Type Success
 
         # POST-EXECUTION
         if ($OpenOutputFolder) {
@@ -704,12 +654,111 @@ function Export-ShortcutInformation {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Writes shortcut export entries and their icon files.
+.DESCRIPTION
+    This helper iterates shortcut files, formats each report entry, appends it to the report file,
+    and exports the associated icon images into the output folder.
+.INPUTS
+    [System.IO.FileInfo[]]
+    [System.String]
+    [System.String]
+    [System.String]
+    [System.String]
+    [System.Object]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Write-ShortcutReportBody {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The shortcut files being exported.')]
+        [System.IO.FileInfo[]]$ShortcutFiles,
+
+        [Parameter(Mandatory=$true,HelpMessage='The system Start Menu root used to build relative locations.')]
+        [System.String]$SystemStartMenuFolder,
+
+        [Parameter(Mandatory=$true,HelpMessage='The user Start Menu root used to build relative locations.')]
+        [System.String]$UserStartMenuFolder,
+
+        [Parameter(Mandatory=$true,HelpMessage='The output report file path where the entry will be appended.')]
+        [System.String]$OutputFilePath,
+
+        [Parameter(Mandatory=$true,HelpMessage='The folder where shortcut icon exports will be written.')]
+        [System.String]$ActualOutputFolder,
+
+        [Parameter(Mandatory=$false,HelpMessage='An optional WScript.Shell COM object to reuse.')] 
+        [System.Object]$WScriptShell
+    )
+
+    [System.Int32]$ShortcutCounter = 0
+    foreach ($ShortcutFile in $ShortcutFiles | Sort-Object FullName) {
+        $ShortcutCounter++
+        [System.String]$ShortcutPath = $ShortcutFile.FullName
+
+        # Build a compact Start Menu-relative location string for table export.
+        [System.String]$StartMenuLocationShort = ''
+        if ($ShortcutPath.StartsWith($SystemStartMenuFolder,[System.StringComparison]::OrdinalIgnoreCase)) {
+            $StartMenuLocationShort = "[SYSTEM]$($ShortcutPath.Substring($SystemStartMenuFolder.Length))"
+        }
+        elseif ($ShortcutPath.StartsWith($UserStartMenuFolder,[System.StringComparison]::OrdinalIgnoreCase)) {
+            $StartMenuLocationShort = "[USER]$($ShortcutPath.Substring($UserStartMenuFolder.Length))"
+        }
+
+        # Normalize all Start Menu roots to [ROOT] for consistent export output.
+        if (Test-String -IsPopulated $StartMenuLocationShort) {
+            $StartMenuLocationShort = $StartMenuLocationShort -replace '^\[(SYSTEM|USER)\]', '[STARTMENUROOT]'
+        }
+
+        [PSCustomObject]$Props = Get-ShortcutProperties -ShortcutFile $ShortcutFile -WScriptShell $WScriptShell
+        if ($null -eq $Props) { continue }
+
+        # Keep body rows value-only to make copy/paste into tables easy.
+        [System.String[]]$ShortcutLines = @(
+            '******************************',
+            "* Shortcut $ShortcutCounter of $($ShortcutFiles.Count)",
+            '******************************',
+            "$($ShortcutFile.BaseName)",
+            "$($Props.TargetPath)",
+            "$($Props.WorkingDirectory)",
+            "$($Props.Arguments)",
+            "$StartMenuLocationShort",
+            "$($Props.IconFilePath)",
+            '******************************',
+            ''
+        )
+        Add-Content -Path $OutputFilePath -Value $ShortcutLines -Encoding UTF8
+
+        # Export icon image to the same output folder as the text report.
+        [PSCustomObject]$ShortcutImageProperties = [PSCustomObject]@{
+            BaseName     = $ShortcutFile.BaseName
+            IconFilePath = $Props.IconFilePath
+            TargetPath   = $Props.TargetPath
+        }
+        Export-ShortcutImage -InputObject $ShortcutImageProperties -OutputFolder $ActualOutputFolder -PNG
+        Export-ShortcutImage -InputObject $ShortcutImageProperties -OutputFolder $ActualOutputFolder -ICO
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Writes the standard header for a shortcut export report file.
 .DESCRIPTION
     This function composes and writes the common header lines used by shortcut export reports
     to the provided output file path.
 .EXAMPLE
-    Set-ShortcutReportHeader -OutputFilePath 'C:\Temp\_Shortcut Properties - Demo.txt' -ItemBaseName 'Demo'
+    Write-ShortcutReportHeader -OutputFilePath 'C:\Temp\_Shortcut Properties - Demo.txt' -ItemBaseName 'Demo'
 .INPUTS
     [System.String]
 .OUTPUTS
@@ -722,7 +771,7 @@ function Export-ShortcutInformation {
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Set-ShortcutReportHeader {
+function Write-ShortcutReportHeader {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The output report file path where the header will be written.')]
@@ -774,7 +823,7 @@ function Set-ShortcutReportHeader {
     This function composes and appends the common footer lines used by shortcut export reports
     to the provided output file path.
 .EXAMPLE
-    Set-ShortcutReportFooter -OutputFilePath 'C:\Temp\_Shortcut Properties - Demo.txt'
+    Write-ShortcutReportFooter -OutputFilePath 'C:\Temp\_Shortcut Properties - Demo.txt'
 .INPUTS
     [System.String]
 .OUTPUTS
@@ -787,7 +836,7 @@ function Set-ShortcutReportHeader {
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Set-ShortcutReportFooter {
+function Write-ShortcutReportFooter {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The output report file path where the footer will be appended.')]

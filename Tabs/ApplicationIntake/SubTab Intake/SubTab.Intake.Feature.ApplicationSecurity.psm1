@@ -95,10 +95,7 @@ function Import-FeatureApplicationSecurity {
             PNGFileName     = 'folders_explorer'
             SizeType        = 'Small'
             ToolTip         = 'The installation folder of the application. This will be used to create security files like AppLocker policies.'
-            Function        = {
-                [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
-                Select-Folder -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder
-            }.GetNewClosure()
+            Function        = { Select-Folder -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder }.GetNewClosure()
         }
         [System.Collections.Hashtable]$ADGroupDefaultButton = @{
             ColumnNumber    = 7

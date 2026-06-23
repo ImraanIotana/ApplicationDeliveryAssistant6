@@ -71,8 +71,14 @@ function New-ApplicationIntakeDocument {
         if (-not (Test-Path -LiteralPath $DocumentationFolderPath -PathType Container)) {
             New-Item -Path $DocumentationFolderPath -ItemType Directory -Force | Out-Null
         }
-
+        # Build the output document path
         [System.String]$OutputDocumentPath = Join-Path -Path $DocumentationFolderPath -ChildPath ('KPN Dossier ' + $ApplicationID + '.docx')
+
+        # CONFIRMATION
+        # Ask the user to confirm before launching Word and creating the document.
+        [System.String]$Title = 'Confirm Word Document'
+        [System.String]$Body = "Do you want to create the WORD DOCUMENT for the following application?`n`n$ApplicationID"
+        if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
 
         # EXECUTION
         # Create the intake document from template and fill the fields
@@ -80,7 +86,7 @@ function New-ApplicationIntakeDocument {
 
         # POST-EXECUTION
         # Report the created document path.
-        Write-Line "Succesfully created Word document: $OutputDocumentPath" -Type Success
+        Write-Line "Succesfully created the WORD DOCUMENT for application: $ApplicationID" -Type Success
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -132,12 +138,6 @@ function New-WordDocumentFromTemplate {
     try {
         # VALIDATION
         if (-not (Test-Path -LiteralPath $TemplatePath -PathType Leaf)) { throw "Template not found. ($TemplatePath)" }
-
-        # CONFIRMATION
-        # Ask the user to confirm creating the Word document.
-        [System.String]$Title = 'Confirm Word Document'
-        [System.String]$Body = "Do you want to create the Word document?"
-        if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
         
         # PREPARATION
         # Start Word in the background and create a new document from the template.

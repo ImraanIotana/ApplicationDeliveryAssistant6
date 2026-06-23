@@ -239,11 +239,11 @@ function New-ApplicationFolder {
         # Set the Title and Body for the confirmation message box
         if (Test-Path -Path $NewFolderPath -PathType Container) {
             [System.String]$Title   = "Confirm Overwrite Application Folder"
-            [System.String]$Body    = "This will OVERWRITE the EXISTING Application Folder with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
+            [System.String]$Body    = "This will OVERWRITE the EXISTING APPLICATION FOLDER with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
         }
         else {
             [System.String]$Title   = "Create Application Folder"
-            [System.String]$Body    = "This will create a NEW Application Folder with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
+            [System.String]$Body    = "This will create a NEW APPLICATION FOLDER with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
         }
         # If the user did not confirm, return
         if (Get-UserConfirmation -Title $Title -Body $Body) {
@@ -267,9 +267,10 @@ function New-ApplicationFolder {
 
         # Create the initial Word document in the Documentation subfolder from the selected template.
         [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
-        New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
+        New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
         Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
+        New-AppLockerFile -Path $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text -ADGroupSID $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text -ApplicationID $ApplicationID
         Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
         # Write a message to the host indicating that the new application folder has been created
@@ -412,7 +413,7 @@ function Copy-UDF {
 
         # POST-EXECUTION
         # Report the resolved UDF source and target path.
-        Write-Line "Extracted UDF archive: $ResolvedUDFPath"
+        Write-Line "Added the Universal Deployment Framework: $ResolvedUDFPath" -Type Success
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
