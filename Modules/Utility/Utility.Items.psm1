@@ -18,7 +18,7 @@
     Version         : 6.0.0.0
     Author          : Imraan Iotana
     Creation Date   : December 2025
-    Last Update     : May 2026
+    Last Update     : June 2026
 #>
 ####################################################################################################
 function Open-Folder {
@@ -42,7 +42,6 @@ function Open-Folder {
     # Handlers
     [System.String]$HighlightPrefix     = '/select,"{0}"'
 
-
     # VALIDATION
     # Validate the input based on the parameter set
     switch ($ParameterSetName) {
@@ -50,13 +49,13 @@ function Open-Folder {
             # Validate the string
             if (Test-String -IsEmpty $FolderToOpen) { Write-Line "The Path string is empty." -Type Fail ; Return }
             # Validate the path
-            if (-Not(Test-Path -Path $FolderToOpen)) { Write-Line "The folder does not exist, or could not be reached. ($FolderToOpen)" -Type Fail ; Return }
+            if (-Not(Test-Path -LiteralPath $FolderToOpen)) { Write-Line "The folder does not exist, or could not be reached. ($FolderToOpen)" -Type Fail ; Return }
         }
         'HighlightTheItem' {
             # Validate the string
             if (Test-String -IsEmpty $ItemToHighlight) { Write-Line "The HighlightItem string is empty." -Type Fail ; Return }
             # Validate the path
-            if (-Not(Test-Path -Path $ItemToHighlight)) {
+            if (-Not(Test-Path -LiteralPath $ItemToHighlight)) {
                 Write-Line "The selected item could not be reached. ($ItemToHighlight)" -Type Fail
                 Open-Folder -Path (Split-Path -Path $ItemToHighlight -Parent) ; Return
             }
@@ -68,10 +67,10 @@ function Open-Folder {
         'OpenTheFolder'    {
             # Open the folder or highlight the file if a file path was supplied
             try {
-                $SelectedItem = Get-Item -LiteralPath $FolderToOpen -ErrorAction Stop
+                $SelectedItem = Get-Item -Force -LiteralPath $FolderToOpen -ErrorAction Stop
                 if ($SelectedItem.PSIsContainer) {
                     Write-Line "Opening folder... ($FolderToOpen)"
-                    Invoke-Item -Path $FolderToOpen
+                    Invoke-Item -LiteralPath $FolderToOpen
                 }
                 else {
                     Write-Line "Opening folder and highlighting item... ($FolderToOpen)"
