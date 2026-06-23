@@ -12,7 +12,7 @@
     [PSCustomObject]
     [System.String]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -65,6 +65,7 @@ function Initialize-Graphics {
         Import-TabApplicationIntake -InputObject $InputObject -ParentTabControl $ParentTabControl
         Import-TabTools -InputObject $InputObject -ParentTabControl $ParentTabControl
         Import-TabAppLocker -InputObject $InputObject -ParentTabControl $ParentTabControl
+        Import-TabFTP -InputObject $InputObject -ParentTabControl $ParentTabControl
         Import-TabApplicationSettings -InputObject $InputObject -ParentTabControl $ParentTabControl
         
     }
@@ -89,7 +90,7 @@ function Initialize-Graphics {
     [PSCustomObject]
     [System.String]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -146,7 +147,7 @@ function Import-GraphicalSettings {
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -188,7 +189,7 @@ function Add-Assemblies {
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -236,7 +237,7 @@ function Add-GraphicalDimensions {
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -287,7 +288,7 @@ function Add-FontProperties {
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -340,7 +341,7 @@ function Add-MainIconToSettings {
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0

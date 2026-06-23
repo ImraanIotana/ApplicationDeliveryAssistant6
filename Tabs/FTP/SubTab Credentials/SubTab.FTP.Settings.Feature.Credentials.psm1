@@ -19,7 +19,7 @@
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Import-FeatureFileBitness {
+function Import-FeatureFTPCredentials {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -38,7 +38,7 @@ function Import-FeatureFileBitness {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'FILE BITNESS'
+            Title           = 'CREDENTIALS'
             Color           = 'Cyan'
             NumberOfRows    = 2
             GroupBoxAbove   = $GroupBoxAbove

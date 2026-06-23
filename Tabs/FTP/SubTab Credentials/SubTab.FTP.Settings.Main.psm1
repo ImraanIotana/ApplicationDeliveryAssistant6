@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Tools tab into the main application.
+    Imports the Credentials sub-tab into the FTP tab.
 .DESCRIPTION
-    This function imports the Tools tab into the main application by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the Credentials sub-tab into the FTP tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-TabTools -ParentTabControl $Global:MainTabControl
+    Import-SubTabCredentials -ParentTabControl $MySubTabControl
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabControl]
@@ -19,7 +19,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-TabTools {
+function Import-SubTabFTPSettings {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -30,26 +30,25 @@ function Import-TabTools {
     )
 
     try {
+        # PREPARATION
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'TOOLS'
+            Title               = 'SETTINGS'
             Version             = '6.0.0.0'
-            BackGroundColor     = 'Blue'
+            BackGroundColor     = 'LightSalmon'
         }
+
+        # EXECUTION
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('Tools')) { $Global:Graphics.TextBoxes.Tools = @{} }
-        if (-not $Global:Graphics.ComboBoxes.ContainsKey('Tools')) { $Global:Graphics.ComboBoxes.Tools = @{} }
+        if (-not $Global:Graphics.TextBoxes.FTP.ContainsKey('Settings')) { $Global:Graphics.TextBoxes.FTP.Settings = @{} }
+        if (-not $Global:Graphics.ComboBoxes.FTP.ContainsKey('Settings')) { $Global:Graphics.ComboBoxes.FTP.Settings = @{} }
 
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
-        # Create the SubTabControl and add it to the TabPage
-        [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
-
-        # Import the SubTabs
-        Import-SubTabFiles -InputObject $InputObject -ParentTabControl $SubTabControl
-        Import-SubTabConnections -InputObject $InputObject -ParentTabControl $SubTabControl
+        # Import the Features
+        $FTPCredentialsGroupBox = Import-FeatureFTPCredentials -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $CompareFilesGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

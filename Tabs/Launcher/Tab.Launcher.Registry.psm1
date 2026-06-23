@@ -10,7 +10,7 @@
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0

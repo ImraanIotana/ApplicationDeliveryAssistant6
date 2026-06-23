@@ -10,7 +10,7 @@
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -65,7 +65,7 @@ function Add-MainTabControlDimensions {
     [PSCustomObject]
     [System.Windows.Forms.Form]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -123,7 +123,7 @@ function Add-MainTabControl {
     [System.Windows.Forms.TabPage]
     [PSCustomObject]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -260,7 +260,7 @@ function New-TabPage {
 .INPUTS
     [System.Windows.Forms.TabControl]
 .OUTPUTS
-    No objects are returned to the pipeline. All output is written to the host.
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
