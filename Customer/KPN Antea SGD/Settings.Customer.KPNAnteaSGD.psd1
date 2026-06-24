@@ -62,12 +62,11 @@ Imraan'
             Subject = 'Goedkeuring Intakedocument APPNAME - (REFERENCENUMBER)'
             Body    = 'Hallo NAAM,
 
-Het Intake document van de applicatie APPNAME is gereed voor goedkeuring.
-Het document is te vinden in de bijlage van deze mail.
+Het Intake document van de applicatie APPNAME is gereed voor goedkeuring. Het document is te vinden in de bijlage van deze mail.
 
-Ik wilde vragen of je specifiek het Testplan (Hoofdstuk 6) wil controleren en goedkeuren.
+Ik wilde vragen of je specifiek het Testplan (Hoofdstuk 6) wil controleren en goedkeuren. Je kunt dan simpelweg antwoorden op deze mail met een akkoord.
 
-Mocht je in de installatie of configuratie van de applicatie nog zaken tegenkomen die niet correct zijn, kun je dit aangeven. Ik zal dit dan verwerken in het Intake document.
+Mocht je in de Installatie of Configuratie van de applicatie nog zaken tegenkomen die niet correct zijn, kun je dit aangeven. Ik zal dit dan verwerken in het Intake document.
 
 Als er vragen of onduidelijkheden zijn, laat het me gerust weten.
 
