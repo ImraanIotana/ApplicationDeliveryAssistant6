@@ -60,12 +60,12 @@ function Import-SubTabApplicationIntake {
         # EXECUTION - FEATURES
         # Import the Features and store the returned GroupBoxes in variables to be used as the GroupBoxAbove parameter for the next Feature
         $IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection  -InputObject $InputObject -Color $TopColor      -ParentTabPage $ParentTabPage
-        <#$ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -Color $MiddleColor1   -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
+        $ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -Color $MiddleColor1   -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
         $ApplicationCustomPropertiesGroupBox    = Import-FeatureApplicationCustomProperties -InputObject $InputObject -Color $MiddleColor1   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationFormalPropertiesGroupBox
         $ApplicationShortcutsGroupBox           = Import-FeatureIntakeApplicationShortcuts  -InputObject $InputObject -Color $MiddleColor2   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationCustomPropertiesGroupBox
         $ApplicationSecurityGroupBox            = Import-FeatureApplicationSecurity         -InputObject $InputObject -Color $MiddleColor3    -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationShortcutsGroupBox
         $ApplicationDetectionGroupBox           = Import-FeatureIntakeApplicationDetection  -InputObject $InputObject -Color $MiddleColor3    -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationSecurityGroupBox
-        $null                                   = Import-FeatureIntakeApplicationID         -InputObject $InputObject -Color $BottomColor   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationDetectionGroupBox#>
+        $null                                   = Import-FeatureIntakeApplicationID         -InputObject $InputObject -Color $BottomColor   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationDetectionGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

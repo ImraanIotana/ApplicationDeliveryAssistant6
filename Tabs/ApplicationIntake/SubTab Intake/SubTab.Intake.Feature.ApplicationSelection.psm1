@@ -10,6 +10,7 @@
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
     [System.Windows.Forms.GroupBox]
+    [System.String]
 .OUTPUTS
     [System.Windows.Forms.GroupBox]
 .NOTES
@@ -51,24 +52,30 @@ function Import-FeatureIntakeApplicationSelection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
-        # Use tab titles to derive graphics keys: 'APPLICATION INTAKE' -> 'ApplicationIntake', parent tab title -> 'INTAKE'.
-        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($TabProperties.Title.ToLower()) -replace '\s+', '')
-        [System.String]$GraphicsParentKey = if ($ParentTabControl.Parent -is [System.Windows.Forms.TabPage]) { $ParentTabControl.Parent.Text } else { $null }
-        if (-not $Global:Graphics.TextBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.TextBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
-        if (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+        # Derive graphics keys from the current tab hierarchy
+        [System.Windows.Forms.TabControl]$ParentTabControl = $ParentTabPage.Parent
+        [System.Windows.Forms.Control]$ParentTab = if ($ParentTabControl -is [System.Windows.Forms.TabControl]) { $ParentTabControl.Parent } else { $null }
+        [System.String]$GraphicsParentKey = if ($ParentTab -is [System.Windows.Forms.TabPage]) { $ParentTab.Text } else { $null }
+        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
+        # Build the ComboBox property path used by New-ComboBox
+        [System.String]$SelectedApplicationPropertyName = "ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.InstalledApplications"
+        # Create Graphics hashtable entries for this tab path when they do not already exist
+        if ($GraphicsParentKey -and (-not $Global:Graphics.TextBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.TextBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+        if ($GraphicsParentKey -and (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
 
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
-        [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
+        [System.Collections.Hashtable]$InstalledApplicationsComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Import from Registry'
-            PropertyName                = 'ComboBoxes.INTAKE.ApplicationIntake.InstalledApplications'
+            PropertyName                = $SelectedApplicationPropertyName
             ToolTip                     = 'The list of installed applications to select from and import into the intake form.'
             SizeType                    = 'Medium'
             ApplicationsFromRegistry    = Get-InstalledApplicationsFromRegistry
         }
-        # Create the ComboBoxes
-        $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.InstalledApplications = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        # Create the ComboBox
+        [System.Windows.Forms.ComboBox]$InstalledApplicationsComboBox = New-ComboBox @InstalledApplicationsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.InstalledApplications = $InstalledApplicationsComboBox
 
         # EXECUTION - BUTTONS
         # Set the Import Button properties
@@ -79,7 +86,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'download_for_windows'
                 SizeType        = 'Medium'
                 ToolTip         = 'Import the selected application from the registry.'
-                Function        = { Import-SelectedApplicationToIntake -SelectedApplication $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.InstalledApplications.SelectedItem }.GetNewClosure()
+                Function        = { Import-SelectedApplicationToIntakeTextBoxes -SelectedApplication $InstalledApplicationsComboBox.SelectedItem }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 5
@@ -88,8 +95,8 @@ function Import-FeatureIntakeApplicationSelection {
                 SizeType        = 'Medium'
                 ToolTip         = 'Refresh the list of applications from the registry.'
                 Function        = {
-                    Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.InstalledApplications -ApplicationsFromRegistry (Get-InstalledApplicationsFromRegistry)
-                    Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.ApplicationShortcuts -Shortcuts (Get-Shortcuts -IncludeInternetShortcuts)
+                    Update-ComboBox -ComboBox $InstalledApplicationsComboBox -ApplicationsFromRegistry (Get-InstalledApplicationsFromRegistry)
+                    Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.ApplicationShortcuts -Shortcuts (Get-Shortcuts -IncludeInternetShortcuts)
                 }.GetNewClosure()
             }
         )
@@ -101,7 +108,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected application.'
-                Function        = { $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.InstalledApplications.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
+                Function        = { $InstalledApplicationsComboBox.SelectedItem | Format-List | Out-String | Write-Host }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -109,7 +116,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'regedit'
                 SizeType        = 'Small'
                 ToolTip         = 'Open the registry editor at the selected applications registry path.'
-                Function        = { Start-RegistryEditor -Key $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.InstalledApplications.SelectedItem.RegistryPath }.GetNewClosure()
+                Function        = { Start-RegistryEditor -Key $InstalledApplicationsComboBox.SelectedItem.RegistryPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
@@ -117,7 +124,7 @@ function Import-FeatureIntakeApplicationSelection {
                 PNGFileName     = 'table_export'
                 SizeType        = 'Small'
                 ToolTip         = 'Export the selected application to a text file.'
-                Function        = { Export-RegistryKey -RegistryKeyPath $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.InstalledApplications.SelectedItem.RegistryPath -OpenOutputFolder }.GetNewClosure()
+                Function        = { Export-RegistryKey -RegistryKeyPath $InstalledApplicationsComboBox.SelectedItem.RegistryPath -OpenOutputFolder }.GetNewClosure()
             }
         )
         # Add the Buttons
@@ -145,7 +152,7 @@ function Import-FeatureIntakeApplicationSelection {
     This function populates Application Formal Properties, Custom Properties, and Security fields
     with values from the selected application object.
 .EXAMPLE
-    Import-SelectedApplicationToIntake -SelectedApplication $SelectedApplication
+    Import-SelectedApplicationToIntakeTextBoxes -SelectedApplication $SelectedApplication
 .INPUTS
     [PSCustomObject]
 .OUTPUTS
@@ -158,7 +165,7 @@ function Import-FeatureIntakeApplicationSelection {
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Import-SelectedApplicationToIntake {
+function Import-SelectedApplicationToIntakeTextBoxes {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false,HelpMessage='The selected application object from the registry.')]
@@ -172,9 +179,13 @@ function Import-SelectedApplicationToIntake {
     }
 
     # PREPARATION
+    # Resolve the formal properties section key with backward compatibility
+    [System.String]$FormalPropertiesKey = 'FormalApplicationProperties'
+    if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($FormalPropertiesKey)) { $FormalPropertiesKey = 'FormalProperties' }
+
     # Define the sections to populate
     [System.Object[]]$Sections = @(
-        $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties
+        $Global:Graphics.TextBoxes.ApplicationIntake.$FormalPropertiesKey
         $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties
     )
     # Set the mapping hashtable

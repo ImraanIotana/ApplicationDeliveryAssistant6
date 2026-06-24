@@ -269,7 +269,16 @@ function New-ApplicationFolder {
         [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
-        Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
+        [System.Object]$SelectedShortcutItem = if (
+            $Global:Graphics.ComboBoxes.ContainsKey('INTAKE') -and
+            $Global:Graphics.ComboBoxes.INTAKE.ContainsKey('ApplicationIntake') -and
+            $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.ContainsKey('ApplicationShortcuts')
+        ) {
+            $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.ApplicationShortcuts.SelectedItem
+        } else {
+            $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
+        }
+        Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $SelectedShortcutItem
         New-AppLockerFile -Path $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text -ADGroupSID $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text -ApplicationID $ApplicationID -SelectedTemplate $SelectedTemplate
         Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 

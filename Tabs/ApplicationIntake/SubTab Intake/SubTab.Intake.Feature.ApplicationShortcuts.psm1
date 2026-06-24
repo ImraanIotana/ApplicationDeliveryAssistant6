@@ -51,18 +51,31 @@ function Import-FeatureIntakeApplicationShortcuts {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # Derive graphics keys from the current tab hierarchy
+        [System.Windows.Forms.TabControl]$ParentTabControl = $ParentTabPage.Parent
+        [System.Windows.Forms.Control]$ParentTab = if ($ParentTabControl -is [System.Windows.Forms.TabControl]) { $ParentTabControl.Parent } else { $null }
+        [System.String]$GraphicsParentKey = if ($ParentTab -is [System.Windows.Forms.TabPage]) { $ParentTab.Text } else { $null }
+        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
+
+        # Build the ComboBox property path used by New-ComboBox
+        [System.String]$ApplicationShortcutsPropertyName = "ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.ApplicationShortcuts"
+
+        # Create Graphics hashtable entries for this tab path when they do not already exist
+        if ($GraphicsParentKey -and (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
         [System.Collections.Hashtable]$ApplicationShortcutsComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Select Shortcut / Folder'
-            PropertyName                = 'ComboBoxes.ApplicationIntake.ApplicationShortcuts'
+            PropertyName                = $ApplicationShortcutsPropertyName
             ToolTip                     = 'The shortcut or shortcut folder of the application.'
             SizeType                    = 'Medium'
             Shortcuts                   = Get-Shortcuts -IncludeInternetShortcuts
         }
         # Create the ComboBox
-        $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts = New-ComboBox @ApplicationShortcutsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        [System.Windows.Forms.ComboBox]$ApplicationShortcutsComboBox = New-ComboBox @ApplicationShortcutsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.ApplicationShortcuts = $ApplicationShortcutsComboBox
 
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
@@ -73,7 +86,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected shortcut or folder.'
-                Function        = { Write-ShortcutInformationToHost -Path $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem.FullPath }.GetNewClosure()
+                Function        = { Write-ShortcutInformationToHost -Path $ApplicationShortcutsComboBox.SelectedItem.FullPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -81,7 +94,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'folder_go'
                 SizeType        = 'Small'
                 ToolTip         = 'Open the folder containing the selected shortcut.'
-                Function        = { Open-Folder -Path $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem.FullPath }.GetNewClosure()
+                Function        = { Open-Folder -Path $ApplicationShortcutsComboBox.SelectedItem.FullPath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
@@ -89,7 +102,7 @@ function Import-FeatureIntakeApplicationShortcuts {
                 PNGFileName     = 'table_export'
                 SizeType        = 'Small'
                 ToolTip         = 'Export the selected shortcut to a text file.'
-                Function        = { Export-ShortcutInformation -ShortcutItem $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem -OpenOutputFolder }.GetNewClosure()
+                Function        = { Export-ShortcutInformation -ShortcutItem $ApplicationShortcutsComboBox.SelectedItem -OpenOutputFolder }.GetNewClosure()
             }
         )
         # Add the Buttons
