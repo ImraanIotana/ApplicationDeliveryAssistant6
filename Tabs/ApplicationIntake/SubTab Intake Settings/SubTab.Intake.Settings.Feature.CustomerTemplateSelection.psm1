@@ -95,6 +95,14 @@ function Import-FeatureIntakeTemplateSelection {
             }
             @{
                 ColumnNumber    = 6
+                Text            = 'Open Folder'
+                PNGFileName     = 'folder_go'
+                SizeType        = 'Small'
+                ToolTip         = 'Open the folder containing the templates.'
+                Function        = { Open-Folder -Path $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath }.GetNewClosure()
+            }
+            @{
+                ColumnNumber    = 7
                 Text            = 'Refresh'
                 PNGFileName     = 'arrow_refresh'
                 SizeType        = 'Small'

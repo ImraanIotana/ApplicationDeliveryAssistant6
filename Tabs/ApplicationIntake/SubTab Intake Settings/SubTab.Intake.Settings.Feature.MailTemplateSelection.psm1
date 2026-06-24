@@ -90,28 +90,6 @@ function Import-FeatureIntakeMailTemplateSelection {
             }
             @{
                 ColumnNumber    = 6
-                Text            = 'Open Folder'
-                PNGFileName     = 'folder_go'
-                SizeType        = 'Small'
-                ToolTip         = 'Open the folder containing the selected settings file.'
-                Function        = {
-                    [System.Windows.Forms.ComboBox]$ComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection
-                    if ($null -eq $ComboBox.SelectedItem) {
-                        Write-Line 'No mail template is selected.' -Type Warning
-                        return
-                    }
-
-                    [string]$TemplateSettingsPath = $ComboBox.SelectedItem.TemplateSettingsPath
-                    if (-not (Test-Path -Path $TemplateSettingsPath -PathType Leaf)) {
-                        Write-Line "The settings file cannot be found: $TemplateSettingsPath" -Type Warning
-                        return
-                    }
-
-                    Open-Folder -Path (Split-Path -Path $TemplateSettingsPath -Parent)
-                }.GetNewClosure()
-            }
-            @{
-                ColumnNumber    = 7
                 Text            = 'Refresh'
                 PNGFileName     = 'arrow_refresh'
                 SizeType        = 'Small'
