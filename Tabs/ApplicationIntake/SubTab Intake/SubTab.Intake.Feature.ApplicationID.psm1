@@ -232,6 +232,40 @@ function New-ApplicationFolder {
             Write-Line "The Application ID is empty. Please generate an Application ID before creating the application folder. No action has been taken."
             return
         }
+
+        # Resolve the TemplateSelection ComboBox without hardcoded parent or subtab keys
+        [System.Object]$TemplateSelectionComboBox = $null
+        if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
+            foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
+                [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
+                if ($ParentNode -is [System.Collections.IDictionary]) {
+                    foreach ($SubTabKey in $ParentNode.Keys) {
+                        [System.Object]$SubTabNode = $ParentNode.$SubTabKey
+                        if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey('TemplateSelection')) {
+                            $TemplateSelectionComboBox = $SubTabNode.TemplateSelection
+                            break
+                        }
+                    }
+                }
+                if ($null -ne $TemplateSelectionComboBox) { break }
+            }
+        }
+        if ($null -eq $TemplateSelectionComboBox -and ($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey('TemplateSelection')) {
+            $TemplateSelectionComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection
+        }
+        [System.Object]$SelectedTemplate = if ($null -ne $TemplateSelectionComboBox) { $TemplateSelectionComboBox.SelectedItem } else { $null }
+        if ($null -eq $SelectedTemplate) {
+            Write-Line 'No customer template selected. Please select a template first. No action has been taken.'
+            return
+        }
+
+        # Resolve subfolders from the selected template
+        [System.Object]$ApplicationFolderSubFolders = $SelectedTemplate.ApplicationFolderSubFolders
+        if ($null -eq $ApplicationFolderSubFolders) {
+            Write-Line 'The selected template has no ApplicationFolderSubFolders configuration. No action has been taken.'
+            return
+        }
+
         # Set the path for the new folder
         [System.String]$NewFolderPath = Join-Path -Path $OutputFolder -ChildPath $ApplicationID
 
@@ -258,15 +292,18 @@ function New-ApplicationFolder {
         # Create the new folder
         New-Item -Path $NewFolderPath -ItemType Directory -Force | Out-Null
         # Get the subfolders from the Application Folder Template
-        [System.Collections.Generic.List[System.String]]$SubFolders = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.ApplicationFolderSubFolders.GetEnumerator() | ForEach-Object { $_.Value }
+        [System.Collections.Generic.List[System.String]]$SubFolders = @($ApplicationFolderSubFolders.GetEnumerator() | ForEach-Object { $_.Value })
+        if ($SubFolders.Count -eq 0) {
+            Write-Line 'The selected template defines no application subfolders. No action has been taken.'
+            return
+        }
         # Create the subfolders in the new folder
         foreach ($SubFolder in $SubFolders) {
             [System.String]$SubFolderPath = Join-Path -Path $NewFolderPath -ChildPath $SubFolder
             New-Item -Path $SubFolderPath -ItemType Directory -Force | Out-Null
         }
 
-        # Create the initial Word document in the Documentation subfolder from the selected template.
-        [System.Object]$SelectedTemplate = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
+        # Create the initial Word document in the Documentation subfolder from the selected template
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
         [System.Object]$SelectedShortcutItem = if (
