@@ -50,7 +50,7 @@ function Import-TabApplicationIntake {
         [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
 
         # Import the SubTabs
-        Import-SubTabIntake         -InputObject $InputObject -ParentTabControl $SubTabControl
+        Import-SubTabApplicationIntake         -InputObject $InputObject -ParentTabControl $SubTabControl
         #Import-SubTabIntakeExtras   -InputObject $InputObject -ParentTabControl $SubTabControl
     }
     catch {

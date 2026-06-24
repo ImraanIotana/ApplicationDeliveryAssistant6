@@ -5,7 +5,7 @@
 .DESCRIPTION
     This function imports the Intake sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-SubTabIntake -ParentTabControl $MySubTabControl
+    Import-SubTabApplicationIntake -ParentTabControl $MySubTabControl
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabControl]
@@ -19,7 +19,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-SubTabIntake {
+function Import-SubTabApplicationIntake {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -38,6 +38,11 @@ function Import-SubTabIntake {
             Version             = '6.0.0.0'
             BackGroundColor     = 'RoyalBlue'
         }
+        # Use the Tab title to derive the graphics storage key (e.g. 'APPLICATION INTAKE' -> 'ApplicationIntake').
+        [System.String]$GraphicsSubTabKey = (($TabProperties.Title.ToLower() -split ' ') | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper() + $_.Substring(1) } }) -join ''
+        # Create the hashtables for this sub-tab in the Global Graphics object if they do not already exist.
+        if (-not $Global:Graphics.TextBoxes.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.TextBoxes.$GraphicsSubTabKey = @{} }
+        if (-not $Global:Graphics.ComboBoxes.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.ComboBoxes.$GraphicsSubTabKey = @{} }
 
         # PREPARATION - COLORS
         # Define the colors for the features in this sub-tab
@@ -54,12 +59,12 @@ function Import-SubTabIntake {
         # EXECUTION - FEATURES
         # Import the Features and store the returned GroupBoxes in variables to be used as the GroupBoxAbove parameter for the next Feature
         $IntakeApplicationSelectionGroupBox     = Import-FeatureIntakeApplicationSelection  -InputObject $InputObject -Color $TopColor      -ParentTabPage $ParentTabPage
-        $ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -Color $MiddleColor1   -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
+        <#$ApplicationFormalPropertiesGroupBox    = Import-FeatureApplicationFormalProperties -InputObject $InputObject -Color $MiddleColor1   -ParentTabPage $ParentTabPage -GroupBoxAbove $IntakeApplicationSelectionGroupBox
         $ApplicationCustomPropertiesGroupBox    = Import-FeatureApplicationCustomProperties -InputObject $InputObject -Color $MiddleColor1   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationFormalPropertiesGroupBox
         $ApplicationShortcutsGroupBox           = Import-FeatureIntakeApplicationShortcuts  -InputObject $InputObject -Color $MiddleColor2   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationCustomPropertiesGroupBox
         $ApplicationSecurityGroupBox            = Import-FeatureApplicationSecurity         -InputObject $InputObject -Color $MiddleColor3    -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationShortcutsGroupBox
         $ApplicationDetectionGroupBox           = Import-FeatureIntakeApplicationDetection  -InputObject $InputObject -Color $MiddleColor3    -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationSecurityGroupBox
-        $null                                   = Import-FeatureIntakeApplicationID         -InputObject $InputObject -Color $BottomColor   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationDetectionGroupBox
+        $null                                   = Import-FeatureIntakeApplicationID         -InputObject $InputObject -Color $BottomColor   -ParentTabPage $ParentTabPage -GroupBoxAbove $ApplicationDetectionGroupBox#>
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
