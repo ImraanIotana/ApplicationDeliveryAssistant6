@@ -51,6 +51,12 @@ function Import-FeatureIntakeApplicationSelection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # Use tab titles to derive graphics keys: 'APPLICATION INTAKE' -> 'ApplicationIntake', parent tab title -> 'INTAKE'.
+        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($TabProperties.Title.ToLower()) -replace '\s+', '')
+        [System.String]$GraphicsParentKey = if ($ParentTabControl.Parent -is [System.Windows.Forms.TabPage]) { $ParentTabControl.Parent.Text } else { $null }
+        if (-not $Global:Graphics.TextBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.TextBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+        if (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
