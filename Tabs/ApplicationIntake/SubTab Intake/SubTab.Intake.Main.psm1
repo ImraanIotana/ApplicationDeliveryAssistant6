@@ -34,7 +34,7 @@ function Import-SubTabIntake {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'INTAKE'
+            Title               = 'APPLICATION INTAKE'
             Version             = '6.0.0.0'
             BackGroundColor     = 'RoyalBlue'
         }

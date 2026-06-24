@@ -33,27 +33,25 @@ function Import-TabApplicationIntake {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'APPLICATION INTAKE'
+            Title               = 'INTAKE'
             Version             = '6.0.0.0'
             BackGroundColor     = 'RoyalBlue'
         }
+        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
+        if (-not $Global:Graphics.TextBoxes.ContainsKey($TabProperties.Title)) { $Global:Graphics.TextBoxes.$($TabProperties.Title) = @{} }
+        if (-not $Global:Graphics.ComboBoxes.ContainsKey($TabProperties.Title)) { $Global:Graphics.ComboBoxes.$($TabProperties.Title) = @{} }
 
-        # EXECUTION - TABPAGE
+        # EXECUTION - PARENT TABPAGE
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
-
-        # EXECUTION - TEXTBOXES AND COMBOBOXES
-        # Create the subkeys for the TextBoxes and ComboBoxes of the Features
-        [System.String]$SubKeyName = 'ApplicationIntake'
-        New-TextBoxSubKey -Name $SubKeyName
-        New-ComboBoxSubKey -Name $SubKeyName
 
         # EXECUTION - SUBTABS
         # Create the SubTabControl and add it to the TabPage
         [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
+
         # Import the SubTabs
-        Import-SubTabIntake -InputObject $InputObject -ParentTabControl $SubTabControl
-        Import-SubTabIntakeSettings -InputObject $InputObject -ParentTabControl $SubTabControl
+        Import-SubTabIntake         -InputObject $InputObject -ParentTabControl $SubTabControl
+        #Import-SubTabIntakeExtras   -InputObject $InputObject -ParentTabControl $SubTabControl
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

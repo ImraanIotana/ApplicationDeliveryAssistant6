@@ -56,7 +56,7 @@ function Import-FeatureExtraDocumentInformation {
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'My Full Name'
-            PropertyName    = 'TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName'
+            PropertyName    = 'TextBoxes.IntakeExtras.ExtraDocumentInformation.UserFullName'
             ToolTip         = 'The full name of the user that will be used in the document properties.'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
@@ -65,15 +65,16 @@ function Import-FeatureExtraDocumentInformation {
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'My Email Address'
-            PropertyName    = 'TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress'
+            PropertyName    = 'TextBoxes.IntakeExtras.ExtraDocumentInformation.UserEmailAddress'
             ToolTip         = 'The email address of the user that will be used in the document properties.'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
 
         }
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName      = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress  = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        if (-not $Global:Graphics.TextBoxes.IntakeExtras.ContainsKey('ExtraDocumentInformation')) { $Global:Graphics.TextBoxes.IntakeExtras.ExtraDocumentInformation = @{} }
+        $Global:Graphics.TextBoxes.IntakeExtras.ExtraDocumentInformation.UserFullName      = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.IntakeExtras.ExtraDocumentInformation.UserEmailAddress  = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox

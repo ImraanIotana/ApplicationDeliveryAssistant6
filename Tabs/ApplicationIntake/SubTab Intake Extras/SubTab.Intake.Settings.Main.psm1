@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Intake sub-tab into the Tools tab.
+    Imports the Intake Extras sub-tab into the Tools tab.
 .DESCRIPTION
-    This function imports the Intake sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the Intake Extras sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-SubTabIntake -ParentTabControl $MySubTabControl
+    Import-SubTabIntakeExtras -ParentTabControl $MySubTabControl
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabControl]
@@ -19,7 +19,7 @@
     Last Update     : May 2026
 #>
 ####################################################################################################
-function Import-SubTabIntakeSettings {
+function Import-SubTabIntakeExtras {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -34,7 +34,7 @@ function Import-SubTabIntakeSettings {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'INTAKE SETTINGS'
+            Title               = 'INTAKE EXTRAS'
             Version             = '6.0.0.0'
             BackGroundColor     = 'RoyalBlue'
         }
@@ -45,8 +45,7 @@ function Import-SubTabIntakeSettings {
 
         # EXECUTION
         # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('IntakeSettings')) { $Global:Graphics.TextBoxes.IntakeSettings = @{} }
-        if (-not $Global:Graphics.TextBoxes.IntakeSettings.ContainsKey('ExtraDocumentInformation')) { $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation = @{} }
+        if (-not $Global:Graphics.TextBoxes.IntakeExtras.ContainsKey('ExtraDocumentInformation')) { $Global:Graphics.TextBoxes.IntakeExtras.ExtraDocumentInformation = @{} }
 
         # EXECUTION - TABPAGE
         # Create the TabPage
