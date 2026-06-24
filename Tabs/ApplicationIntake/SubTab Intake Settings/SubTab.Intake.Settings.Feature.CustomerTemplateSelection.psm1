@@ -43,7 +43,7 @@ function Import-FeatureIntakeTemplateSelection {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'TEMPLATE SELECTION'
+            Title           = 'CUSTOMER TEMPLATE SELECTION'
             Color           = $Color
             NumberOfRows    = 1
             GroupBoxAbove   = $GroupBoxAbove
