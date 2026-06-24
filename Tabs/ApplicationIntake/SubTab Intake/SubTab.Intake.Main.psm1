@@ -38,11 +38,12 @@ function Import-SubTabApplicationIntake {
             Version             = '6.0.0.0'
             BackGroundColor     = 'RoyalBlue'
         }
-        # Use the Tab title to derive the graphics storage key (e.g. 'APPLICATION INTAKE' -> 'ApplicationIntake').
-        [System.String]$GraphicsSubTabKey = (($TabProperties.Title.ToLower() -split ' ') | ForEach-Object { if ($_.Length -gt 0) { $_.Substring(0,1).ToUpper() + $_.Substring(1) } }) -join ''
-        # Create the hashtables for this sub-tab in the Global Graphics object if they do not already exist.
-        if (-not $Global:Graphics.TextBoxes.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.TextBoxes.$GraphicsSubTabKey = @{} }
-        if (-not $Global:Graphics.ComboBoxes.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.ComboBoxes.$GraphicsSubTabKey = @{} }
+        # Use tab titles to derive graphics keys: 'APPLICATION INTAKE' -> 'ApplicationIntake', parent tab title -> 'INTAKE'.
+        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($TabProperties.Title.ToLower()) -replace '\s+', '')
+        [System.String]$GraphicsParentKey = if ($ParentTabControl.Parent -is [System.Windows.Forms.TabPage]) { $ParentTabControl.Parent.Text } else { $null }
+        if (-not $Global:Graphics.TextBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.TextBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+        if (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+
 
         # PREPARATION - COLORS
         # Define the colors for the features in this sub-tab
