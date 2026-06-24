@@ -20,7 +20,7 @@
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Import-FeatureIntakeTemplateSelection {
+function Import-FeatureIntakeCustomerTemplateSelection {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -80,7 +80,7 @@ function Import-FeatureIntakeTemplateSelection {
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
         [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{ # Testing duplicate buttons with the same function to ensure they work as expected
+            @{
                 ColumnNumber    = 5
                 Text            = 'Details'
                 PNGFileName     = 'information'

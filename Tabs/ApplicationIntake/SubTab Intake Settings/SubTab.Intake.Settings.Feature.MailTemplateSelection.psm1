@@ -45,7 +45,7 @@ function Import-FeatureIntakeMailTemplateSelection {
             ParentTabPage   = $ParentTabPage
             Title           = 'MAIL TEMPLATE SELECTION'
             Color           = $Color
-            NumberOfRows    = 1
+            NumberOfRows    = 3
             GroupBoxAbove   = $GroupBoxAbove
         }
         # Create the GroupBox
@@ -70,23 +70,13 @@ function Import-FeatureIntakeMailTemplateSelection {
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
         [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
-            @{ # Testing duplicate buttons with the same function to ensure they work as expected
+            @{
                 ColumnNumber    = 5
                 Text            = 'Details'
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected template.'
-                Function        = {
-                    [System.Windows.Forms.ComboBox]$ComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection
-                    if ($null -eq $ComboBox.SelectedItem) {
-                        Write-Line 'No mail template is selected.' -Type Warning
-                        return
-                    }
-                    [System.Object]$SelectedTemplate = $ComboBox.SelectedItem
-                    Write-Line "Mail Template: $($SelectedTemplate.TemplateName)" -Type Special
-                    Write-Line "Subject: $($SelectedTemplate.Subject)" -Type Info
-                    Write-Line "Settings File: $($SelectedTemplate.TemplateSettingsPath)" -Type Info
-                }.GetNewClosure()
+                Function        = { Write-MailTemplateToHost -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -97,12 +87,144 @@ function Import-FeatureIntakeMailTemplateSelection {
                 Function        = { Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection -MailTemplates (Get-MailTemplates) }.GetNewClosure()
             }
         )
+        # Set the action button properties
+        [System.Collections.Hashtable]$ActionButtonProperties = @{
+            ColumnNumber    = 1
+            Text            = 'Create New Mail'
+            PNGFileName     = 'mail_yellow'
+            SizeType        = 'Large'
+            ToolTip         = 'Create a new mail based on the selected template.'
+            Function        = { New-MailFromTemplate -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection }.GetNewClosure()
+        }
         # Add the Buttons
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
+        New-Button @ActionButtonProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 2
 
         # POST-EXECUTION
         # Return the GroupBox object
         $FeatureGroupBox
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Writes details of the selected mail template to the host.
+.DESCRIPTION
+    This function reads the selected item from the Mail Template Selection ComboBox and writes key template
+    details (mail template name, subject, and body) to the host.
+.EXAMPLE
+    Write-MailTemplateToHost -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection
+.PARAMETER ComboBox
+    Required ComboBox containing mail template items.
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Write-MailTemplateToHost {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The mail template ComboBox.')]
+        [System.Windows.Forms.ComboBox]$ComboBox
+    )
+
+    # Guard against calls before the UI control exists.
+    if ($null -eq $ComboBox -or $ComboBox.IsDisposed) {
+        Write-Line 'The mail template ComboBox is not available.' -Type Warning
+        return
+    }
+
+    # A template must be selected before we can show details.
+    if ($null -eq $ComboBox.SelectedItem) {
+        Write-Line 'No mail template is selected.' -Type Warning
+        return
+    }
+
+    # Read the selected template once and write the key mail fields.
+    [System.Object]$SelectedTemplate = $ComboBox.SelectedItem
+    Write-Line "Mail Template: $($SelectedTemplate.TemplateName)" -Type Special
+    Write-Line "Mail Subject: $($SelectedTemplate.Subject)" -Type Info
+    Write-Line "Mail Body: $($SelectedTemplate.Body)" -Type Info
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Creates a new mail draft from the selected mail template.
+.DESCRIPTION
+    This function reads the currently selected template from the Mail Template Selection ComboBox,
+    creates a mailto URL with escaped subject/body content, and opens the default mail client.
+.EXAMPLE
+    New-MailFromTemplate -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection
+.PARAMETER ComboBox
+    Required ComboBox containing mail template items.
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function New-MailFromTemplate {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The mail template ComboBox.')]
+        [System.Windows.Forms.ComboBox]$ComboBox
+    )
+
+    # Guard against calls before the UI control exists.
+    if ($null -eq $ComboBox -or $ComboBox.IsDisposed) {
+        Write-Line 'The mail template ComboBox is not available.' -Type Warning
+        return
+    }
+
+    # A template must be selected before creating a draft mail.
+    if ($null -eq $ComboBox.SelectedItem) {
+        Write-Line 'No mail template is selected.' -Type Warning
+        return
+    }
+
+    [System.Object]$SelectedTemplate = $ComboBox.SelectedItem
+
+    # Keep To optional and support common field names if present in customer template content.
+    [System.String]$To = ''
+    if ($SelectedTemplate.PSObject.Properties.Name -contains 'To' -and -not (Test-String -IsEmpty $SelectedTemplate.To)) {
+        $To = [System.String]$SelectedTemplate.To
+    }
+    elseif ($SelectedTemplate.PSObject.Properties.Name -contains 'Recipient' -and -not (Test-String -IsEmpty $SelectedTemplate.Recipient)) {
+        $To = [System.String]$SelectedTemplate.Recipient
+    }
+
+    [System.String]$Subject = [System.String]$SelectedTemplate.Subject
+    [System.String]$Body = [System.String]$SelectedTemplate.Body
+
+    try {
+        [System.String]$MailtoUrl = "mailto:$To`?subject=$([uri]::EscapeDataString($Subject))&body=$([uri]::EscapeDataString($Body))"
+        Start-Process $MailtoUrl
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
@@ -143,11 +265,13 @@ function Get-MailTemplates {
     )
 
     # PREPARATION - RESOLVE SETTINGS FILE
+    # Prefer the customer template currently selected in Intake Settings.
     if (Test-String -IsEmpty $SettingsFilePath) {
         # First preference: currently selected customer template in the Template Selection combo box.
         $SettingsFilePath = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath
     }
 
+    # If no explicit/selected file is available, try the Default customer settings file.
     if (Test-String -IsEmpty $SettingsFilePath) {
         [System.String]$CustomerFolder = Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer'
         if (-not (Test-Path -Path $CustomerFolder -PathType Container)) {
@@ -163,6 +287,7 @@ function Get-MailTemplates {
     }
 
     # VALIDATION
+    # Stop early when the settings file path is still unresolved or no longer exists.
     if (Test-String -IsEmpty $SettingsFilePath) {
         Write-Line 'No customer settings file is available to read mail templates from.' -Type Warning
         return @()
@@ -173,6 +298,7 @@ function Get-MailTemplates {
     }
 
     # EXECUTION - IMPORT SETTINGS DATA
+    # Read the customer data file as a hashtable so we can inspect MailTemplates safely.
     try {
         [System.Collections.Hashtable]$TemplateContent = Import-PowerShellDataFile -Path $SettingsFilePath
     }
@@ -183,6 +309,7 @@ function Get-MailTemplates {
     }
 
     [System.Object]$MailTemplates = $null
+    # Primary key is MailTemplates; keep legacy support for accidental '$MailTemplates'.
     if ($TemplateContent.ContainsKey('MailTemplates')) {
         $MailTemplates = $TemplateContent.MailTemplates
     }
@@ -196,6 +323,7 @@ function Get-MailTemplates {
     }
 
     # POST-EXECUTION - RETURN COMBOBOX OBJECTS
+    # Normalize each template entry into the structure expected by New-ComboBox/Update-ComboBox.
     foreach ($TemplateName in ($MailTemplates.Keys | Sort-Object)) {
         [System.Object]$MailTemplateContent = $MailTemplates[$TemplateName]
 
@@ -214,6 +342,4 @@ function Get-MailTemplates {
 
 ### END OF FUNCTION
 ####################################################################################################
-
-
 
