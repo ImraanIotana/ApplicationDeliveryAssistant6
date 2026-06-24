@@ -81,19 +81,14 @@ function New-ComboBox {
         [System.Management.Automation.SwitchParameter]$ReturnComboBox
     )
 
-    # VALIDATION
-    [System.Collections.Hashtable[]]$ContentSources = @(
-        @{ Name = 'ContentStringArray';      HasValue = ($ContentStringArray.Count -gt 0) }
-        @{ Name = 'ApplicationsFromRegistry'; HasValue = ($ApplicationsFromRegistry.Count -gt 0) }
-        @{ Name = 'Shortcuts';                HasValue = ($Shortcuts.Count -gt 0) }
-        @{ Name = 'CustomerTemplates';        HasValue = ($CustomerTemplates.Count -gt 0) }
-        @{ Name = 'MailTemplates';            HasValue = ($MailTemplates.Count -gt 0) }
-    )
-    [System.Collections.Hashtable[]]$ProvidedSources = @($ContentSources | Where-Object { $_.HasValue })
-    if ($ProvidedSources.Count -gt 1) {
-        [System.String]$SourceList = ($ProvidedSources.Name -join ', ')
-        throw "Only one content source parameter can be used at a time. Provided: $SourceList"
+    [System.Collections.Hashtable]$ContentSourceParameters = @{
+        ContentStringArray       = $ContentStringArray
+        ApplicationsFromRegistry = $ApplicationsFromRegistry
+        Shortcuts                = $Shortcuts
+        CustomerTemplates        = $CustomerTemplates
+        MailTemplates            = $MailTemplates
     }
+    [System.Collections.Hashtable]$ContentSource = Get-ComboBoxContentSource @ContentSourceParameters
 
      # PREPARATION
     # Input
@@ -148,50 +143,7 @@ function New-ComboBox {
     }
 
     # CONTENT
-    # Fill the ComboBox items from the ContentStringArray parameter
-    if ($ContentStringArray.Count -gt 0) {
-        [System.Void]$NewComboBox.Items.AddRange($ContentStringArray)
-    }
-    # Fill the ComboBox items from the ApplicationsFromRegistry parameter
-    if ($ApplicationsFromRegistry.Count -gt 0) {       
-        # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
-        $NewComboBox.DisplayMember = 'ComboBoxName'
-        # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the RegistryPath)
-        $NewComboBox.ValueMember = 'RegistryPath'
-        # Clear any existing items and add the applications from the registry to the ComboBox items
-        $NewComboBox.Items.Clear()
-        [void]$NewComboBox.Items.AddRange([System.Object[]]$ApplicationsFromRegistry)
-    }
-    # Fill the ComboBox items from the Shortcuts parameter
-    if ($Shortcuts.Count -gt 0) {       
-        # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
-        $NewComboBox.DisplayMember = 'ComboBoxName'
-        # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the FullPath)
-        $NewComboBox.ValueMember = 'FullPath'
-        # Clear any existing items and add the applications from the registry to the ComboBox items
-        $NewComboBox.Items.Clear()
-        [void]$NewComboBox.Items.AddRange([System.Object[]]$Shortcuts)
-    }
-    # Fill the ComboBox items from the CustomerTemplates parameter
-    if ($CustomerTemplates.Count -gt 0) {       
-        # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
-        $NewComboBox.DisplayMember = 'ComboBoxName'
-        # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the TemplatePath)
-        $NewComboBox.ValueMember = 'TemplatePath'
-        # Clear any existing items and add the applications from the registry to the ComboBox items
-        $NewComboBox.Items.Clear()
-        [void]$NewComboBox.Items.AddRange([System.Object[]]$CustomerTemplates)
-    }
-    # Fill the ComboBox items from the MailTemplates parameter
-    if ($MailTemplates.Count -gt 0) {
-        # Set the DisplayMember to the property of the mail template objects that contains the name to display in the ComboBox
-        $NewComboBox.DisplayMember = 'ComboBoxName'
-        # Set the ValueMember to the property of the mail template objects that contains the key value
-        $NewComboBox.ValueMember = 'TemplateKey'
-        # Clear any existing items and add the mail templates to the ComboBox items
-        $NewComboBox.Items.Clear()
-        [void]$NewComboBox.Items.AddRange([System.Object[]]$MailTemplates)
-    }
+    Set-ComboBoxContent -ComboBox $NewComboBox -ContentSource $ContentSource
 
     # EXECUTION - CUSTOM PROPERTIES '(TAG)'
 
@@ -406,68 +358,19 @@ function Update-ComboBox {
         [System.Object[]]$MailTemplates
     )
 
-    # VALIDATION
-    [System.Collections.Hashtable[]]$ContentSources = @(
-        @{ Name = 'ContentStringArray';      HasValue = ($ContentStringArray.Count -gt 0) }
-        @{ Name = 'ApplicationsFromRegistry'; HasValue = ($ApplicationsFromRegistry.Count -gt 0) }
-        @{ Name = 'Shortcuts';                HasValue = ($Shortcuts.Count -gt 0) }
-        @{ Name = 'CustomerTemplates';        HasValue = ($CustomerTemplates.Count -gt 0) }
-        @{ Name = 'MailTemplates';            HasValue = ($MailTemplates.Count -gt 0) }
-    )
-    [System.Collections.Hashtable[]]$ProvidedSources = @($ContentSources | Where-Object { $_.HasValue })
-    if ($ProvidedSources.Count -gt 1) {
-        [System.String]$SourceList = ($ProvidedSources.Name -join ', ')
-        throw "Only one content source parameter can be used at a time. Provided: $SourceList"
+    [System.Collections.Hashtable]$ContentSourceParameters = @{
+        ContentStringArray       = $ContentStringArray
+        ApplicationsFromRegistry = $ApplicationsFromRegistry
+        Shortcuts                = $Shortcuts
+        CustomerTemplates        = $CustomerTemplates
+        MailTemplates            = $MailTemplates
     }
+    [System.Collections.Hashtable]$ContentSource = Get-ComboBoxContentSource @ContentSourceParameters
 
     try {
         [System.String]$PreviouslySelectedText = $ComboBox.Text
 
-        # Clear existing items first
-        $ComboBox.Items.Clear()
-
-        # Fill the ComboBox items from the ContentStringArray parameter
-        if ($ContentStringArray.Count -gt 0) {
-            $ComboBox.DisplayMember = ''
-            $ComboBox.ValueMember = ''
-            [System.Void]$ComboBox.Items.AddRange($ContentStringArray)
-        }
-
-        # Fill the ComboBox items from the ApplicationsFromRegistry parameter
-        if ($ApplicationsFromRegistry.Count -gt 0) {
-            # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
-            $ComboBox.DisplayMember = 'ComboBoxName'
-            # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the RegistryPath)
-            $ComboBox.ValueMember = 'RegistryPath'
-            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$ApplicationsFromRegistry)
-        }
-
-        # Fill the ComboBox items from the Shortcuts parameter
-        if ($Shortcuts.Count -gt 0) {
-            # Set the DisplayMember to the property of the shortcut objects that contains the name to display in the ComboBox
-            $ComboBox.DisplayMember = 'ComboBoxName'
-            # Set the ValueMember to the property of the shortcut objects that contains the value to use when an item is selected in the ComboBox (in this case, the FullPath)
-            $ComboBox.ValueMember = 'FullPath'
-            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$Shortcuts)
-        }
-
-        # Fill the ComboBox items from the CustomerTemplates parameter
-        if ($CustomerTemplates.Count -gt 0) {
-            # Set the DisplayMember to the property of the customer template objects that contains the name to display in the ComboBox
-            $ComboBox.DisplayMember = 'ComboBoxName'
-            # Set the ValueMember to the property of the customer template objects that contains the template path
-            $ComboBox.ValueMember = 'TemplatePath'
-            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$CustomerTemplates)
-        }
-
-        # Fill the ComboBox items from the MailTemplates parameter
-        if ($MailTemplates.Count -gt 0) {
-            # Set the DisplayMember to the property of the mail template objects that contains the name to display in the ComboBox
-            $ComboBox.DisplayMember = 'ComboBoxName'
-            # Set the ValueMember to the key of the selected mail template
-            $ComboBox.ValueMember = 'TemplateKey'
-            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$MailTemplates)
-        }
+        Set-ComboBoxContent -ComboBox $ComboBox -ContentSource $ContentSource
 
         # Try to preserve the previous text/selection during refresh.
         if (-not (Test-String -IsEmpty $PreviouslySelectedText)) {
@@ -492,6 +395,89 @@ function Update-ComboBox {
     catch {
         Write-ErrorReport -ErrorRecord $_
     }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Resolves the single active ComboBox content source and metadata.
+.DESCRIPTION
+    This internal helper validates that only one content source parameter is populated and returns a hashtable
+    with source name, items, display member, and value member for downstream binding.
+#>
+####################################################################################################
+function Get-ComboBoxContentSource {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false)]
+        [System.String[]]$ContentStringArray,
+
+        [Parameter(Mandatory=$false)]
+        [System.Object[]]$ApplicationsFromRegistry,
+
+        [Parameter(Mandatory=$false)]
+        [System.Object[]]$Shortcuts,
+
+        [Parameter(Mandatory=$false)]
+        [System.Object[]]$CustomerTemplates,
+
+        [Parameter(Mandatory=$false)]
+        [System.Object[]]$MailTemplates
+    )
+
+    [System.Collections.Hashtable[]]$ContentSources = @(
+        @{ Name = 'ContentStringArray';       Items = [System.Object[]]$ContentStringArray;       DisplayMember = '';              ValueMember = '' }
+        @{ Name = 'ApplicationsFromRegistry'; Items = [System.Object[]]$ApplicationsFromRegistry; DisplayMember = 'ComboBoxName'; ValueMember = 'RegistryPath' }
+        @{ Name = 'Shortcuts';                Items = [System.Object[]]$Shortcuts;                DisplayMember = 'ComboBoxName'; ValueMember = 'FullPath' }
+        @{ Name = 'CustomerTemplates';        Items = [System.Object[]]$CustomerTemplates;        DisplayMember = 'ComboBoxName'; ValueMember = 'TemplatePath' }
+        @{ Name = 'MailTemplates';            Items = [System.Object[]]$MailTemplates;            DisplayMember = 'ComboBoxName'; ValueMember = 'TemplateKey' }
+    )
+
+    [System.Collections.Hashtable[]]$ProvidedSources = @($ContentSources | Where-Object { $_.Items.Count -gt 0 })
+    if ($ProvidedSources.Count -gt 1) {
+        [System.String]$SourceList = ($ProvidedSources.Name -join ', ')
+        throw "Only one content source parameter can be used at a time. Provided: $SourceList"
+    }
+
+    if ($ProvidedSources.Count -eq 0) { return $null }
+    return $ProvidedSources[0]
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Applies a resolved content source to a ComboBox.
+.DESCRIPTION
+    This internal helper clears existing items and binds items plus display/value members from a source descriptor.
+#>
+####################################################################################################
+function Set-ComboBoxContent {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true)]
+        [System.Windows.Forms.ComboBox]$ComboBox,
+
+        [Parameter(Mandatory=$false)]
+        [System.Collections.Hashtable]$ContentSource
+    )
+
+    $ComboBox.Items.Clear()
+
+    if ($null -eq $ContentSource) {
+        return
+    }
+
+    $ComboBox.DisplayMember = $ContentSource.DisplayMember
+    $ComboBox.ValueMember = $ContentSource.ValueMember
+    [System.Void]$ComboBox.Items.AddRange([System.Object[]]$ContentSource.Items)
 }
 
 ### END OF FUNCTION

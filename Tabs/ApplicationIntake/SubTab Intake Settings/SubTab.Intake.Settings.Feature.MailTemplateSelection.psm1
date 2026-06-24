@@ -82,7 +82,6 @@ function Import-FeatureIntakeMailTemplateSelection {
                         Write-Line 'No mail template is selected.' -Type Warning
                         return
                     }
-
                     [System.Object]$SelectedTemplate = $ComboBox.SelectedItem
                     Write-Line "Mail Template: $($SelectedTemplate.TemplateName)" -Type Special
                     Write-Line "Subject: $($SelectedTemplate.Subject)" -Type Info

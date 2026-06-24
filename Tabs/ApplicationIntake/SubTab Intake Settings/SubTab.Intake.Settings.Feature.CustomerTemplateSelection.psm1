@@ -65,6 +65,18 @@ function Import-FeatureIntakeTemplateSelection {
         # Create the ComboBox
         $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
 
+        # When the selected customer template changes, refresh the mail template list as well.
+        $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.Add_SelectedIndexChanged([System.EventHandler]{
+            param($ChangedControl, $ChangedEvent)
+
+            [System.Windows.Forms.ComboBox]$MailTemplateSelection = $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection
+            if ($null -eq $MailTemplateSelection -or $MailTemplateSelection.IsDisposed) {
+                return
+            }
+
+            Update-ComboBox -ComboBox $MailTemplateSelection -MailTemplates (Get-MailTemplates)
+        }.GetNewClosure())
+
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
         [System.Collections.Hashtable[]]$SmallButtonsPropertiesArray = @(
@@ -83,14 +95,6 @@ function Import-FeatureIntakeTemplateSelection {
             }
             @{
                 ColumnNumber    = 6
-                Text            = 'Open Folder'
-                PNGFileName     = 'folder_go'
-                SizeType        = 'Small'
-                ToolTip         = 'Open the folder containing the templates.'
-                Function        = { Open-Folder -Path $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath }.GetNewClosure()
-            }
-            @{
-                ColumnNumber    = 7
                 Text            = 'Refresh'
                 PNGFileName     = 'arrow_refresh'
                 SizeType        = 'Small'
