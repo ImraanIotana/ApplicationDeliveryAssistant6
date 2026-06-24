@@ -51,25 +51,38 @@ function Import-FeatureIntakeCustomerTemplateSelection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # Derive graphics keys from the current tab hierarchy
+        [System.Windows.Forms.TabControl]$ParentTabControl = $ParentTabPage.Parent
+        [System.Windows.Forms.Control]$ParentTab = if ($ParentTabControl -is [System.Windows.Forms.TabControl]) { $ParentTabControl.Parent } else { $null }
+        [System.String]$GraphicsParentKey = if ($ParentTab -is [System.Windows.Forms.TabPage]) { $ParentTab.Text } else { $null }
+        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
+
+        # Build the ComboBox property path used by New-ComboBox
+        [System.String]$TemplateSelectionPropertyName = "ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.TemplateSelection"
+
+        # Create Graphics hashtable entries for this tab path when they do not already exist
+        if ($GraphicsParentKey -and (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber           = 1
             Label               = 'Select Customer Template'
-            PropertyName        = 'ComboBoxes.ApplicationIntake.TemplateSelection'
+            PropertyName        = $TemplateSelectionPropertyName
             ToolTip             = 'The list of customer templates to select from.'
             SizeType            = 'Medium'
             CustomerTemplates   = Get-CustomerTemplates
             DefaultValue        = 'Default'
         }
         # Create the ComboBox
-        $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        [System.Windows.Forms.ComboBox]$TemplateSelectionComboBox = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.TemplateSelection = $TemplateSelectionComboBox
 
         # When the selected customer template changes, refresh the mail template list as well.
-        $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.Add_SelectedIndexChanged([System.EventHandler]{
+        $TemplateSelectionComboBox.Add_SelectedIndexChanged([System.EventHandler]{
             param($ChangedControl, $ChangedEvent)
 
-            [System.Windows.Forms.ComboBox]$MailTemplateSelection = $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection
+            [System.Windows.Forms.ComboBox]$MailTemplateSelection = $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.MailTemplateSelection
             if ($null -eq $MailTemplateSelection -or $MailTemplateSelection.IsDisposed) {
                 return
             }
@@ -87,10 +100,10 @@ function Import-FeatureIntakeCustomerTemplateSelection {
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected template.'
                 Function        = {
-                    Write-Line "Template Identity: $($Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.Identity)" -Type Special
-                    Write-Line "Template Path: $($Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath)" -Type Info
+                    Write-Line "Template Identity: $($TemplateSelectionComboBox.SelectedItem.Identity)" -Type Special
+                    Write-Line "Template Path: $($TemplateSelectionComboBox.SelectedItem.TemplatePath)" -Type Info
                     Write-Line "Template Application SubFolders:" -Type Info
-                    $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.ApplicationFolderSubFolders.GetEnumerator() | Sort-Object -Property Value | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
+                    $TemplateSelectionComboBox.SelectedItem.ApplicationFolderSubFolders.GetEnumerator() | Sort-Object -Property Value | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
                 }.GetNewClosure()
             }
             @{
@@ -99,7 +112,7 @@ function Import-FeatureIntakeCustomerTemplateSelection {
                 PNGFileName     = 'folder_go'
                 SizeType        = 'Small'
                 ToolTip         = 'Open the folder containing the templates.'
-                Function        = { Open-Folder -Path $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath }.GetNewClosure()
+                Function        = { Open-Folder -Path $TemplateSelectionComboBox.SelectedItem.TemplatePath }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
@@ -107,7 +120,7 @@ function Import-FeatureIntakeCustomerTemplateSelection {
                 PNGFileName     = 'arrow_refresh'
                 SizeType        = 'Small'
                 ToolTip         = 'Refresh the list of customer templates.'
-                Function        = { Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection -CustomerTemplates (Get-CustomerTemplates) }.GetNewClosure()
+                Function        = { Update-ComboBox -ComboBox $TemplateSelectionComboBox -CustomerTemplates (Get-CustomerTemplates) }.GetNewClosure()
             }
         )
         # Add the Buttons

@@ -51,6 +51,18 @@ function Import-FeatureIntakeMailTemplateSelection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # Derive graphics keys from the current tab hierarchy
+        [System.Windows.Forms.TabControl]$ParentTabControl = $ParentTabPage.Parent
+        [System.Windows.Forms.Control]$ParentTab = if ($ParentTabControl -is [System.Windows.Forms.TabControl]) { $ParentTabControl.Parent } else { $null }
+        [System.String]$GraphicsParentKey = if ($ParentTab -is [System.Windows.Forms.TabPage]) { $ParentTab.Text } else { $null }
+        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
+
+        # Build the ComboBox property path used by New-ComboBox
+        [System.String]$MailTemplateSelectionPropertyName = "ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.MailTemplateSelection"
+
+        # Create Graphics hashtable entries for this tab path when they do not already exist
+        if ($GraphicsParentKey -and (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+
         # PREPARATION - MAIL TEMPLATES
         [System.Object[]]$MailTemplates = Get-MailTemplates
 
@@ -59,13 +71,14 @@ function Import-FeatureIntakeMailTemplateSelection {
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber           = 1
             Label               = 'Select Mail Template'
-            PropertyName        = 'ComboBoxes.ApplicationIntake.MailTemplateSelection'
+            PropertyName        = $MailTemplateSelectionPropertyName
             ToolTip             = 'The list of mail templates to select from.'
             SizeType            = 'Medium'
             MailTemplates       = $MailTemplates
         }
         # Create the ComboBox
-        $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        [System.Windows.Forms.ComboBox]$MailTemplateSelectionComboBox = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
+        $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.MailTemplateSelection = $MailTemplateSelectionComboBox
 
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
@@ -76,7 +89,7 @@ function Import-FeatureIntakeMailTemplateSelection {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected template.'
-                Function        = { Write-MailTemplateToHost -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection }.GetNewClosure()
+                Function        = { Write-MailTemplateToHost -ComboBox $MailTemplateSelectionComboBox }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -84,7 +97,7 @@ function Import-FeatureIntakeMailTemplateSelection {
                 PNGFileName     = 'arrow_refresh'
                 SizeType        = 'Small'
                 ToolTip         = 'Refresh the list of mail templates from the selected customer settings file.'
-                Function        = { Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection -MailTemplates (Get-MailTemplates) }.GetNewClosure()
+                Function        = { Update-ComboBox -ComboBox $MailTemplateSelectionComboBox -MailTemplates (Get-MailTemplates) }.GetNewClosure()
             }
         )
         # Set the action button properties
@@ -94,7 +107,7 @@ function Import-FeatureIntakeMailTemplateSelection {
             PNGFileName     = 'mail_yellow'
             SizeType        = 'Large'
             ToolTip         = 'Create a new mail based on the selected template.'
-            Function        = { New-MailFromTemplate -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection }.GetNewClosure()
+            Function        = { New-MailFromTemplate -ComboBox $MailTemplateSelectionComboBox }.GetNewClosure()
         }
         # Add the Buttons
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $SmallButtonsPropertiesArray -ParentGroupBox $FeatureGroupBox -RowNumber 1
@@ -268,7 +281,28 @@ function Get-MailTemplates {
     # Prefer the customer template currently selected in Intake Settings.
     if (Test-String -IsEmpty $SettingsFilePath) {
         # First preference: currently selected customer template in the Template Selection combo box.
-        $SettingsFilePath = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath
+        [System.Object]$TemplateSelectionComboBox = $null
+        if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
+            foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
+                [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
+                if ($ParentNode -is [System.Collections.IDictionary]) {
+                    foreach ($SubTabKey in $ParentNode.Keys) {
+                        [System.Object]$SubTabNode = $ParentNode.$SubTabKey
+                        if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey('TemplateSelection')) {
+                            $TemplateSelectionComboBox = $SubTabNode.TemplateSelection
+                            break
+                        }
+                    }
+                }
+                if ($null -ne $TemplateSelectionComboBox) { break }
+            }
+        }
+        if ($null -eq $TemplateSelectionComboBox -and ($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey('TemplateSelection')) {
+            $TemplateSelectionComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection
+        }
+        if ($null -ne $TemplateSelectionComboBox -and $null -ne $TemplateSelectionComboBox.SelectedItem) {
+            $SettingsFilePath = $TemplateSelectionComboBox.SelectedItem.TemplatePath
+        }
     }
 
     # If no explicit/selected file is available, try the Default customer settings file.

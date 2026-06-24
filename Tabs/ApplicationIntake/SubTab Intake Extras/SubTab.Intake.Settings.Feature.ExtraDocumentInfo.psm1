@@ -51,12 +51,20 @@ function Import-FeatureExtraDocumentInformation {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # Derive graphics keys from the current tab
+        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
+        [System.String]$GraphicsFeatureKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($FeatureProperties.Title.ToLower()) -replace '\s+', '')
+
+        # Build textbox property paths
+        [System.String]$UserFullNamePropertyName = "TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.UserFullName"
+        [System.String]$UserEmailAddressPropertyName = "TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.UserEmailAddress"
+
         # TEXTBOXES
         # Set the VendorNameTextBox properties
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'My Full Name'
-            PropertyName    = 'TextBoxes.IntakeExtras.ExtraDocumentInformation.UserFullName'
+            PropertyName    = $UserFullNamePropertyName
             ToolTip         = 'The full name of the user that will be used in the document properties.'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
@@ -65,16 +73,17 @@ function Import-FeatureExtraDocumentInformation {
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'My Email Address'
-            PropertyName    = 'TextBoxes.IntakeExtras.ExtraDocumentInformation.UserEmailAddress'
+            PropertyName    = $UserEmailAddressPropertyName
             ToolTip         = 'The email address of the user that will be used in the document properties.'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
 
         }
         # Create the TextBoxes
-        if (-not $Global:Graphics.TextBoxes.IntakeExtras.ContainsKey('ExtraDocumentInformation')) { $Global:Graphics.TextBoxes.IntakeExtras.ExtraDocumentInformation = @{} }
-        $Global:Graphics.TextBoxes.IntakeExtras.ExtraDocumentInformation.UserFullName      = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.IntakeExtras.ExtraDocumentInformation.UserEmailAddress  = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        if (-not $Global:Graphics.TextBoxes.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.TextBoxes.$GraphicsSubTabKey = @{} }
+        if (-not $Global:Graphics.TextBoxes.$GraphicsSubTabKey.ContainsKey($GraphicsFeatureKey)) { $Global:Graphics.TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey = @{} }
+        $Global:Graphics.TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.UserFullName      = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.UserEmailAddress  = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox

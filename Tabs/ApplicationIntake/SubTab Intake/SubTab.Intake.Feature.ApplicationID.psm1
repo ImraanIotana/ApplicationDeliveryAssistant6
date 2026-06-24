@@ -306,15 +306,26 @@ function New-ApplicationFolder {
         # Create the initial Word document in the Documentation subfolder from the selected template
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
-        [System.Object]$SelectedShortcutItem = if (
-            $Global:Graphics.ComboBoxes.ContainsKey('INTAKE') -and
-            $Global:Graphics.ComboBoxes.INTAKE.ContainsKey('ApplicationIntake') -and
-            $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.ContainsKey('ApplicationShortcuts')
-        ) {
-            $Global:Graphics.ComboBoxes.INTAKE.ApplicationIntake.ApplicationShortcuts.SelectedItem
-        } else {
-            $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts.SelectedItem
+        [System.Object]$ApplicationShortcutsComboBox = $null
+        if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
+            foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
+                [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
+                if ($ParentNode -is [System.Collections.IDictionary]) {
+                    foreach ($SubTabKey in $ParentNode.Keys) {
+                        [System.Object]$SubTabNode = $ParentNode.$SubTabKey
+                        if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey('ApplicationShortcuts')) {
+                            $ApplicationShortcutsComboBox = $SubTabNode.ApplicationShortcuts
+                            break
+                        }
+                    }
+                }
+                if ($null -ne $ApplicationShortcutsComboBox) { break }
+            }
         }
+        if ($null -eq $ApplicationShortcutsComboBox -and ($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey('ApplicationShortcuts')) {
+            $ApplicationShortcutsComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts
+        }
+        [System.Object]$SelectedShortcutItem = if ($null -ne $ApplicationShortcutsComboBox) { $ApplicationShortcutsComboBox.SelectedItem } else { $null }
         Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $SelectedShortcutItem
         New-AppLockerFile -Path $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text -ADGroupSID $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text -ApplicationID $ApplicationID -SelectedTemplate $SelectedTemplate
         Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
