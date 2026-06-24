@@ -1,161 +1,6 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Adds graphical dimensions to the ComboBox settings based on the GroupBox dimensions and the ComboBox margins.
-.DESCRIPTION
-    This function adds graphical dimensions to the ComboBox settings based on the GroupBox dimensions and the ComboBox margins.
-     It calculates the width of the ComboBox based on the GroupBox dimensions and the ComboBox margins, and adds these dimensions to the ComboBox settings in the GraphicalSettings hashtable of the main object.
-.EXAMPLE
-    Add-ComboBoxDimensions -InputObject $MyApplicationObject
-.INPUTS
-    [PSCustomObject]
-.OUTPUTS
-    No objects are returned to the pipeline.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : May 2026
-    Last Update     : May 2026
-#>
-####################################################################################################
-function Add-ComboBoxDimensions {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
-        [PSCustomObject]$InputObject
-    )
-
-    try {
-        # PREPARATION - GET SETTINGS
-        # Get the GraphicalSettings settings
-        [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
-
-        # EXECUTION
-        # The ComboBox dimensions are exactly the same as the TextBox dimensions, so we can copy the TextBox dimensions to the ComboBox dimensions
-        $Settings.ComboBox = $Settings.TextBox
-    }
-    catch {
-        Write-ErrorReport -ErrorRecord $_
-    }
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
-    Updates the content of an existing ComboBox.
-.DESCRIPTION
-    This function clears and repopulates an existing ComboBox.
-    You can provide either an array of strings or an array of application objects from the registry.
-.EXAMPLE
-    Update-ComboBox -ComboBox $MyComboBox -ContentStringArray @('Item1','Item2')
-.EXAMPLE
-    Update-ComboBox -ComboBox $MyComboBox -ApplicationsFromRegistry $ApplicationsFromRegistry
-.INPUTS
-    [System.Windows.Forms.ComboBox]
-    [System.String[]]
-    [System.Object[]]
-.OUTPUTS
-    No objects are returned to the pipeline.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : May 2026
-    Last Update     : May 2026
-#>
-####################################################################################################
-function Update-ComboBox {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The ComboBox to update.')]
-        [System.Windows.Forms.ComboBox]$ComboBox,
-
-        [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
-        [System.String[]]$ContentStringArray,
-
-        [Parameter(Mandatory=$false,HelpMessage='The array of application objects that will be displayed in the ComboBox.')]
-        [System.Object[]]$ApplicationsFromRegistry,
-
-        [Parameter(Mandatory=$false,HelpMessage='The array of shortcut objects that will be displayed in the ComboBox.')]
-        [System.Object[]]$Shortcuts,
-
-        [Parameter(Mandatory=$false,HelpMessage='The array of customer template objects that will be displayed in the ComboBox.')]
-        [System.Object[]]$CustomerTemplates
-    )
-
-    # VALIDATION
-    # If both ContentStringArray and ApplicationsFromRegistry are provided, throw an error
-    if ($ContentStringArray.Count -gt 0 -and $ApplicationsFromRegistry.Count -gt 0) {
-        throw "Both ContentStringArray and ApplicationsFromRegistry parameters cannot be used at the same time. Please provide only one of them."
-    }
-    # If ApplicationsFromRegistry is provided but is not an array of objects, throw an error
-    if ($ApplicationsFromRegistry.Count -gt 0 -and -not ($ApplicationsFromRegistry -is [System.Object[]])) {
-        throw "The ApplicationsFromRegistry parameter must be an array of objects. Please provide an array of application objects retrieved from the registry."
-    }
-
-    # If ContentStringArray is provided but is not an array of strings, throw an error
-    if ($ContentStringArray.Count -gt 0 -and -not ($ContentStringArray -is [System.String[]])) {
-        throw "The ContentStringArray parameter must be an array of strings. Please provide an array of strings to display in the ComboBox."
-    }
-
-    try {
-        # Clear existing items first
-        $ComboBox.Items.Clear()
-
-        # Fill the ComboBox items from the ContentStringArray parameter
-        if ($ContentStringArray.Count -gt 0) {
-            $ComboBox.DisplayMember = ''
-            $ComboBox.ValueMember = ''
-            [System.Void]$ComboBox.Items.AddRange($ContentStringArray)
-        }
-
-        # Fill the ComboBox items from the ApplicationsFromRegistry parameter
-        if ($ApplicationsFromRegistry.Count -gt 0) {
-            # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
-            $ComboBox.DisplayMember = 'ComboBoxName'
-            # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the RegistryPath)
-            $ComboBox.ValueMember = 'RegistryPath'
-            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$ApplicationsFromRegistry)
-        }
-
-        # Fill the ComboBox items from the Shortcuts parameter
-        if ($Shortcuts.Count -gt 0) {
-            # Set the DisplayMember to the property of the shortcut objects that contains the name to display in the ComboBox
-            $ComboBox.DisplayMember = 'ComboBoxName'
-            # Set the ValueMember to the property of the shortcut objects that contains the value to use when an item is selected in the ComboBox (in this case, the FullPath)
-            $ComboBox.ValueMember = 'FullPath'
-            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$Shortcuts)
-        }
-
-        # Fill the ComboBox items from the CustomerTemplates parameter
-        if ($CustomerTemplates.Count -gt 0) {
-            # Set the DisplayMember to the property of the customer template objects that contains the name to display in the ComboBox
-            $ComboBox.DisplayMember = 'ComboBoxName'
-            # Set the ValueMember to the property of the customer template objects that contains the template path
-            $ComboBox.ValueMember = 'TemplatePath'
-            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$CustomerTemplates)
-        }
-
-        # Write a message to the host indicating that the ComboBox has been updated
-        Write-Line "The ComboBox ($($ComboBox.Tag.Label)) has been updated."
-    }
-    catch {
-        Write-ErrorReport -ErrorRecord $_
-    }
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
     Creates a new ComboBox and adds it to the specified parent GroupBox.
 .DESCRIPTION
     This function creates a new ComboBox and adds it to the specified parent GroupBox.
@@ -229,23 +74,25 @@ function New-ComboBox {
         [Parameter(Mandatory=$false,HelpMessage='The array of objects that will be displayed in the ComboBox.')]
         [System.Object[]]$CustomerTemplates,
 
+        [Parameter(Mandatory=$false,HelpMessage='The array of objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$MailTemplates,
+
         [Parameter(Mandatory=$false,HelpMessage='Switch for returning the ComboBox object after it is created and added to the parent.')]
         [System.Management.Automation.SwitchParameter]$ReturnComboBox
     )
 
     # VALIDATION
-    # If both ContentStringArray and ApplicationsFromRegistry are provided, throw an error
-    if ($ContentStringArray.Count -gt 0 -and $ApplicationsFromRegistry.Count -gt 0) {
-        throw "Both ContentStringArray and ApplicationsFromRegistry parameters cannot be used at the same time. Please provide only one of them."
-    }
-    # If ApplicationsFromRegistry is provided but is not an array of objects, throw an error
-    if ($ApplicationsFromRegistry.Count -gt 0 -and -not ($ApplicationsFromRegistry -is [System.Object[]])) {
-    throw "The ApplicationsFromRegistry parameter must be an array of objects. Please provide an array of application objects retrieved from the registry."
-}
-
-    # If ContentStringArray is provided but is not an array of strings, throw an error
-    if ($ContentStringArray.Count -gt 0 -and -not ($ContentStringArray -is [System.String[]])) {
-    throw "The ContentStringArray parameter must be an array of strings. Please provide an array of strings to display in the ComboBox."
+    [System.Collections.Hashtable[]]$ContentSources = @(
+        @{ Name = 'ContentStringArray';      HasValue = ($ContentStringArray.Count -gt 0) }
+        @{ Name = 'ApplicationsFromRegistry'; HasValue = ($ApplicationsFromRegistry.Count -gt 0) }
+        @{ Name = 'Shortcuts';                HasValue = ($Shortcuts.Count -gt 0) }
+        @{ Name = 'CustomerTemplates';        HasValue = ($CustomerTemplates.Count -gt 0) }
+        @{ Name = 'MailTemplates';            HasValue = ($MailTemplates.Count -gt 0) }
+    )
+    [System.Collections.Hashtable[]]$ProvidedSources = @($ContentSources | Where-Object { $_.HasValue })
+    if ($ProvidedSources.Count -gt 1) {
+        [System.String]$SourceList = ($ProvidedSources.Name -join ', ')
+        throw "Only one content source parameter can be used at a time. Provided: $SourceList"
     }
 
      # PREPARATION
@@ -334,6 +181,16 @@ function New-ComboBox {
         # Clear any existing items and add the applications from the registry to the ComboBox items
         $NewComboBox.Items.Clear()
         [void]$NewComboBox.Items.AddRange([System.Object[]]$CustomerTemplates)
+    }
+    # Fill the ComboBox items from the MailTemplates parameter
+    if ($MailTemplates.Count -gt 0) {
+        # Set the DisplayMember to the property of the mail template objects that contains the name to display in the ComboBox
+        $NewComboBox.DisplayMember = 'ComboBoxName'
+        # Set the ValueMember to the property of the mail template objects that contains the key value
+        $NewComboBox.ValueMember = 'TemplateKey'
+        # Clear any existing items and add the mail templates to the ComboBox items
+        $NewComboBox.Items.Clear()
+        [void]$NewComboBox.Items.AddRange([System.Object[]]$MailTemplates)
     }
 
     # EXECUTION - CUSTOM PROPERTIES '(TAG)'
@@ -450,6 +307,191 @@ function New-ComboBox {
     # POST-EXECUTION
     # If the ReturnComboBox switch is set, return the ComboBox object
     if ($ReturnComboBox.IsPresent) { $NewComboBox }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Adds graphical dimensions to the ComboBox settings based on the GroupBox dimensions and the ComboBox margins.
+.DESCRIPTION
+    This function adds graphical dimensions to the ComboBox settings based on the GroupBox dimensions and the ComboBox margins.
+     It calculates the width of the ComboBox based on the GroupBox dimensions and the ComboBox margins, and adds these dimensions to the ComboBox settings in the GraphicalSettings hashtable of the main object.
+.EXAMPLE
+    Add-ComboBoxDimensions -InputObject $MyApplicationObject
+.INPUTS
+    [PSCustomObject]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Add-ComboBoxDimensions {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
+    )
+
+    try {
+        # PREPARATION - GET SETTINGS
+        # Get the GraphicalSettings settings
+        [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
+
+        # EXECUTION
+        # The ComboBox dimensions are exactly the same as the TextBox dimensions, so we can copy the TextBox dimensions to the ComboBox dimensions
+        $Settings.ComboBox = $Settings.TextBox
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Updates the content of an existing ComboBox.
+.DESCRIPTION
+    This function clears and repopulates an existing ComboBox.
+    You can provide either an array of strings or an array of application objects from the registry.
+.EXAMPLE
+    Update-ComboBox -ComboBox $MyComboBox -ContentStringArray @('Item1','Item2')
+.EXAMPLE
+    Update-ComboBox -ComboBox $MyComboBox -ApplicationsFromRegistry $ApplicationsFromRegistry
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+    [System.String[]]
+    [System.Object[]]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : May 2026
+    Last Update     : May 2026
+#>
+####################################################################################################
+function Update-ComboBox {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ComboBox to update.')]
+        [System.Windows.Forms.ComboBox]$ComboBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of strings that will be displayed in the ComboBox.')]
+        [System.String[]]$ContentStringArray,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of application objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$ApplicationsFromRegistry,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of shortcut objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$Shortcuts,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of customer template objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$CustomerTemplates,
+
+        [Parameter(Mandatory=$false,HelpMessage='The array of mail template objects that will be displayed in the ComboBox.')]
+        [System.Object[]]$MailTemplates
+    )
+
+    # VALIDATION
+    [System.Collections.Hashtable[]]$ContentSources = @(
+        @{ Name = 'ContentStringArray';      HasValue = ($ContentStringArray.Count -gt 0) }
+        @{ Name = 'ApplicationsFromRegistry'; HasValue = ($ApplicationsFromRegistry.Count -gt 0) }
+        @{ Name = 'Shortcuts';                HasValue = ($Shortcuts.Count -gt 0) }
+        @{ Name = 'CustomerTemplates';        HasValue = ($CustomerTemplates.Count -gt 0) }
+        @{ Name = 'MailTemplates';            HasValue = ($MailTemplates.Count -gt 0) }
+    )
+    [System.Collections.Hashtable[]]$ProvidedSources = @($ContentSources | Where-Object { $_.HasValue })
+    if ($ProvidedSources.Count -gt 1) {
+        [System.String]$SourceList = ($ProvidedSources.Name -join ', ')
+        throw "Only one content source parameter can be used at a time. Provided: $SourceList"
+    }
+
+    try {
+        [System.String]$PreviouslySelectedText = $ComboBox.Text
+
+        # Clear existing items first
+        $ComboBox.Items.Clear()
+
+        # Fill the ComboBox items from the ContentStringArray parameter
+        if ($ContentStringArray.Count -gt 0) {
+            $ComboBox.DisplayMember = ''
+            $ComboBox.ValueMember = ''
+            [System.Void]$ComboBox.Items.AddRange($ContentStringArray)
+        }
+
+        # Fill the ComboBox items from the ApplicationsFromRegistry parameter
+        if ($ApplicationsFromRegistry.Count -gt 0) {
+            # Set the DisplayMember to the property of the application objects that contains the name to display in the ComboBox
+            $ComboBox.DisplayMember = 'ComboBoxName'
+            # Set the ValueMember to the property of the application objects that contains the value to use when an item is selected in the ComboBox (in this case, the RegistryPath)
+            $ComboBox.ValueMember = 'RegistryPath'
+            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$ApplicationsFromRegistry)
+        }
+
+        # Fill the ComboBox items from the Shortcuts parameter
+        if ($Shortcuts.Count -gt 0) {
+            # Set the DisplayMember to the property of the shortcut objects that contains the name to display in the ComboBox
+            $ComboBox.DisplayMember = 'ComboBoxName'
+            # Set the ValueMember to the property of the shortcut objects that contains the value to use when an item is selected in the ComboBox (in this case, the FullPath)
+            $ComboBox.ValueMember = 'FullPath'
+            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$Shortcuts)
+        }
+
+        # Fill the ComboBox items from the CustomerTemplates parameter
+        if ($CustomerTemplates.Count -gt 0) {
+            # Set the DisplayMember to the property of the customer template objects that contains the name to display in the ComboBox
+            $ComboBox.DisplayMember = 'ComboBoxName'
+            # Set the ValueMember to the property of the customer template objects that contains the template path
+            $ComboBox.ValueMember = 'TemplatePath'
+            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$CustomerTemplates)
+        }
+
+        # Fill the ComboBox items from the MailTemplates parameter
+        if ($MailTemplates.Count -gt 0) {
+            # Set the DisplayMember to the property of the mail template objects that contains the name to display in the ComboBox
+            $ComboBox.DisplayMember = 'ComboBoxName'
+            # Set the ValueMember to the key of the selected mail template
+            $ComboBox.ValueMember = 'TemplateKey'
+            [System.Void]$ComboBox.Items.AddRange([System.Object[]]$MailTemplates)
+        }
+
+        # Try to preserve the previous text/selection during refresh.
+        if (-not (Test-String -IsEmpty $PreviouslySelectedText)) {
+            foreach ($Item in $ComboBox.Items) {
+                if ($null -eq $Item) { continue }
+
+                if ($Item -is [string] -and $Item -eq $PreviouslySelectedText) {
+                    $ComboBox.SelectedItem = $Item
+                    break
+                }
+
+                if ($null -ne $Item.PSObject.Properties['ComboBoxName'] -and $Item.ComboBoxName -eq $PreviouslySelectedText) {
+                    $ComboBox.SelectedItem = $Item
+                    break
+                }
+            }
+        }
+
+        # Write a message to the host indicating that the ComboBox has been updated
+        Write-Line "The ComboBox ($($ComboBox.Tag.Label)) has been updated."
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
 }
 
 ### END OF FUNCTION

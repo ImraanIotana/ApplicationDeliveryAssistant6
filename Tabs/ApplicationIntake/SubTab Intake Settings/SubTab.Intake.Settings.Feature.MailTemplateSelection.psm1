@@ -51,6 +51,9 @@ function Import-FeatureIntakeMailTemplateSelection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # PREPARATION - MAIL TEMPLATES
+        [System.Object[]]$MailTemplates = Get-MailTemplates
+
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
@@ -59,8 +62,7 @@ function Import-FeatureIntakeMailTemplateSelection {
             PropertyName        = 'ComboBoxes.ApplicationIntake.MailTemplateSelection'
             ToolTip             = 'The list of mail templates to select from.'
             SizeType            = 'Medium'
-            MailTemplates       = Get-MailTemplates
-            DefaultValue        = 'Default'
+            MailTemplates       = $MailTemplates
         }
         # Create the ComboBox
         $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
@@ -75,10 +77,16 @@ function Import-FeatureIntakeMailTemplateSelection {
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected template.'
                 Function        = {
-                    Write-Line "Template Identity: $($Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection.SelectedItem.Identity)" -Type Special
-                    Write-Line "Template Path: $($Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection.SelectedItem.TemplatePath)" -Type Info
-                    Write-Line "Template Application SubFolders:" -Type Info
-                    $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection.SelectedItem.ApplicationFolderSubFolders.GetEnumerator() | Sort-Object -Property Value | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
+                    [System.Windows.Forms.ComboBox]$ComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection
+                    if ($null -eq $ComboBox.SelectedItem) {
+                        Write-Line 'No mail template is selected.' -Type Warning
+                        return
+                    }
+
+                    [System.Object]$SelectedTemplate = $ComboBox.SelectedItem
+                    Write-Line "Mail Template: $($SelectedTemplate.TemplateName)" -Type Special
+                    Write-Line "Subject: $($SelectedTemplate.Subject)" -Type Info
+                    Write-Line "Settings File: $($SelectedTemplate.TemplateSettingsPath)" -Type Info
                 }.GetNewClosure()
             }
             @{
@@ -86,16 +94,30 @@ function Import-FeatureIntakeMailTemplateSelection {
                 Text            = 'Open Folder'
                 PNGFileName     = 'folder_go'
                 SizeType        = 'Small'
-                ToolTip         = 'Open the folder containing the templates.'
-                Function        = { Open-Folder -Path $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection.SelectedItem.TemplatePath }.GetNewClosure()
+                ToolTip         = 'Open the folder containing the selected settings file.'
+                Function        = {
+                    [System.Windows.Forms.ComboBox]$ComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection
+                    if ($null -eq $ComboBox.SelectedItem) {
+                        Write-Line 'No mail template is selected.' -Type Warning
+                        return
+                    }
+
+                    [string]$TemplateSettingsPath = $ComboBox.SelectedItem.TemplateSettingsPath
+                    if (-not (Test-Path -Path $TemplateSettingsPath -PathType Leaf)) {
+                        Write-Line "The settings file cannot be found: $TemplateSettingsPath" -Type Warning
+                        return
+                    }
+
+                    Open-Folder -Path (Split-Path -Path $TemplateSettingsPath -Parent)
+                }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
                 Text            = 'Refresh'
                 PNGFileName     = 'arrow_refresh'
                 SizeType        = 'Small'
-                ToolTip         = 'Refresh the list of customer templates.'
-                Function        = { Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection -CustomerTemplates (Get-MailTemplates) }.GetNewClosure()
+                ToolTip         = 'Refresh the list of mail templates from the selected customer settings file.'
+                Function        = { Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.ApplicationIntake.MailTemplateSelection -MailTemplates (Get-MailTemplates) }.GetNewClosure()
             }
         )
         # Add the Buttons
@@ -137,45 +159,78 @@ function Import-FeatureIntakeMailTemplateSelection {
 #>
 ####################################################################################################
 function Get-MailTemplates {
+    [CmdletBinding()]
     param (
-        $FolderToSearch = (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
+        [Parameter(Mandatory=$false,HelpMessage='Optional explicit path to a Settings.Customer.*.psd1 file.')]
+        [System.String]$SettingsFilePath
     )
-    
+
+    # PREPARATION - RESOLVE SETTINGS FILE
+    if (Test-String -IsEmpty $SettingsFilePath) {
+        # First preference: currently selected customer template in the Template Selection combo box.
+        $SettingsFilePath = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem.TemplatePath
+    }
+
+    if (Test-String -IsEmpty $SettingsFilePath) {
+        [System.String]$CustomerFolder = Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer'
+        if (-not (Test-Path -Path $CustomerFolder -PathType Container)) {
+            Write-Line "The customer folder cannot be found: $CustomerFolder" -Type Warning
+            return @()
+        }
+
+        # Fallback to the Default customer settings file when no customer template is selected yet.
+        [System.String]$DefaultSettingsPath = Join-Path -Path $CustomerFolder -ChildPath 'Default\Settings.Customer.Default.psd1'
+        if (Test-Path -Path $DefaultSettingsPath -PathType Leaf) {
+            $SettingsFilePath = $DefaultSettingsPath
+        }
+    }
+
     # VALIDATION
-    # Check if the specified folder exists
-    if (-Not (Test-Path -Path $FolderToSearch -PathType Container)) {
-        Write-Warning "The specified folder '$FolderToSearch' does not exist. Returning an empty list."
+    if (Test-String -IsEmpty $SettingsFilePath) {
+        Write-Line 'No customer settings file is available to read mail templates from.' -Type Warning
+        return @()
+    }
+    if (-not (Test-Path -Path $SettingsFilePath -PathType Leaf)) {
+        Write-Line "The selected customer settings file cannot be found: $SettingsFilePath" -Type Warning
         return @()
     }
 
-    # EXECUTION
-    # Get all .psd1 files in the specified folder and subfolders that start with 'Settings.Customer.'
-    [System.IO.FileInfo[]]$TemplateFiles = Get-ChildItem -Path $FolderToSearch -Filter '*.psd1' -File -Recurse |
-        Where-Object { $_.BaseName.StartsWith('Settings.Customer.') } |
-        Sort-Object -Property Name
-    # Return an empty array if no template files are found
-    if ($TemplateFiles.Count -eq 0) {
+    # EXECUTION - IMPORT SETTINGS DATA
+    try {
+        [System.Collections.Hashtable]$TemplateContent = Import-PowerShellDataFile -Path $SettingsFilePath
+    }
+    catch {
+        Write-Line "The settings file could not be parsed: $SettingsFilePath" -Type Warning
+        Write-ErrorReport -ErrorRecord $_
         return @()
     }
 
-    foreach ($TemplateFile in $TemplateFiles) {
-        # Get the content of the template file
-        $TemplateContent = Import-PowerShellDataFile -Path $TemplateFile.FullName
+    [System.Object]$MailTemplates = $null
+    if ($TemplateContent.ContainsKey('MailTemplates')) {
+        $MailTemplates = $TemplateContent.MailTemplates
+    }
+    elseif ($TemplateContent.ContainsKey('$MailTemplates')) {
+        # Backward-compatible fallback for accidentally prefixed keys.
+        $MailTemplates = $TemplateContent.'$MailTemplates'
+    }
 
-        # Extract the template name by removing the 'Settings.Customer.' prefix from the base name
-        $TemplateName = $TemplateFile.BaseName -replace '^Settings\.Customer\.', ''
+    if ($null -eq $MailTemplates -or -not ($MailTemplates -is [System.Collections.IDictionary])) {
+        return @()
+    }
 
-        # Create a custom object for each template file
+    # POST-EXECUTION - RETURN COMBOBOX OBJECTS
+    foreach ($TemplateName in ($MailTemplates.Keys | Sort-Object)) {
+        [System.Object]$MailTemplateContent = $MailTemplates[$TemplateName]
+
         [PSCustomObject]@{
-            ComboBoxName = $TemplateContent.Identity
-            TemplatePath = $TemplateFile.FullName
-            TemplateName = $TemplateName
-            FileName     = $TemplateFile.Name
-            FullName     = $TemplateFile.FullName
-            Directory    = $TemplateFile.DirectoryName
-            Content      = $TemplateContent
-            Identity     = $TemplateContent.Identity
-            ApplicationFolderSubFolders = $TemplateContent.ApplicationFolderSubFolders
+            ComboBoxName         = [System.String]$TemplateName
+            TemplateName         = [System.String]$TemplateName
+            TemplateKey          = [System.String]$TemplateName
+            Subject              = $MailTemplateContent.Subject
+            Body                 = $MailTemplateContent.Body
+            Content              = $MailTemplateContent
+            TemplateSettingsPath = $SettingsFilePath
+            CustomerIdentity     = $TemplateContent.Identity
         }
     }
 }

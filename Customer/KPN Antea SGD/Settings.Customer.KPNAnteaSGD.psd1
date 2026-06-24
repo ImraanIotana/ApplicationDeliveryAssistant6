@@ -37,7 +37,7 @@
         Other           = '9. Archive\Other'
     }
 
-    $MailTemplates = @{
+    MailTemplates = @{
         '1. Introductory Mail' = @{
             Subject = 'TEST: Introductory Mail Subject'
             Body    = 'TEST: Introductory Mail Body'
