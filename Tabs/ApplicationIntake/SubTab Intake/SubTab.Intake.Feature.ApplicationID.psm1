@@ -233,26 +233,39 @@ function New-ApplicationFolder {
             return
         }
 
-        # Resolve the TemplateSelection ComboBox without hardcoded parent or subtab keys
-        [System.Object]$TemplateSelectionComboBox = $null
-        if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
-            foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
-                [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
-                if ($ParentNode -is [System.Collections.IDictionary]) {
-                    foreach ($SubTabKey in $ParentNode.Keys) {
-                        [System.Object]$SubTabNode = $ParentNode.$SubTabKey
-                        if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey('TemplateSelection')) {
-                            $TemplateSelectionComboBox = $SubTabNode.TemplateSelection
-                            break
+        # Resolve a ComboBox by key without hardcoded parent or subtab keys
+        [ScriptBlock]$ResolveComboBox = {
+            param (
+                [Parameter(Mandatory=$true)]
+                [System.String]$ComboBoxName
+            )
+
+            [System.Object]$ResolvedComboBox = $null
+            if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
+                foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
+                    [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
+                    if ($ParentNode -is [System.Collections.IDictionary]) {
+                        foreach ($SubTabKey in $ParentNode.Keys) {
+                            [System.Object]$SubTabNode = $ParentNode.$SubTabKey
+                            if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey($ComboBoxName)) {
+                                $ResolvedComboBox = $SubTabNode.$ComboBoxName
+                                break
+                            }
                         }
                     }
+                    if ($null -ne $ResolvedComboBox) { break }
                 }
-                if ($null -ne $TemplateSelectionComboBox) { break }
             }
+
+            if ($null -eq $ResolvedComboBox -and ($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey($ComboBoxName)) {
+                $ResolvedComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.$ComboBoxName
+            }
+
+            $ResolvedComboBox
         }
-        if ($null -eq $TemplateSelectionComboBox -and ($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey('TemplateSelection')) {
-            $TemplateSelectionComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection
-        }
+
+        # Resolve the TemplateSelection ComboBox without hardcoded parent or subtab keys
+        [System.Object]$TemplateSelectionComboBox = & $ResolveComboBox -ComboBoxName 'TemplateSelection'
         [System.Object]$SelectedTemplate = if ($null -ne $TemplateSelectionComboBox) { $TemplateSelectionComboBox.SelectedItem } else { $null }
         if ($null -eq $SelectedTemplate) {
             Write-Line 'No customer template selected. Please select a template first. No action has been taken.'
@@ -306,25 +319,7 @@ function New-ApplicationFolder {
         # Create the initial Word document in the Documentation subfolder from the selected template
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
-        [System.Object]$ApplicationShortcutsComboBox = $null
-        if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
-            foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
-                [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
-                if ($ParentNode -is [System.Collections.IDictionary]) {
-                    foreach ($SubTabKey in $ParentNode.Keys) {
-                        [System.Object]$SubTabNode = $ParentNode.$SubTabKey
-                        if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey('ApplicationShortcuts')) {
-                            $ApplicationShortcutsComboBox = $SubTabNode.ApplicationShortcuts
-                            break
-                        }
-                    }
-                }
-                if ($null -ne $ApplicationShortcutsComboBox) { break }
-            }
-        }
-        if ($null -eq $ApplicationShortcutsComboBox -and ($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey('ApplicationShortcuts')) {
-            $ApplicationShortcutsComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.ApplicationShortcuts
-        }
+        [System.Object]$ApplicationShortcutsComboBox = & $ResolveComboBox -ComboBoxName 'ApplicationShortcuts'
         [System.Object]$SelectedShortcutItem = if ($null -ne $ApplicationShortcutsComboBox) { $ApplicationShortcutsComboBox.SelectedItem } else { $null }
         Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $SelectedShortcutItem
         New-AppLockerFile -Path $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text -ADGroupSID $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text -ApplicationID $ApplicationID -SelectedTemplate $SelectedTemplate

@@ -73,12 +73,18 @@ function New-ApplicationIntakeDocument {
         }
         # Build the output document path
         [System.String]$OutputDocumentPath = Join-Path -Path $DocumentationFolderPath -ChildPath ('KPN Dossier ' + $ApplicationID + '.docx')
+        [System.String]$TemplateCopyPath = Join-Path -Path $DocumentationFolderPath -ChildPath ([System.IO.Path]::GetFileName($ResolvedTemplatePath))
 
         # CONFIRMATION
-        # Ask the user to confirm before launching Word and creating the document.
+        # Ask the user to confirm before launching Word and creating the document
         [System.String]$Title = 'Confirm Word Document'
         [System.String]$Body = "Do you want to create the WORD DOCUMENT for the following application?`n`n$ApplicationID"
-        if (-not (Get-UserConfirmation -Title $Title -Body $Body)) { return }
+        if (-not (Get-UserConfirmation -Title $Title -Body $Body)) {
+            # User declined Word generation, copy template as fallback working file
+            Copy-Item -Path $ResolvedTemplatePath -Destination $TemplateCopyPath -Force
+            Write-Line "Copied the Word template for later use: $TemplateCopyPath" -Type Info
+            return
+        }
 
         # EXECUTION
         # Create the intake document from template and fill the fields
