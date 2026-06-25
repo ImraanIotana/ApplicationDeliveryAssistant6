@@ -484,38 +484,3 @@ function Set-ComboBoxContent {
 ####################################################################################################
 
 
-####################################################################################################
-<#
-.SYNOPSIS
-    Creates a ComboBoxes subkey in the global graphics hashtable when it does not already exist.
-.DESCRIPTION
-    This function initializes a named subkey under $Global:Graphics.ComboBoxes so application controls can store their ComboBox references safely.
-.EXAMPLE
-    New-ComboBoxSubKey -Name 'ApplicationIntake'
-.INPUTS
-    [System.String]
-.OUTPUTS
-    No objects are returned to the pipeline.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : June 2026
-    Last Update     : June 2026
-#>
-####################################################################################################
-function New-ComboBoxSubKey {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The name of the ComboBoxes subkey to initialize.')]
-        [string]$Name
-    )
-
-    # Create the requested ComboBoxes subkey only when it has not already been initialized.
-    if (-not $Global:Graphics.ComboBoxes.ContainsKey($Name)) { $Global:Graphics.ComboBoxes.$Name = @{} }
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-

@@ -37,9 +37,9 @@ function Import-TabApplicationIntake {
             Version             = '6.0.0.0'
             BackGroundColor     = 'RoyalBlue'
         }
-        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey($TabProperties.Title)) { $Global:Graphics.TextBoxes.$($TabProperties.Title) = @{} }
-        if (-not $Global:Graphics.ComboBoxes.ContainsKey($TabProperties.Title)) { $Global:Graphics.ComboBoxes.$($TabProperties.Title) = @{} }
+        # Create the hashtables for this tab in the Global Graphics object.
+        New-SubKeyForBoxes -BoxType TextBoxes -Name $TabProperties.Title
+        New-SubKeyForBoxes -BoxType ComboBoxes -Name $TabProperties.Title
 
         # EXECUTION - PARENT TABPAGE
         # Create the TabPage

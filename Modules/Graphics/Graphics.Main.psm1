@@ -81,6 +81,56 @@ function Initialize-Graphics {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Creates a graphics subkey for TextBoxes or ComboBoxes when it does not already exist.
+.DESCRIPTION
+    This function initializes a named subkey under $Global:Graphics.TextBoxes or
+    $Global:Graphics.ComboBoxes. Optionally, it also initializes a child subkey
+    under that named key.
+.EXAMPLE
+    New-SubKeyForBoxes -BoxType TextBoxes -Name 'ApplicationIntake'
+.EXAMPLE
+    New-SubKeyForBoxes -BoxType ComboBoxes -Name 'ApplicationIntake' -ChildName 'ApplicationSelection'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline.
+#>
+####################################################################################################
+function New-SubKeyForBoxes {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The graphics box type to initialize.')]
+        [ValidateSet('TextBoxes','ComboBoxes')]
+        [System.String]$BoxType,
+
+        [Parameter(Mandatory=$true,HelpMessage='The top-level subkey name to initialize.')]
+        [System.String]$Name,
+
+        [Parameter(Mandatory=$false,HelpMessage='Optional child subkey name under the top-level key.')]
+        [System.String]$ChildName
+    )
+
+    # Ensure global graphics root keys exist before creating nested subkeys.
+    if (-not $Global:Graphics) { $Global:Graphics = @{} }
+    if (-not $Global:Graphics.ContainsKey('TextBoxes')) { $Global:Graphics.TextBoxes = @{} }
+    if (-not $Global:Graphics.ContainsKey('ComboBoxes')) { $Global:Graphics.ComboBoxes = @{} }
+
+    if (-not $Global:Graphics.$BoxType.ContainsKey($Name)) {
+        $Global:Graphics.$BoxType.$Name = @{}
+    }
+
+    if ($ChildName -and (-not $Global:Graphics.$BoxType.$Name.ContainsKey($ChildName))) {
+        $Global:Graphics.$BoxType.$Name.$ChildName = @{}
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Imports the graphical settings from a specified file and adds them to the main application object.
 .DESCRIPTION
     This function imports the graphical settings from a specified file and adds them to the main application object. It searches for the graphical settings file in the specified root folder and its subfolders, imports the settings from the file, and adds them to the main application object under the GraphicalSettings property.

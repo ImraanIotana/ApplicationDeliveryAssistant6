@@ -40,9 +40,9 @@ function Import-TabAppLocker {
         }
 
         # EXECUTION
-        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('AppLocker')) { $Global:Graphics.TextBoxes.AppLocker = @{} }
-        if (-not $Global:Graphics.ComboBoxes.ContainsKey('AppLocker')) { $Global:Graphics.ComboBoxes.AppLocker = @{} }
+        # Create the hashtables for this tab in the Global Graphics object.
+        New-SubKeyForBoxes -BoxType TextBoxes -Name 'AppLocker'
+        New-SubKeyForBoxes -BoxType ComboBoxes -Name 'AppLocker'
 
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties

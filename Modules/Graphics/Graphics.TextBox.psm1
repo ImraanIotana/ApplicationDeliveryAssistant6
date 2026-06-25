@@ -517,41 +517,6 @@ function Write-ClipBoardToTextBox {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Creates a TextBoxes subkey in the global graphics hashtable when it does not already exist.
-.DESCRIPTION
-    This function initializes a named subkey under $Global:Graphics.TextBoxes so Application Intake controls can store their TextBox references safely.
-.EXAMPLE
-    New-TextBoxSubKey -Name 'ApplicationIntake'
-.INPUTS
-    [System.String]
-.OUTPUTS
-    No objects are returned to the pipeline.
-.NOTES
-    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
-    Author          : Imraan Iotana
-    Creation Date   : June 2026
-    Last Update     : June 2026
-#>
-####################################################################################################
-function New-TextBoxSubKey {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The name of the TextBoxes subkey to initialize.')]
-        [string]$Name
-    )
-
-    # Create the requested TextBoxes subkey only when it has not already been initialized.
-    if (-not $Global:Graphics.TextBoxes.ContainsKey($Name)) { $Global:Graphics.TextBoxes.$Name = @{} }
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
     Toggles the visibility of password characters in a TextBox.
 .DESCRIPTION
     This function toggles the UseSystemPasswordChar property of a TextBox to show or hide password characters.
