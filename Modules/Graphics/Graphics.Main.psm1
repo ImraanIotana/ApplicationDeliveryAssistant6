@@ -81,15 +81,15 @@ function Initialize-Graphics {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Creates a graphics subkey for TextBoxes or ComboBoxes when it does not already exist.
+    Creates graphics subkeys for both TextBoxes and ComboBoxes when they do not already exist.
 .DESCRIPTION
-    This function initializes a named subkey under $Global:Graphics.TextBoxes or
-    $Global:Graphics.ComboBoxes. Optionally, it also initializes a child subkey
-    under that named key.
+    This function initializes a named subkey under both
+    $Global:Graphics.TextBoxes and $Global:Graphics.ComboBoxes.
+    Optionally, it also initializes a child subkey under that named key for both.
 .EXAMPLE
-    New-SubKeyForBoxes -BoxType TextBoxes -Name 'ApplicationIntake'
+    New-SubKeyForBoxes -Name 'ApplicationIntake'
 .EXAMPLE
-    New-SubKeyForBoxes -BoxType ComboBoxes -Name 'ApplicationIntake' -ChildName 'ApplicationSelection'
+    New-SubKeyForBoxes -Name 'ApplicationIntake' -ChildName 'ApplicationSelection'
 .INPUTS
     [System.String]
 .OUTPUTS
@@ -99,10 +99,6 @@ function Initialize-Graphics {
 function New-SubKeyForBoxes {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true,HelpMessage='The graphics box type to initialize.')]
-        [ValidateSet('TextBoxes','ComboBoxes')]
-        [System.String]$BoxType,
-
         [Parameter(Mandatory=$true,HelpMessage='The top-level subkey name to initialize.')]
         [System.String]$Name,
 
@@ -115,12 +111,14 @@ function New-SubKeyForBoxes {
     if (-not $Global:Graphics.ContainsKey('TextBoxes')) { $Global:Graphics.TextBoxes = @{} }
     if (-not $Global:Graphics.ContainsKey('ComboBoxes')) { $Global:Graphics.ComboBoxes = @{} }
 
-    if (-not $Global:Graphics.$BoxType.ContainsKey($Name)) {
-        $Global:Graphics.$BoxType.$Name = @{}
-    }
+    foreach ($KeyType in @('TextBoxes','ComboBoxes')) {
+        if (-not $Global:Graphics.$KeyType.ContainsKey($Name)) {
+            $Global:Graphics.$KeyType.$Name = @{}
+        }
 
-    if ($ChildName -and (-not $Global:Graphics.$BoxType.$Name.ContainsKey($ChildName))) {
-        $Global:Graphics.$BoxType.$Name.$ChildName = @{}
+        if ($ChildName -and (-not $Global:Graphics.$KeyType.$Name.ContainsKey($ChildName))) {
+            $Global:Graphics.$KeyType.$Name.$ChildName = @{}
+        }
     }
 }
 

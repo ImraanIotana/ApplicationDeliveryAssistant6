@@ -38,8 +38,7 @@ function Import-TabApplicationIntake {
             BackGroundColor     = 'RoyalBlue'
         }
         # Create the hashtables for this tab in the Global Graphics object.
-        New-SubKeyForBoxes -BoxType TextBoxes -Name $TabProperties.Title
-        New-SubKeyForBoxes -BoxType ComboBoxes -Name $TabProperties.Title
+        New-SubKeyForBoxes -Name $TabProperties.Title
 
         # EXECUTION - PARENT TABPAGE
         # Create the TabPage
