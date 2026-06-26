@@ -52,30 +52,22 @@ function Import-FeatureIntakeApplicationSelection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
-        # Derive graphics keys from the current tab hierarchy
-        [System.Windows.Forms.TabControl]$ParentTabControl = $ParentTabPage.Parent
-        [System.Windows.Forms.Control]$ParentTab = if ($ParentTabControl -is [System.Windows.Forms.TabControl]) { $ParentTabControl.Parent } else { $null }
-        [System.String]$GraphicsParentKey = if ($ParentTab -is [System.Windows.Forms.TabPage]) { $ParentTab.Text } else { $null }
-        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
-        # Build the ComboBox property path used by New-ComboBox
-        [System.String]$SelectedApplicationPropertyName = "ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.InstalledApplications"
-        # Create Graphics hashtable entries for this tab path when they do not already exist
-        if ($GraphicsParentKey -and (-not $Global:Graphics.TextBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.TextBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
-        if ($GraphicsParentKey -and (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+        # Ensure the flat storage key exists for this tab-feature pair and capture it.
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
 
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
         [System.Collections.Hashtable]$InstalledApplicationsComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Import from Registry'
-            PropertyName                = $SelectedApplicationPropertyName
+            PropertyName                = "ComboBoxes.$SubKeyForBoxes.InstalledApplications"
             ToolTip                     = 'The list of installed applications to select from and import into the intake form.'
             SizeType                    = 'Medium'
             ApplicationsFromRegistry    = Get-InstalledApplicationsFromRegistry
         }
         # Create the ComboBox
         [System.Windows.Forms.ComboBox]$InstalledApplicationsComboBox = New-ComboBox @InstalledApplicationsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
-        $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.InstalledApplications = $InstalledApplicationsComboBox
+        $Global:Graphics.ComboBoxes[$SubKeyForBoxes].InstalledApplications = $InstalledApplicationsComboBox
 
         # EXECUTION - BUTTONS
         # Set the Import Button properties
@@ -96,7 +88,7 @@ function Import-FeatureIntakeApplicationSelection {
                 ToolTip         = 'Refresh the list of applications from the registry.'
                 Function        = {
                     Update-ComboBox -ComboBox $InstalledApplicationsComboBox -ApplicationsFromRegistry (Get-InstalledApplicationsFromRegistry)
-                    Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.ApplicationShortcuts -Shortcuts (Get-Shortcuts -IncludeInternetShortcuts)
+                    Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes[$SubKeyForBoxes].ApplicationShortcuts -Shortcuts (Get-Shortcuts -IncludeInternetShortcuts)
                 }.GetNewClosure()
             }
         )

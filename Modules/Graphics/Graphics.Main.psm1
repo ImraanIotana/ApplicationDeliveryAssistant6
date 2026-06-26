@@ -81,15 +81,14 @@ function Initialize-Graphics {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Creates graphics subkeys for both TextBoxes and ComboBoxes when they do not already exist.
+    Creates flattened graphics subkeys for both TextBoxes and ComboBoxes.
 .DESCRIPTION
-    This function initializes a named subkey under both
-    $Global:Graphics.TextBoxes and $Global:Graphics.ComboBoxes.
-    Optionally, it also initializes a child subkey under that named key for both.
+    This function builds a flat key path in the format TabName.FeatureName,
+    then initializes that key under both $Global:Graphics.TextBoxes and
+    $Global:Graphics.ComboBoxes.
+    TabName and FeatureName are normalized by removing spaces and converting to lowercase.
 .EXAMPLE
-    New-SubKeyForBoxes -Name 'ApplicationIntake'
-.EXAMPLE
-    New-SubKeyForBoxes -Name 'ApplicationIntake' -ChildName 'ApplicationSelection'
+    New-SubKeyForBoxes -TabName 'ApplicationIntake' -FeatureName 'Main'
 .INPUTS
     [System.String]
 .OUTPUTS
@@ -99,26 +98,56 @@ function Initialize-Graphics {
 function New-SubKeyForBoxes {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true,HelpMessage='The top-level subkey name to initialize.')]
-        [System.String]$Name,
+        [Parameter(Mandatory=$true,ParameterSetName='ByName',HelpMessage='The tab name for the key path.')]
+        [System.String]$TabName,
 
-        [Parameter(Mandatory=$false,HelpMessage='Optional child subkey name under the top-level key.')]
-        [System.String]$ChildName
+        [Parameter(Mandatory=$true,ParameterSetName='ByName',HelpMessage='The feature name for the key path.')]
+        [System.String]$FeatureName,
+
+        [Parameter(Mandatory=$true,ParameterSetName='ByParentTabPage',HelpMessage='The sub tab page used to derive the tab and feature keys from the current UI hierarchy.')]
+        [System.Windows.Forms.TabPage]$ParentTabPage,
+
+        [Parameter(Mandatory=$false,HelpMessage='Returns the generated flattened key name when specified.')]
+        [System.Management.Automation.SwitchParameter]$PassThru
     )
 
-    # Ensure global graphics root keys exist before creating nested subkeys.
-    if (-not $Global:Graphics) { $Global:Graphics = @{} }
-    if (-not $Global:Graphics.ContainsKey('TextBoxes')) { $Global:Graphics.TextBoxes = @{} }
-    if (-not $Global:Graphics.ContainsKey('ComboBoxes')) { $Global:Graphics.ComboBoxes = @{} }
+    # Root keys are initialized by Initialize-Graphics.
+    if (-not $Global:Graphics -or -not $Global:Graphics.ContainsKey('TextBoxes') -or -not $Global:Graphics.ContainsKey('ComboBoxes')) {
+        throw 'Global Graphics root keys are not initialized. Run Initialize-Graphics first.'
+    }
+
+    # Resolve names from ParentTabPage when requested.
+    if ($PSCmdlet.ParameterSetName -eq 'ByParentTabPage') {
+        [System.Windows.Forms.TabControl]$ParentTabControl = $ParentTabPage.Parent
+        [System.Windows.Forms.Control]$ParentTab = if ($ParentTabControl -is [System.Windows.Forms.TabControl]) { $ParentTabControl.Parent } else { $null }
+
+        if (-not ($ParentTab -is [System.Windows.Forms.TabPage])) {
+            throw 'Unable to resolve parent tab from ParentTabPage. Ensure ParentTabPage is attached to a sub-tab control inside a tab page.'
+        }
+
+        [System.String]$TabName = $ParentTab.Text
+        [System.String]$FeatureName = $ParentTabPage.Text
+    }
+
+    # Normalize names for consistent key storage.
+    [System.String]$NormalizedTabName = ($TabName -replace '\s+', '').ToLowerInvariant()
+    [System.String]$NormalizedFeatureName = ($FeatureName -replace '\s+', '').ToLowerInvariant()
+
+    if ([System.String]::IsNullOrWhiteSpace($NormalizedTabName) -or [System.String]::IsNullOrWhiteSpace($NormalizedFeatureName)) {
+        throw 'TabName and FeatureName must contain at least one non-space character.'
+    }
+
+    # Build a flattened key path in the format tabname.featurename.
+    [System.String]$FlatKeyName = "$NormalizedTabName.$NormalizedFeatureName"
 
     foreach ($KeyType in @('TextBoxes','ComboBoxes')) {
-        if (-not $Global:Graphics.$KeyType.ContainsKey($Name)) {
-            $Global:Graphics.$KeyType.$Name = @{}
+        if (-not $Global:Graphics.$KeyType.ContainsKey($FlatKeyName)) {
+            $Global:Graphics.$KeyType.$FlatKeyName = @{}
         }
+    }
 
-        if ($ChildName -and (-not $Global:Graphics.$KeyType.$Name.ContainsKey($ChildName))) {
-            $Global:Graphics.$KeyType.$Name.$ChildName = @{}
-        }
+    if ($PassThru) {
+        $FlatKeyName
     }
 }
 

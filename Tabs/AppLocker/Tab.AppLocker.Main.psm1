@@ -41,7 +41,7 @@ function Import-TabAppLocker {
 
         # EXECUTION
         # Create the hashtables for this tab in the Global Graphics object.
-        New-SubKeyForBoxes -Name 'AppLocker'
+        New-SubKeyForBoxes -TabName 'AppLocker' -FeatureName 'Main'
 
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties

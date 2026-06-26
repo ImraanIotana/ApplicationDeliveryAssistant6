@@ -38,7 +38,7 @@ function Import-TabApplicationIntake {
             BackGroundColor     = 'RoyalBlue'
         }
         # Create the hashtables for this tab in the Global Graphics object.
-        New-SubKeyForBoxes -Name $TabProperties.Title
+        New-SubKeyForBoxes -TabName $TabProperties.Title -FeatureName 'Main'
 
         # EXECUTION - PARENT TABPAGE
         # Create the TabPage
@@ -50,7 +50,7 @@ function Import-TabApplicationIntake {
 
         # Import the SubTabs
         Import-SubTabApplicationIntake  -InputObject $InputObject -ParentTabControl $SubTabControl
-        Import-SubTabIntakeExtras       -InputObject $InputObject -ParentTabControl $SubTabControl
+        #Import-SubTabIntakeExtras       -InputObject $InputObject -ParentTabControl $SubTabControl
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

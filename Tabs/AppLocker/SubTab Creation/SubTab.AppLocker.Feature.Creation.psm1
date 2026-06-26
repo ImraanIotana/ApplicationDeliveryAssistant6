@@ -51,12 +51,15 @@ function Import-FeatureAppLockerCreation {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # Ensure the flat storage key exists for this tab-feature pair and capture it.
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
+
         # EXECUTION - TEXTBOXES
         # Set the InstallationFolderTextBox properties
         [System.Collections.Hashtable]$InstallationFolderTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Select Folder'
-            PropertyName    = 'TextBoxes.AppLocker.Creation.FolderPath'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.FolderPath"
             ToolTip         = 'The folder to create AppLocker policies for.'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Browse Folder'),@(6,'Paste'),@(7,'Open'))
@@ -65,7 +68,7 @@ function Import-FeatureAppLockerCreation {
         [System.Collections.Hashtable]$ADGroupNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'AD Group Name'
-            PropertyName    = 'TextBoxes.AppLocker.Creation.ADGroupName'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.ADGroupName"
             ToolTip         = 'The Active Directory group name that will be associated with the AppLocker policies'
             DefaultValue    = 'Everyone'
             SizeType        = 'Medium'
@@ -75,16 +78,16 @@ function Import-FeatureAppLockerCreation {
         [System.Collections.Hashtable]$ADGroupSIDTextBoxProperties = @{
             RowNumber       = 3
             Label           = 'AD Group SID'
-            PropertyName    = 'TextBoxes.AppLocker.Creation.ADGroupSID'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.ADGroupSID"
             ToolTip         = 'The Security Identifier (SID) of the Active Directory group associated with the AppLocker policies'
             DefaultValue    = 'S-1-1-0'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
         }
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.AppLocker.Creation.FolderPath    = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupName   = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupSID    = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FolderPath    = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupName   = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupSID    = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
         # Set the Default Button properties
@@ -96,8 +99,8 @@ function Import-FeatureAppLockerCreation {
             ToolTip         = 'Set the Active Directory group and SID to their default values.'
             Function        = {
                 # This button is not a true "default" button as the default values are not hardcoded but rather set in the TextBox properties.
-                Reset-TextBox -TextBox $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupName
-                Reset-TextBox -TextBox $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupSID -Force
+                Reset-TextBox -TextBox $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupName
+                Reset-TextBox -TextBox $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupSID -Force
             }.GetNewClosure()
         }
         # Set the Action Button
@@ -108,8 +111,8 @@ function Import-FeatureAppLockerCreation {
             SizeType        = 'Large'
             ToolTip         = 'Create the AppLocker files for the selected folder.'
             Function        = {
-                [System.String]$FolderToScan        = $Global:Graphics.TextBoxes.AppLocker.Creation.FolderPath.Text
-                [System.String]$ADGroupSID          = $Global:Graphics.TextBoxes.AppLocker.Creation.ADGroupSID.Text
+                [System.String]$FolderToScan        = $Global:Graphics.TextBoxes[$SubKeyForBoxes].FolderPath.Text
+                [System.String]$ADGroupSID          = $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupSID.Text
                 [System.Object]$SelectedTemplate    = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
                 New-AppLockerFile -FolderToScan $FolderToScan -ADGroupSID $ADGroupSID -SelectedTemplate $SelectedTemplate -OpenOutputFolder
             }.GetNewClosure()
