@@ -255,17 +255,110 @@ function New-ApplicationIDFromTextBoxes {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Generates an Application ID from Intake Custom Properties textboxes.
+    Resolves a ComboBox from Graphics.ComboBoxes by logical name.
 .DESCRIPTION
-    This function reads Vendor Name, Application Name, and Application Version from the Intake Custom Properties textboxes.
-    It removes all whitespace from each value, validates that all values are populated, and generates an Application ID string.
-    The generated ID is written to the supplied output textbox when one is provided.
+    Searches flattened ComboBox sections first, then legacy nested sections,
+    and finally the legacy ApplicationIntake fallback node.
 .EXAMPLE
-    New-ApplicationIDFromTextBoxes -OutputTextBox $ApplicationIDTextBox
+    Get-GraphicsComboBoxByName -ComboBoxName 'TemplateSelection'
 .INPUTS
-    [System.Windows.Forms.TextBox]
+    [System.String]
 .OUTPUTS
-    No objects are returned to the pipeline. The result is written to the provided textbox.
+    [System.Windows.Forms.ComboBox] when found; otherwise $null.
+#>
+####################################################################################################
+function Get-GraphicsComboBoxByName {
+    [CmdletBinding()]
+    [OutputType([System.Windows.Forms.ComboBox])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ComboBox key name to resolve from Graphics.ComboBoxes.')]
+        [System.String]$ComboBoxName
+    )
+
+    if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
+        foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
+            [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
+            if ($ParentNode -isnot [System.Collections.IDictionary]) { continue }
+
+            # Flattened layout: ComboBox stored directly in the section hashtable.
+            if ($ParentNode.ContainsKey($ComboBoxName) -and $ParentNode.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
+                return $ParentNode.$ComboBoxName
+            }
+
+            # Legacy nested layout: one additional level (tab -> subtab -> ComboBox).
+            foreach ($SubTabKey in $ParentNode.Keys) {
+                [System.Object]$SubTabNode = $ParentNode.$SubTabKey
+                if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey($ComboBoxName) -and $SubTabNode.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
+                    return $SubTabNode.$ComboBoxName
+                }
+            }
+        }
+    }
+
+    if (($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey($ComboBoxName)) {
+        if ($Global:Graphics.ComboBoxes.ApplicationIntake.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
+            return $Global:Graphics.ComboBoxes.ApplicationIntake.$ComboBoxName
+        }
+    }
+
+    return $null
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Resolves the Intake Security section from Graphics.TextBoxes.
+.DESCRIPTION
+    Searches flattened Intake sections first, then falls back to the legacy
+    ApplicationIntake.Security node.
+.EXAMPLE
+    Get-IntakeSecuritySection
+.INPUTS
+    No input objects are accepted.
+.OUTPUTS
+    [System.Object] hashtable-like section when found; otherwise $null.
+#>
+####################################################################################################
+function Get-IntakeSecuritySection {
+    [CmdletBinding()]
+    param ()
+
+    foreach ($Key in $Global:Graphics.TextBoxes.Keys) {
+        [System.Object]$Section = $Global:Graphics.TextBoxes[$Key]
+        if (($Section -is [System.Collections.IDictionary]) -and $Section.ContainsKey('Security')) {
+            return $Section.Security
+        }
+    }
+
+    if (($Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Security')) {
+        return $Global:Graphics.TextBoxes.ApplicationIntake.Security
+    }
+
+    return $null
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Creates the application folder structure for the generated Application ID.
+.DESCRIPTION
+    This function creates the application folder for the current Application ID in the configured output folder.
+    It validates the output folder and Application ID, asks for confirmation before overwriting an existing folder,
+    creates the folder and its configured subfolders, generates initial artifacts, and opens the output folder afterwards.
+.EXAMPLE
+    New-ApplicationFolder
+.INPUTS
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
@@ -281,57 +374,26 @@ function New-ApplicationFolder {
     )
     
     try {
+        # 1) Validate output location and resolve the current Application ID.
         # VALIDATION
-        # If OutputFolder is not provided, throw an error
+        # Ensure the output folder is usable.
         if (Test-String -IsEmpty $OutputFolder) { throw "The OutputFolder parameter is empty." }
-        # If the output folder does not exist, create it
         if (-not (Test-Path -Path $OutputFolder -PathType Container)) { New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null }
 
         # PREPARATION
-        # Resolve and set the ApplicationID textbox
+        # Resolve and refresh the Application ID.
         [System.Windows.Forms.TextBox]$ApplicationIDTextBox = Get-IntakeApplicationIDTextBox
         New-ApplicationIDFromTextBoxes -OutputTextBox $ApplicationIDTextBox
-        # Get the Application ID from the ApplicationID TextBox
         [System.String]$ApplicationID = if ($null -ne $ApplicationIDTextBox) { $ApplicationIDTextBox.Text } else { $null }
-        # If the Application ID is empty, throw an error
         if (Test-String -IsEmpty $ApplicationID) {
             Write-Line "The Application ID is empty. Please generate an Application ID before creating the application folder. No action has been taken."
             return
         }
 
-        # Resolve a ComboBox by key without hardcoded parent or subtab keys
-        [ScriptBlock]$ResolveComboBox = {
-            param (
-                [Parameter(Mandatory=$true)]
-                [System.String]$ComboBoxName
-            )
-
-            [System.Object]$ResolvedComboBox = $null
-            if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
-                foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
-                    [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
-                    if ($ParentNode -is [System.Collections.IDictionary]) {
-                        foreach ($SubTabKey in $ParentNode.Keys) {
-                            [System.Object]$SubTabNode = $ParentNode.$SubTabKey
-                            if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey($ComboBoxName)) {
-                                $ResolvedComboBox = $SubTabNode.$ComboBoxName
-                                break
-                            }
-                        }
-                    }
-                    if ($null -ne $ResolvedComboBox) { break }
-                }
-            }
-
-            if ($null -eq $ResolvedComboBox -and ($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey($ComboBoxName)) {
-                $ResolvedComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.$ComboBoxName
-            }
-
-            $ResolvedComboBox
-        }
-
-        # Resolve the TemplateSelection ComboBox without hardcoded parent or subtab keys
-        [System.Object]$TemplateSelectionComboBox = & $ResolveComboBox -ComboBoxName 'TemplateSelection'
+        # 2) Resolve template selection and target folder structure.
+        # PREPARATION
+        # Resolve the selected customer template.
+        [System.Object]$TemplateSelectionComboBox = Get-GraphicsComboBoxByName -ComboBoxName 'TemplateSelection'
         [System.Object]$SelectedTemplate = if ($null -ne $TemplateSelectionComboBox) { $TemplateSelectionComboBox.SelectedItem } else { $null }
         if ($null -eq $SelectedTemplate) {
             Write-Line 'No customer template selected. Please select a template first. No action has been taken.'
@@ -349,7 +411,6 @@ function New-ApplicationFolder {
         [System.String]$NewFolderPath = Join-Path -Path $OutputFolder -ChildPath $ApplicationID
 
         # CONFIRMATION
-        # Set the Title and Body for the confirmation message box
         if (Test-Path -Path $NewFolderPath -PathType Container) {
             [System.String]$Title   = "Confirm Overwrite Application Folder"
             [System.String]$Body    = "This will OVERWRITE the EXISTING APPLICATION FOLDER with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
@@ -358,44 +419,63 @@ function New-ApplicationFolder {
             [System.String]$Title   = "Create Application Folder"
             [System.String]$Body    = "This will create a NEW APPLICATION FOLDER with the following name:`n`n$ApplicationID`n`nDo you want to continue?"
         }
-        # If the user did not confirm, return
         if (Get-UserConfirmation -Title $Title -Body $Body) {
             Write-Line "Creating application folder: $NewFolderPath. One moment please..."
         } else {
             return
         }
 
+        # 3) Create folder tree and base artifacts.
         # EXECUTION
-        # Remove the existing folder if it exists
+        # Recreate the root application folder.
         if (Test-Path -Path $NewFolderPath -PathType Container) { Remove-Item -Path $NewFolderPath -Recurse -Force }
-        # Create the new folder
         New-Item -Path $NewFolderPath -ItemType Directory -Force | Out-Null
-        # Get the subfolders from the Application Folder Template
+
+        # Create configured application subfolders.
         [System.Collections.Generic.List[System.String]]$SubFolders = @($ApplicationFolderSubFolders.GetEnumerator() | ForEach-Object { $_.Value })
         if ($SubFolders.Count -eq 0) {
             Write-Line 'The selected template defines no application subfolders. No action has been taken.'
             return
         }
-        # Create the subfolders in the new folder
         foreach ($SubFolder in $SubFolders) {
             [System.String]$SubFolderPath = Join-Path -Path $NewFolderPath -ChildPath $SubFolder
             New-Item -Path $SubFolderPath -ItemType Directory -Force | Out-Null
         }
 
-        # Create the initial Word document in the Documentation subfolder from the selected template
+        # Create initial artifacts in the folder.
         New-MetaDataFile -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
         New-ApplicationIntakeDocument -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate -FolderToSearch (Join-Path -Path $Global:ApplicationObject.RootFolder -ChildPath 'Customer')
-        [System.Object]$ApplicationShortcutsComboBox = & $ResolveComboBox -ComboBoxName 'ApplicationShortcuts'
-        [System.Object]$SelectedShortcutItem = if ($null -ne $ApplicationShortcutsComboBox) { $ApplicationShortcutsComboBox.SelectedItem } else { $null }
-        Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutItem $SelectedShortcutItem
-        New-AppLockerFile -Path $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text -ADGroupSID $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text -ApplicationID $ApplicationID -SelectedTemplate $SelectedTemplate
+
+        # 4) Add optional exports and generated files that depend on UI selections.
+        # Export selected application registry details to the template-defined Archive\Other folder.
+        [System.Object]$InstalledApplicationsComboBox = Get-GraphicsComboBoxByName -ComboBoxName 'InstalledApplications'
+        [System.Object]$SelectedInstalledApplication = if ($null -ne $InstalledApplicationsComboBox) { $InstalledApplicationsComboBox.SelectedItem } else { $null }
+        [System.String]$SelectedRegistryPath = if ($null -ne $SelectedInstalledApplication) { $SelectedInstalledApplication.RegistryPath } else { $null }
+        [System.String]$OtherRelativePath = [System.String]$ApplicationFolderSubFolders.Other
+        if (Test-String -IsEmpty $OtherRelativePath) {
+            Write-Line 'The selected customer template does not define ApplicationFolderSubFolders.Other. Skipping registry export.' -Type Warning
+        }
+        elseif (Test-String -IsPopulated $SelectedRegistryPath) {
+            [System.String]$RegistryExportOutputFolder = Join-Path -Path $NewFolderPath -ChildPath $OtherRelativePath
+            Export-RegistryKey -RegistryKeyPath $SelectedRegistryPath -OutputFolder $RegistryExportOutputFolder
+        }
+        else {
+            Write-Line 'No installed application selected. Skipping registry export.' -Type Warning
+        }
+
+        [System.Object]$ApplicationShortcutsComboBox = Get-GraphicsComboBoxByName -ComboBoxName 'ApplicationShortcuts'
+        Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutComboBox $ApplicationShortcutsComboBox
+
+        [System.Object]$SecuritySection = Get-IntakeSecuritySection
+        [System.String]$SecurityInstallationFolder = if ($null -ne $SecuritySection -and $null -ne $SecuritySection.InstallationFolder) { $SecuritySection.InstallationFolder.Text } else { $null }
+        [System.String]$SecurityADGroupSID = if ($null -ne $SecuritySection -and $null -ne $SecuritySection.ADGroupSID) { $SecuritySection.ADGroupSID.Text } else { $null }
+        New-AppLockerFile -Path $SecurityInstallationFolder -ADGroupSID $SecurityADGroupSID -ApplicationID $ApplicationID -SelectedTemplate $SelectedTemplate
+
         Copy-UDF -ApplicationFolderPath $NewFolderPath -SelectedTemplate $SelectedTemplate
 
-        # Write a message to the host indicating that the new application folder has been created
+        # 5) Report completion and open destination.
+        # Report completion and open destination.
         Write-Line "The new application folder has been created. ($ApplicationID)"
-
-        # POST-EXECUTION
-        # Open the OutputFolder
         Open-Folder -Path $OutputFolder
     }
     catch {

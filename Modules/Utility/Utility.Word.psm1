@@ -86,6 +86,14 @@ function New-ApplicationIntakeDocument {
             return
         }
 
+        # VALIDATION
+        # If Word is not installed/registered, copy the template as fallback working file.
+        if ($null -eq [System.Type]::GetTypeFromProgID('Word.Application')) {
+            Copy-Item -Path $ResolvedTemplatePath -Destination $TemplateCopyPath -Force
+            Write-Line "Microsoft Word is not installed. Copied the Word template for later use: $TemplateCopyPath" -Type Warning
+            return
+        }
+
         # EXECUTION
         # Create the intake document from template and fill the fields
         New-WordDocumentFromTemplate -TemplatePath $ResolvedTemplatePath -OutputPath $OutputDocumentPath
