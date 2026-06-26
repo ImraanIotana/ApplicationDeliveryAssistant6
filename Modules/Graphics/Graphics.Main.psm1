@@ -86,13 +86,18 @@ function Initialize-Graphics {
     This function builds a flat key path in the format TabName.FeatureName,
     then initializes that key under both $Global:Graphics.TextBoxes and
     $Global:Graphics.ComboBoxes.
-    TabName and FeatureName are normalized by removing spaces and converting to lowercase.
+    Names can be provided directly with -TabName and -FeatureName,
+    or derived from -ParentTabPage when used on a sub-tab.
+    Key names are normalized by removing spaces and converting to lowercase.
 .EXAMPLE
     New-SubKeyForBoxes -TabName 'ApplicationIntake' -FeatureName 'Main'
+.EXAMPLE
+    New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
 .INPUTS
     [System.String]
+    [System.Windows.Forms.TabPage]
 .OUTPUTS
-    No objects are returned to the pipeline.
+    [System.String] when -PassThru is specified; otherwise no objects are returned.
 #>
 ####################################################################################################
 function New-SubKeyForBoxes {

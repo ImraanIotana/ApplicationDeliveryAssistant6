@@ -1,9 +1,10 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Formal Properties feature into the Intake tab.
+    Imports the Application Formal Properties feature into the Intake sub-tab.
 .DESCRIPTION
-    This function imports the Application Formal Properties feature into the Intake tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Application Formal Properties feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    It stores created textboxes under a flattened graphics key resolved via New-SubKeyForBoxes.
 .EXAMPLE
     Import-FeatureApplicationFormalProperties -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
@@ -51,21 +52,16 @@ function Import-FeatureApplicationFormalProperties {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
-        # Derive graphics keys from the current tab
-        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
-        [System.String]$GraphicsFeatureKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($FeatureProperties.Title.ToLower()) -replace '\s+', '')
-
-        # Build textbox property paths
-        [System.String]$VendorNamePropertyName = "TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.VendorName"
-        [System.String]$ApplicationNamePropertyName = "TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.ApplicationName"
-        [System.String]$ApplicationVersionPropertyName = "TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.ApplicationVersion"
+        # PREPARATION - TEXTBOXES
+        # Derive the subkey for the TextBoxes from the current tab
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
 
         # TEXTBOXES
         # Set the VendorNameTextBox properties
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Formal Vendor Name'
-            PropertyName    = $VendorNamePropertyName
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalProperties.VendorName"
             ToolTip         = 'The formal name of the vendor of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
@@ -76,7 +72,7 @@ function Import-FeatureApplicationFormalProperties {
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Formal Application Name'
-            PropertyName    = $ApplicationNamePropertyName
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalProperties.ApplicationName"
             ToolTip         = 'The formal name of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
@@ -87,19 +83,21 @@ function Import-FeatureApplicationFormalProperties {
         [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
             RowNumber       = 3
             Label           = 'Formal Application Version'
-            PropertyName    = $ApplicationVersionPropertyName
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalProperties.ApplicationVersion"
             ToolTip         = 'The formal version of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
         }
-        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey($GraphicsSubTabKey)) { $Global:Graphics.TextBoxes.$GraphicsSubTabKey = @{} }
-        if (-not $Global:Graphics.TextBoxes.$GraphicsSubTabKey.ContainsKey($GraphicsFeatureKey)) { $Global:Graphics.TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey = @{} }
+
+        if (-not $Global:Graphics.TextBoxes[$SubKeyForBoxes].ContainsKey('FormalProperties')) {
+            $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties = @{}
+        }
+
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.VendorName            = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.ApplicationName       = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.$GraphicsSubTabKey.$GraphicsFeatureKey.ApplicationVersion    = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.VendorName         = [System.Windows.Forms.TextBox](New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.ApplicationName    = [System.Windows.Forms.TextBox](New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.ApplicationVersion = [System.Windows.Forms.TextBox](New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
 
         # Return the GroupBox object
         $FeatureGroupBox

@@ -61,7 +61,14 @@ function Import-FeatureIntakeCustomerTemplateSelection {
         [System.String]$TemplateSelectionPropertyName = "ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.TemplateSelection"
 
         # Create Graphics hashtable entries for this tab path when they do not already exist
-        if ($GraphicsParentKey -and (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+        if ($GraphicsParentKey) {
+            if (-not $Global:Graphics.ComboBoxes.ContainsKey($GraphicsParentKey) -or $Global:Graphics.ComboBoxes.$GraphicsParentKey -isnot [System.Collections.IDictionary]) {
+                $Global:Graphics.ComboBoxes.$GraphicsParentKey = @{}
+            }
+            if (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) {
+                $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{}
+            }
+        }
 
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties

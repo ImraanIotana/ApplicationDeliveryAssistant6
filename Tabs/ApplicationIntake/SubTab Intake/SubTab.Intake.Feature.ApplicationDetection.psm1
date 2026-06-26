@@ -10,6 +10,7 @@
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
     [System.Windows.Forms.GroupBox]
+    [System.String]
 .OUTPUTS
     [System.Windows.Forms.GroupBox]
 .NOTES
@@ -51,20 +52,23 @@ function Import-FeatureIntakeApplicationDetection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # PREPARATION - TEXTBOXES
+        # Derive the subkey for the TextBoxes from the current tab
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
+
         # EXECUTION - TEXTBOX
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber                   = 1
             Label                       = 'Detection file / MSI'
-            PropertyName                = 'TextBoxes.ApplicationIntake.Detection.DetectionFile'
+            PropertyName                = "TextBoxes.$SubKeyForBoxes.DetectionFile"
             ToolTip                     = 'The detection file or MSI of the application. This will be used to acquire the detection information for the distribution system.'
             SizeType                    = 'Medium'
             SmallButtons                = @(@(6,'Paste'),@(7,'Open'))
         }
-        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Detection')) { $Global:Graphics.TextBoxes.ApplicationIntake.Detection = @{} }
+
         # Create the TextBox
-        $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].DetectionFile = New-TextBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties
@@ -76,8 +80,8 @@ function Import-FeatureIntakeApplicationDetection {
                 SizeType        = 'Small'
                 ToolTip         = 'Browse for the detection file or MSI of the application.'
                 Function        = {
-                    [System.String]$InitialDirectory = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
-                    Select-File -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile -Type Executable
+                    [System.String]$InitialDirectory = $Global:Graphics.TextBoxes[$SubKeyForBoxes].Security.InstallationFolder.Text
+                    Select-File -InitialDirectory $InitialDirectory -TextBox $Global:Graphics.TextBoxes[$SubKeyForBoxes].DetectionFile -Type Executable
                 }.GetNewClosure()
             }
         )

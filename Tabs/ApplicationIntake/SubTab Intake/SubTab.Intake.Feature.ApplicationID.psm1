@@ -10,6 +10,7 @@
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
     [System.Windows.Forms.GroupBox]
+    [System.String]
 .OUTPUTS
     [System.Windows.Forms.GroupBox]
 .NOTES
@@ -51,20 +52,24 @@ function Import-FeatureIntakeApplicationID {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # PREPARATION - TEXTBOXES
+        # Derive the subkey for the TextBoxes from the current tab
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
+
         # EXECUTION - TEXTBOX
         # Set the TextBox properties
         [System.Collections.Hashtable]$ApplicationIDTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Application ID'
-            PropertyName    = 'TextBoxes.ApplicationIntake.ApplicationID'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.ApplicationID"
             ToolTip         = 'The ID of the application to intake'
             SizeType        = 'Medium'
             Type            = 'Output'
         }
-        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake')) { $Global:Graphics.TextBoxes.ApplicationIntake = @{} }
+
         # Create the TextBox
-        $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID = New-TextBox @ApplicationIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        [System.Windows.Forms.TextBox]$ApplicationIDTextBox = New-TextBox @ApplicationIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].ApplicationID = $ApplicationIDTextBox
 
         # EXECUTION - BUTTONS
         # Set the Buttons properties
@@ -75,7 +80,7 @@ function Import-FeatureIntakeApplicationID {
             PNGFileName     = 'download_for_windows'
             SizeType        = 'Medium'
             ToolTip         = 'Browse for a detection file or MSI.'
-            Function        = { New-ApplicationIDFromTextBoxes -OutputTextBox $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID }.GetNewClosure()
+            Function        = { New-ApplicationIDFromTextBoxes -OutputTextBox $ApplicationIDTextBox }.GetNewClosure()
         }
         [System.Collections.Hashtable]$CreateFolderButtonProperties = @{
             ColumnNumber    = 5
@@ -97,6 +102,50 @@ function Import-FeatureIntakeApplicationID {
     catch {
         Write-ErrorReport -ErrorRecord $_
     }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Resolves the Intake Application ID textbox from Graphics.TextBoxes.
+.DESCRIPTION
+    This function resolves the Application ID textbox from the flattened graphics key model first,
+    then falls back to the legacy ApplicationIntake key path.
+.EXAMPLE
+    Get-IntakeApplicationIDTextBox
+.INPUTS
+    No input objects are accepted.
+.OUTPUTS
+    [System.Windows.Forms.TextBox] when found; otherwise $null.
+#>
+####################################################################################################
+function Get-IntakeApplicationIDTextBox {
+    [CmdletBinding()]
+    [OutputType([System.Windows.Forms.TextBox])]
+    param ()
+
+    if ($Global:Graphics.TextBoxes -is [System.Collections.IDictionary]) {
+        foreach ($Key in $Global:Graphics.TextBoxes.Keys) {
+            [System.Object]$Section = $Global:Graphics.TextBoxes[$Key]
+            if ($Section -is [System.Collections.IDictionary] -and $Section.ContainsKey('ApplicationID')) {
+                if ($Section.ApplicationID -is [System.Windows.Forms.TextBox]) {
+                    return $Section.ApplicationID
+                }
+            }
+        }
+    }
+
+    if ($Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary] -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('ApplicationID')) {
+        if ($Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID -is [System.Windows.Forms.TextBox]) {
+            return $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID
+        }
+    }
+
+    return $null
 }
 
 ### END OF FUNCTION
@@ -139,11 +188,27 @@ function New-ApplicationIDFromTextBoxes {
             'ApplicationName'
             'ApplicationVersion'
         )
+        # Resolve the custom properties section from flattened keys first, then fallback to legacy nested path.
+        [System.Object]$CustomSection = $null
+        foreach ($Key in $Global:Graphics.TextBoxes.Keys) {
+            [System.Object]$Section = $Global:Graphics.TextBoxes[$Key]
+            if ($Section -is [System.Collections.IDictionary] -and $Section.ContainsKey('CustomProperties')) {
+                $CustomSection = $Section.CustomProperties
+                break
+            }
+        }
+        if ($null -eq $CustomSection -and $Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary] -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) {
+            $CustomSection = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties
+        }
+        if ($null -eq $CustomSection) {
+            throw 'Unable to resolve Intake CustomProperties textboxes from Graphics.TextBoxes.'
+        }
+
         # Create a hashtable to store the trimmed values of the TextBoxes
         [System.Collections.Hashtable]$TrimmedValues = @{}
         # Loop through the TextBoxes, get the text, trim it and store it in the hashtable
         foreach ($TextBoxName in $TextBoxesToGetTextFrom) {
-            $TrimmedValues[$TextBoxName] = ($Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.$TextBoxName.Text -replace '\s+', '')
+            $TrimmedValues[$TextBoxName] = ($CustomSection.$TextBoxName.Text -replace '\s+', '')
         }
         # Validate that none of the trimmed values are empty
         foreach ($Key in $TrimmedValues.Keys) {
@@ -196,7 +261,7 @@ function New-ApplicationIDFromTextBoxes {
     It removes all whitespace from each value, validates that all values are populated, and generates an Application ID string.
     The generated ID is written to the supplied output textbox when one is provided.
 .EXAMPLE
-    New-ApplicationIDFromTextBoxes -OutputTextBox $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID
+    New-ApplicationIDFromTextBoxes -OutputTextBox $ApplicationIDTextBox
 .INPUTS
     [System.Windows.Forms.TextBox]
 .OUTPUTS
@@ -223,10 +288,11 @@ function New-ApplicationFolder {
         if (-not (Test-Path -Path $OutputFolder -PathType Container)) { New-Item -Path $OutputFolder -ItemType Directory -Force | Out-Null }
 
         # PREPARATION
-        # Set the ApplicationID
-        New-ApplicationIDFromTextBoxes -OutputTextBox $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID
+        # Resolve and set the ApplicationID textbox
+        [System.Windows.Forms.TextBox]$ApplicationIDTextBox = Get-IntakeApplicationIDTextBox
+        New-ApplicationIDFromTextBoxes -OutputTextBox $ApplicationIDTextBox
         # Get the Application ID from the ApplicationID TextBox
-        [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
+        [System.String]$ApplicationID = if ($null -ne $ApplicationIDTextBox) { $ApplicationIDTextBox.Text } else { $null }
         # If the Application ID is empty, throw an error
         if (Test-String -IsEmpty $ApplicationID) {
             Write-Line "The Application ID is empty. Please generate an Application ID before creating the application folder. No action has been taken."
@@ -440,7 +506,8 @@ function Copy-UDF {
 
         # EXECUTION
         # Extract the UDF archive contents directly into the ApplicationID folder.
-        [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
+        [System.Windows.Forms.TextBox]$ApplicationIDTextBox = Get-IntakeApplicationIDTextBox
+        [System.String]$ApplicationID = if ($null -ne $ApplicationIDTextBox) { $ApplicationIDTextBox.Text } else { $null }
         if (Test-String -IsEmpty $ApplicationID) {
             [System.String]$ApplicationID = 'ApplicationDossier'
         }
@@ -532,7 +599,8 @@ function New-MetaDataFile {
 
         # PREPARATION
         # Build a safe file name based on the generated Application ID.
-        [System.String]$ApplicationID = $Global:Graphics.TextBoxes.ApplicationIntake.ApplicationID.Text
+        [System.Windows.Forms.TextBox]$ApplicationIDTextBox = Get-IntakeApplicationIDTextBox
+        [System.String]$ApplicationID = if ($null -ne $ApplicationIDTextBox) { $ApplicationIDTextBox.Text } else { $null }
         if (Test-String -IsEmpty $ApplicationID) {
             [System.String]$ApplicationID = 'ApplicationDossier'
         }
@@ -606,6 +674,61 @@ function New-MetaDataFile {
             [void]$SelectedTemplateForMetaData.PSObject.Properties.Remove('Content')
         }
 
+        # PREPARATION
+        # Resolve Intake sections from flattened keys first, then fallback to legacy nested paths.
+        [System.Object]$FormalSection = $null
+        [System.Object]$CustomSection = $null
+        [System.Object]$SecuritySection = $null
+        [System.Windows.Forms.TextBox]$DetectionTextBox = $null
+
+        foreach ($Key in $Global:Graphics.TextBoxes.Keys) {
+            [System.Object]$Section = $Global:Graphics.TextBoxes[$Key]
+            if ($null -eq $Section -or $Section -isnot [System.Collections.IDictionary]) { continue }
+
+            if ($Section.ContainsKey('FormalProperties') -and $null -eq $FormalSection) {
+                $FormalSection = $Section.FormalProperties
+            }
+            if ($Section.ContainsKey('CustomProperties') -and $null -eq $CustomSection) {
+                $CustomSection = $Section.CustomProperties
+            }
+            if ($Section.ContainsKey('Security') -and $null -eq $SecuritySection) {
+                $SecuritySection = $Section.Security
+            }
+            if ($Section.ContainsKey('DetectionFile') -and $null -eq $DetectionTextBox) {
+                $DetectionTextBox = $Section.DetectionFile
+            }
+            if ($Section.ContainsKey('Detection') -and $null -eq $DetectionTextBox -and $Section.Detection -is [System.Collections.IDictionary] -and $Section.Detection.ContainsKey('DetectionFile')) {
+                $DetectionTextBox = $Section.Detection.DetectionFile
+            }
+        }
+
+        if ($null -eq $FormalSection -or $null -eq $CustomSection -or $null -eq $SecuritySection -or $null -eq $DetectionTextBox) {
+            if ($Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake') -and $Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary]) {
+                [System.String]$FormalPropertiesKey = 'FormalApplicationProperties'
+                if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($FormalPropertiesKey)) { $FormalPropertiesKey = 'FormalProperties' }
+
+                if ($null -eq $FormalSection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($FormalPropertiesKey)) {
+                    $FormalSection = $Global:Graphics.TextBoxes.ApplicationIntake.$FormalPropertiesKey
+                }
+                if ($null -eq $CustomSection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) {
+                    $CustomSection = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties
+                }
+                if ($null -eq $SecuritySection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Security')) {
+                    $SecuritySection = $Global:Graphics.TextBoxes.ApplicationIntake.Security
+                }
+                if ($null -eq $DetectionTextBox -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('DetectionFile')) {
+                    $DetectionTextBox = $Global:Graphics.TextBoxes.ApplicationIntake.DetectionFile
+                }
+                if ($null -eq $DetectionTextBox -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Detection') -and $Global:Graphics.TextBoxes.ApplicationIntake.Detection -is [System.Collections.IDictionary] -and $Global:Graphics.TextBoxes.ApplicationIntake.Detection.ContainsKey('DetectionFile')) {
+                    $DetectionTextBox = $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile
+                }
+            }
+        }
+
+        if ($null -eq $FormalSection -or $null -eq $CustomSection -or $null -eq $SecuritySection -or $null -eq $DetectionTextBox) {
+            throw 'Unable to resolve Intake textbox sections (Formal, Custom, Security) and DetectionFile from Graphics.TextBoxes.'
+        }
+
         # EXECUTION
         # Build the metadata payload from the current Intake state.
         [PSCustomObject]$MetaDataObject = [PSCustomObject][ordered]@{
@@ -613,21 +736,21 @@ function New-MetaDataFile {
             CreatedOn                   = Get-TimeStamp -ForHost
             ApplicationID               = $ApplicationID
             # Formal properties
-            FormalVendorName            = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.VendorName.Text
-            FormalApplicationName       = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationName.Text
-            FormalApplicationVersion    = $Global:Graphics.TextBoxes.ApplicationIntake.FormalProperties.ApplicationVersion.Text
+            FormalVendorName            = $FormalSection.VendorName.Text
+            FormalApplicationName       = $FormalSection.ApplicationName.Text
+            FormalApplicationVersion    = $FormalSection.ApplicationVersion.Text
             # Custom properties
-            CustomVendorName            = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.VendorName.Text
-            CustomApplicationName       = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationName.Text
-            CustomApplicationVersion    = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion.Text
+            CustomVendorName            = $CustomSection.VendorName.Text
+            CustomApplicationName       = $CustomSection.ApplicationName.Text
+            CustomApplicationVersion    = $CustomSection.ApplicationVersion.Text
             # Security properties
-            InstallationFolder          = $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text
-            ADGroupName                 = $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupName.Text
-            ADGroupSID                  = $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID.Text
+            InstallationFolder          = $SecuritySection.InstallationFolder.Text
+            ADGroupName                 = $SecuritySection.ADGroupName.Text
+            ADGroupSID                  = $SecuritySection.ADGroupSID.Text
             # Other properties
-            DetectionFile               = $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text
-            DetectionFileVersion        = Get-Item -LiteralPath $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text -ErrorAction SilentlyContinue | Select-Object -ExpandProperty VersionInfo -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FileVersion -ErrorAction SilentlyContinue
-            Bitness                     = Get-FileBitness -Path $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile.Text
+            DetectionFile               = $DetectionTextBox.Text
+            DetectionFileVersion        = Get-Item -LiteralPath $DetectionTextBox.Text -ErrorAction SilentlyContinue | Select-Object -ExpandProperty VersionInfo -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FileVersion -ErrorAction SilentlyContinue
+            Bitness                     = Get-FileBitness -Path $DetectionTextBox.Text
             # Extra document information
             UserFullName                = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName.Text
             UserEmailAddress            = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress.Text

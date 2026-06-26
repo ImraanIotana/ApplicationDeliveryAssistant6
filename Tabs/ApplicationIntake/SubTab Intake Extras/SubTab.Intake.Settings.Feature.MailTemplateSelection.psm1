@@ -1,15 +1,17 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Selection feature into the Intake sub-tab.
+    Imports the Mail Template Selection feature into the Intake Extras sub-tab.
 .DESCRIPTION
-    This function imports the Application Selection feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Mail Template Selection feature into the Intake Extras sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    It stores the mail template ComboBox in the flattened graphics key structure resolved by New-SubKeyForBoxes.
 .EXAMPLE
-    Import-FeatureIntakeApplicationSelection -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureIntakeMailTemplateSelection -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
     [System.Windows.Forms.GroupBox]
+    [System.String]
 .OUTPUTS
     [System.Windows.Forms.GroupBox]
 .NOTES
@@ -51,34 +53,23 @@ function Import-FeatureIntakeMailTemplateSelection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
-        # Derive graphics keys from the current tab hierarchy
-        [System.Windows.Forms.TabControl]$ParentTabControl = $ParentTabPage.Parent
-        [System.Windows.Forms.Control]$ParentTab = if ($ParentTabControl -is [System.Windows.Forms.TabControl]) { $ParentTabControl.Parent } else { $null }
-        [System.String]$GraphicsParentKey = if ($ParentTab -is [System.Windows.Forms.TabPage]) { $ParentTab.Text } else { $null }
-        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
-
-        # Build the ComboBox property path used by New-ComboBox
-        [System.String]$MailTemplateSelectionPropertyName = "ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.MailTemplateSelection"
-
-        # Create Graphics hashtable entries for this tab path when they do not already exist
-        if ($GraphicsParentKey -and (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
-
-        # PREPARATION - MAIL TEMPLATES
-        [System.Object[]]$MailTemplates = Get-MailTemplates
-
-        # EXECUTION - COMBOBOXES
+        # PREPARATION - COMBOBOXES
+        # Derive the subkey for the ComboBoxes from the current tab
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber           = 1
             Label               = 'Select Mail Template'
-            PropertyName        = $MailTemplateSelectionPropertyName
+            PropertyName        = "ComboBoxes.$SubKeyForBoxes.MailTemplateSelection"
             ToolTip             = 'The list of mail templates to select from.'
             SizeType            = 'Medium'
-            MailTemplates       = $MailTemplates
+            MailTemplates       = Get-MailTemplates
         }
+
+        # EXECUTION - COMBOBOXES
         # Create the ComboBox
         [System.Windows.Forms.ComboBox]$MailTemplateSelectionComboBox = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
-        $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.MailTemplateSelection = $MailTemplateSelectionComboBox
+        $Global:Graphics.ComboBoxes[$SubKeyForBoxes].MailTemplateSelection = $MailTemplateSelectionComboBox
 
         # EXECUTION - BUTTONS
         # Set the Small Buttons properties

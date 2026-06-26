@@ -52,7 +52,8 @@ function Import-FeatureIntakeApplicationSelection {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
-        # Ensure the flat storage key exists for this tab-feature pair and capture it.
+        # PREPARATION - COMBOBOXES
+        # Derive the subkeys for the TextBoxes and ComboBoxes from the current tab
         [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
 
         # EXECUTION - COMBOBOXES
@@ -67,7 +68,7 @@ function Import-FeatureIntakeApplicationSelection {
         }
         # Create the ComboBox
         [System.Windows.Forms.ComboBox]$InstalledApplicationsComboBox = New-ComboBox @InstalledApplicationsComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
-        $Global:Graphics.ComboBoxes[$SubKeyForBoxes].InstalledApplications = $InstalledApplicationsComboBox
+        $Global:Graphics.ComboBoxes.$SubKeyForBoxes.InstalledApplications = $InstalledApplicationsComboBox
 
         # EXECUTION - BUTTONS
         # Set the Import Button properties
@@ -171,14 +172,52 @@ function Import-SelectedApplicationToIntakeTextBoxes {
     }
 
     # PREPARATION
-    # Resolve the formal properties section key with backward compatibility
-    [System.String]$FormalPropertiesKey = 'FormalApplicationProperties'
-    if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($FormalPropertiesKey)) { $FormalPropertiesKey = 'FormalProperties' }
+    # Resolve formal/custom sections from flattened keys first, then fallback to legacy nested paths.
+    [System.Object]$FormalSection = $null
+    [System.Object]$CustomSection = $null
+    [System.Object]$SecuritySection = $null
+
+    foreach ($Key in $Global:Graphics.TextBoxes.Keys) {
+        [System.Object]$Section = $Global:Graphics.TextBoxes[$Key]
+        if ($null -eq $Section -or $Section -isnot [System.Collections.IDictionary]) { continue }
+
+        if ($Section.ContainsKey('FormalProperties') -and $null -eq $FormalSection) {
+            $FormalSection = $Section.FormalProperties
+        }
+        if ($Section.ContainsKey('CustomProperties') -and $null -eq $CustomSection) {
+            $CustomSection = $Section.CustomProperties
+        }
+        if ($Section.ContainsKey('Security') -and $null -eq $SecuritySection) {
+            $SecuritySection = $Section.Security
+        }
+    }
+
+    if ($null -eq $FormalSection -or $null -eq $CustomSection -or $null -eq $SecuritySection) {
+        if ($Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake') -and $Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary]) {
+            [System.String]$FormalPropertiesKey = 'FormalApplicationProperties'
+            if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($FormalPropertiesKey)) { $FormalPropertiesKey = 'FormalProperties' }
+
+            if ($null -eq $FormalSection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($FormalPropertiesKey)) {
+                $FormalSection = $Global:Graphics.TextBoxes.ApplicationIntake.$FormalPropertiesKey
+            }
+            if ($null -eq $CustomSection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) {
+                $CustomSection = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties
+            }
+            if ($null -eq $SecuritySection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Security')) {
+                $SecuritySection = $Global:Graphics.TextBoxes.ApplicationIntake.Security
+            }
+        }
+    }
+
+    if ($null -eq $FormalSection -or $null -eq $CustomSection -or $null -eq $SecuritySection) {
+        Write-Line 'Unable to resolve Formal/Custom/Security intake textboxes from Graphics.TextBoxes. Open the Intake tab first and try again.' -Type Error
+        return
+    }
 
     # Define the sections to populate
     [System.Object[]]$Sections = @(
-        $Global:Graphics.TextBoxes.ApplicationIntake.$FormalPropertiesKey
-        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties
+        $FormalSection
+        $CustomSection
     )
     # Set the mapping hashtable
     [System.Collections.Hashtable]$MappingHashtable = @{
@@ -198,7 +237,7 @@ function Import-SelectedApplicationToIntakeTextBoxes {
     }
 
     # Populate the Application Security section with the selected application's information from the registry
-    $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder.Text = $SelectedApplication.InstallLocation
+    $SecuritySection.InstallationFolder.Text = $SelectedApplication.InstallLocation
 }
 
 ### END OF FUNCTION

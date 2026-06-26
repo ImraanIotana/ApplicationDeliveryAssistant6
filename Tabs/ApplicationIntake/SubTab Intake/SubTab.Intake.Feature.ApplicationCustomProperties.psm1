@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Custom Properties feature into the Intake tab.
+    Imports the Application Custom Properties feature into the Intake sub-tab.
 .DESCRIPTION
-    This function imports the Application Custom Properties feature into the Intake tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Application Custom Properties feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
     Import-FeatureApplicationCustomProperties -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
@@ -51,12 +51,16 @@ function Import-FeatureApplicationCustomProperties {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # PREPARATION - TEXTBOXES
+        # Derive the subkey for the TextBoxes from the current tab
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
+
         # TEXTBOXES
         # Set the VendorNameTextBox properties
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Custom Vendor Name'
-            PropertyName    = 'TextBoxes.ApplicationIntake.CustomProperties.VendorName'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomProperties.VendorName"
             ToolTip         = 'The custom name of the vendor of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
@@ -65,7 +69,7 @@ function Import-FeatureApplicationCustomProperties {
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Custom Application Name'
-            PropertyName    = 'TextBoxes.ApplicationIntake.CustomProperties.ApplicationName'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationName"
             ToolTip         = 'The custom name of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
@@ -75,17 +79,20 @@ function Import-FeatureApplicationCustomProperties {
         [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
             RowNumber       = 3
             Label           = 'Custom Application Version'
-            PropertyName    = 'TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationVersion"
             ToolTip         = 'The custom version of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
         }
-        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) { $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties = @{} }
+
+        if (-not $Global:Graphics.TextBoxes.$SubKeyForBoxes.ContainsKey('CustomProperties')) {
+            $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties = @{}
+        }
+
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.VendorName          = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationName     = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties.ApplicationVersion  = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.VendorName         = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationName    = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationVersion = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # Return the GroupBox object
         $FeatureGroupBox

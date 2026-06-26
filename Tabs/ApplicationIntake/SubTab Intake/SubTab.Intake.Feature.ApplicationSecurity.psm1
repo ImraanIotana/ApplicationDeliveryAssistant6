@@ -1,15 +1,16 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Security feature into the Intake tab.
+    Imports the Application Security feature into the Intake sub-tab.
 .DESCRIPTION
-    This function imports the Application Security feature into the Intake tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Application Security feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
     Import-FeatureApplicationSecurity -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
     [System.Windows.Forms.GroupBox]
+    [System.String]
 .OUTPUTS
     No objects are returned to the pipeline.
 .NOTES
@@ -50,12 +51,16 @@ function Import-FeatureApplicationSecurity {
         # Create the GroupBox
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
 
+        # PREPARATION - TEXTBOXES
+        # Derive the subkey for the TextBoxes from the current tab
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
+
         # EXECUTION - TEXTBOXES
         # Set the InstallationFolderTextBox properties
         [System.Collections.Hashtable]$InstallationFolderTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Installation Folder'
-            PropertyName    = 'TextBoxes.ApplicationIntake.Security.InstallationFolder'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.Security.InstallationFolder"
             ToolTip         = 'The installation folder of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(6,'Paste'),@(7,'Open'))
@@ -64,7 +69,7 @@ function Import-FeatureApplicationSecurity {
         [System.Collections.Hashtable]$ADGroupNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'AD Group Name'
-            PropertyName    = 'TextBoxes.ApplicationIntake.Security.ADGroupName'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.Security.ADGroupName"
             ToolTip         = 'The Active Directory group name associated with the application'
             DefaultValue    = 'Everyone'
             SizeType        = 'Medium'
@@ -74,18 +79,21 @@ function Import-FeatureApplicationSecurity {
         [System.Collections.Hashtable]$ADGroupSIDTextBoxProperties = @{
             RowNumber       = 3
             Label           = 'AD Group SID'
-            PropertyName    = 'TextBoxes.ApplicationIntake.Security.ADGroupSID'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.Security.ADGroupSID"
             ToolTip         = 'The Security Identifier (SID) of the Active Directory group associated with the application'
             DefaultValue    = 'S-1-1-0'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
         }
-        # Create the hashtables for the TextBoxes in the Global Graphics object if they do not already exist
-        if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Security')) { $Global:Graphics.TextBoxes.ApplicationIntake.Security = @{} }
+
+        if (-not $Global:Graphics.TextBoxes[$SubKeyForBoxes].ContainsKey('Security')) {
+            $Global:Graphics.TextBoxes[$SubKeyForBoxes].Security = @{}
+        }
+
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder   = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupName          = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID           = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].Security.InstallationFolder   = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].Security.ADGroupName          = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].Security.ADGroupSID           = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
         # Set the Button properties
@@ -95,7 +103,7 @@ function Import-FeatureApplicationSecurity {
             PNGFileName     = 'folders_explorer'
             SizeType        = 'Small'
             ToolTip         = 'The installation folder of the application. This will be used to create security files like AppLocker policies.'
-            Function        = { Select-Folder -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.InstallationFolder }.GetNewClosure()
+            Function        = { Select-Folder -TextBox $Global:Graphics.TextBoxes[$SubKeyForBoxes].Security.InstallationFolder }.GetNewClosure()
         }
         [System.Collections.Hashtable]$ADGroupDefaultButton = @{
             ColumnNumber    = 7
@@ -104,8 +112,8 @@ function Import-FeatureApplicationSecurity {
             SizeType        = 'Small'
             ToolTip         = 'Set the Active Directory group and SID to their default values.'
             Function        = {
-                Reset-TextBox -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupName
-                Reset-TextBox -TextBox $Global:Graphics.TextBoxes.ApplicationIntake.Security.ADGroupSID -Force
+                Reset-TextBox -TextBox $Global:Graphics.TextBoxes[$SubKeyForBoxes].Security.ADGroupName
+                Reset-TextBox -TextBox $Global:Graphics.TextBoxes[$SubKeyForBoxes].Security.ADGroupSID -Force
             }.GetNewClosure()
         }
         # Create the Buttons

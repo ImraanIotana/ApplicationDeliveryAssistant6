@@ -54,7 +54,14 @@ function Import-SubTabIntakeExtras {
         if (-not $Global:Graphics.TextBoxes.$GraphicsSubTabKey.ContainsKey('ExtraDocumentInformation')) { $Global:Graphics.TextBoxes.$GraphicsSubTabKey.ExtraDocumentInformation = @{} }
 
         # Create the hashtables for the ComboBoxes in the Global Graphics object if they do not already exist
-        if ($GraphicsParentKey -and (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey))) { $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{} }
+        if ($GraphicsParentKey) {
+            if (-not $Global:Graphics.ComboBoxes.ContainsKey($GraphicsParentKey) -or $Global:Graphics.ComboBoxes.$GraphicsParentKey -isnot [System.Collections.IDictionary]) {
+                $Global:Graphics.ComboBoxes.$GraphicsParentKey = @{}
+            }
+            if (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) {
+                $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{}
+            }
+        }
 
         # EXECUTION - TABPAGE
         # Create the TabPage

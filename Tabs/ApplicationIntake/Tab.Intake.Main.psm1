@@ -37,9 +37,6 @@ function Import-TabApplicationIntake {
             Version             = '6.0.0.0'
             BackGroundColor     = 'RoyalBlue'
         }
-        # Create the hashtables for this tab in the Global Graphics object.
-        New-SubKeyForBoxes -TabName $TabProperties.Title -FeatureName 'Main'
-
         # EXECUTION - PARENT TABPAGE
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
@@ -50,7 +47,7 @@ function Import-TabApplicationIntake {
 
         # Import the SubTabs
         Import-SubTabApplicationIntake  -InputObject $InputObject -ParentTabControl $SubTabControl
-        #Import-SubTabIntakeExtras       -InputObject $InputObject -ParentTabControl $SubTabControl
+        Import-SubTabIntakeExtras       -InputObject $InputObject -ParentTabControl $SubTabControl
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
