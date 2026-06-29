@@ -45,7 +45,7 @@ function Import-FeatureAppLockerSettings {
             ParentTabPage   = $ParentTabPage
             Title           = 'APPLOCKER SETTINGS'
             Color           = $Color
-            NumberOfRows    = 5
+            NumberOfRows    = 9
             GroupBoxAbove   = $GroupBoxAbove
         }
         # Create the GroupBox
@@ -58,41 +58,42 @@ function Import-FeatureAppLockerSettings {
         # Set the AppLockerDEVURL properties
         [System.Collections.Hashtable]$AppLockerDEVURL = @{
             RowNumber       = 1
-            Label           = 'Select Folder'
+            Label           = 'AppLocker DEV LDAP Path'
             PropertyName    = "TextBoxes.$SubKeyForBoxes.AppLockerDEVURL"
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the DEVELOPMENT environment'
-            SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Browse Folder'),@(6,'Paste'),@(7,'Open'))
+            DefaultValue    = 'LDAP://servername.domain.nl/CN={DEVELOPM-75F6-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
+            SizeType        = 'Large'
+            Buttons         = @(@(1,'Copy'),@(2,'Paste'),@(5,'Default'))
         }
         # Set the AppLockerTSTURL properties
         [System.Collections.Hashtable]$AppLockerTSTURL = @{
-            RowNumber       = 2
-            Label           = 'Select Folder'
+            RowNumber       = 4
+            Label           = 'AppLocker TEST LDAP Path'
             PropertyName    = "TextBoxes.$SubKeyForBoxes.AppLockerTSTURL"
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the TEST environment'
-            DefaultValue    = 'Everyone'
-            SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
+            DefaultValue    = 'LDAP://servername.domain.nl/CN={TEST1234-ABCD-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
+            SizeType        = 'Large'
+            Buttons         = @(@(1,'Copy'),@(2,'Paste'),@(5,'Default'))
         }
         # Set the AppLockerACCURL properties
         [System.Collections.Hashtable]$AppLockerACCURL = @{
-            RowNumber       = 3
-            Label           = 'Select Folder'
+            RowNumber       = 7
+            Label           = 'AppLocker ACC LDAP Path'
             PropertyName    = "TextBoxes.$SubKeyForBoxes.AppLockerACCURL"
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the ACCEPTANCE environment'
-            DefaultValue    = 'S-1-1-0'
-            SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
+            DefaultValue    = 'LDAP://servername.domain.nl/CN={ACCEPTAN-1234-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
+            SizeType        = 'Large'
+            Buttons         = @(@(1,'Copy'),@(2,'Paste'),@(5,'Default'))
         }
         # Set the AppLockerPRDURL properties
         [System.Collections.Hashtable]$AppLockerPRDURL = @{
-            RowNumber       = 4
-            Label           = 'Select Folder'
+            RowNumber       = 10
+            Label           = 'AppLocker PRD LDAP Path'
             PropertyName    = "TextBoxes.$SubKeyForBoxes.AppLockerPRDURL"
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the PRODUCTION environment'
-            DefaultValue    = 'S-1-1-0'
-            SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
+            DefaultValue    = 'LDAP://servername.domain.nl/CN={PRODUCTI-6098-4CBA-9233-E1512BF88ABA},CN=Policies,CN=System,DC=domain,DC=nl'
+            SizeType        = 'Large'
+            Buttons         = @(@(1,'Copy'),@(2,'Paste'),@(5,'Default'))
         }
         # Create the TextBoxes
         $Global:Graphics.TextBoxes[$SubKeyForBoxes].AppLockerDEVURL = New-TextBox @AppLockerDEVURL -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
