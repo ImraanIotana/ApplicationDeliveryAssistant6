@@ -44,7 +44,7 @@ function Import-SubTabPackaging {
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
         # Import the Features
-        #$null = Import-FeaturePackaging -InputObject $InputObject -ParentTabPage $ParentTabPage
+        $null = Import-FeatureINNOSetup -InputObject $InputObject -ParentTabPage $ParentTabPage
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
