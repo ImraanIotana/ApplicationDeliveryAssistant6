@@ -51,7 +51,7 @@ function Import-FeatureINNOSetup {
         [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
 
         # Build the TextBox property path used by New-TextBox
-        [System.String]$INNOSetupFilePathPropertyName = "TextBoxes.$SubKeyForBoxes.INNOSetup.FilePath"
+        [System.String]$INNOSetupFilePathPropertyName = "TextBoxes.$SubKeyForBoxes.INNOSetupFilePath"
 
         # Set the TextBox properties
         [System.Collections.Hashtable]$FileTextBoxProperties = @{
@@ -63,11 +63,11 @@ function Import-FeatureINNOSetup {
             SmallButtons    = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
         }
         # Create the TextBox
-        if (-not $Global:Graphics.TextBoxes[$SubKeyForBoxes].ContainsKey('INNOSetup')) {
-            $Global:Graphics.TextBoxes[$SubKeyForBoxes].INNOSetup = @{}
-        }
+        <#if (-not $Global:Graphics.TextBoxes[$SubKeyForBoxes].ContainsKey('INNOSetupFilePath')) {
+            $Global:Graphics.TextBoxes[$SubKeyForBoxes].INNOSetupFilePath = @{}
+        }#>
         [System.Windows.Forms.TextBox]$INNOSetupFilePathTextBox = New-TextBox @FileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes[$SubKeyForBoxes].INNOSetup.FilePath = $INNOSetupFilePathTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].INNOSetupFilePathFilePath = $INNOSetupFilePathTextBox
 
         # PREPARATION - BUTTONS
         # Set the Button properties
@@ -77,7 +77,7 @@ function Import-FeatureINNOSetup {
                 Text            = 'Create INF'
                 PNGFileName     = 'script_palette'
                 SizeType        = 'Medium'
-                Function        = { New-INNOConfigurationFile -Path $INNOSetupFilePathTextBox.Text }.GetNewClosure()
+                Function        = { New-INNOResponseFile -Path $INNOSetupFilePathTextBox.Text }.GetNewClosure()
             }
         )
         # Create the Buttons
@@ -105,9 +105,9 @@ function Import-FeatureINNOSetup {
     It validates the installer path and output folder, asks for confirmation before starting, and optionally
     confirms overwrite when the target INF file already exists.
 .EXAMPLE
-    New-INNOConfigurationFile -Path 'C:\Demo\setup.exe'
+    New-INNOResponseFile -Path 'C:\Demo\setup.exe'
 .EXAMPLE
-    New-INNOConfigurationFile -Path 'C:\Demo\setup.exe' -OutputFolder 'C:\Temp\INNO'
+    New-INNOResponseFile -Path 'C:\Demo\setup.exe' -OutputFolder 'C:\Temp\INNO'
 .INPUTS
     [System.String]
 .OUTPUTS
@@ -120,8 +120,7 @@ function Import-FeatureINNOSetup {
     Last Update     : June 2026
 #>
 ####################################################################################################
-
-function New-INNOConfigurationFile {
+function New-INNOResponseFile {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false,HelpMessage='The executable for which an INF file will be made.')]
