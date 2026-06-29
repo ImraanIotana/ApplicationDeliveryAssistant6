@@ -44,9 +44,8 @@ function Import-SubTabAppLockerImport {
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
         # Import the Features
-        if (Get-Command -Name 'Import-FeatureAppLockerImport' -ErrorAction SilentlyContinue) {
-            $null = Import-FeatureAppLockerImport -InputObject $InputObject -ParentTabPage $ParentTabPage -Color 'GreenYellow'
-        }
+        $null = Import-FeatureAppLockerImport -InputObject $InputObject -ParentTabPage $ParentTabPage -Color 'GreenYellow'
+
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

@@ -79,6 +79,9 @@ function New-AppLockerFile {
         # Apply the fallback AD group before building any output paths
         if (Test-String -IsEmpty $ADGroupSID) { $ADGroupSID = 'S-1-1-0' ; Write-Line "The AD Group SID is empty. The group EVERYONE will be used instead. ($ADGroupSID)" -Type Warning }
 
+        # Track whether the caller explicitly supplied an ApplicationID.
+        [System.Boolean]$UseProvidedApplicationIDInDescription = (Test-String -IsPopulated $ApplicationID)
+
         # Default to the standard AppLocker folder name unless the template overrides it
         [System.String]$AppLockerFolderName = 'AppLockerPolicies'
 
@@ -144,6 +147,31 @@ function New-AppLockerFile {
         Write-Line "The AppLocker policy files by Path have been created for folder: ($FolderToScan)" -Type Success
         $AppLockerFileInformation | New-AppLockerPolicy -RuleType Publisher -User $ADGroupSID -RuleNamePrefix $ApplicationID -Optimize -XML > $AppLockerPolicyPublisherFilePath -IgnoreMissingFileInformation -InformationAction SilentlyContinue
         Write-Line "The AppLocker policy files by Publisher have been created for folder: ($FolderToScan)" -Type Success
+
+        # If the caller supplied an ApplicationID, write it into each rule Description in the generated policy XML files.
+        if ($UseProvidedApplicationIDInDescription) {
+            [System.String[]]$PolicyFilePaths = @(
+                $AppLockerPolicyHashFilePath,
+                $AppLockerPolicyPathFilePath,
+                $AppLockerPolicyPublisherFilePath
+            )
+
+            foreach ($PolicyFilePath in $PolicyFilePaths) {
+                try {
+                    [xml]$PolicyXml = Get-Content -LiteralPath $PolicyFilePath -Raw -ErrorAction Stop
+                    [System.Xml.XmlNodeList]$RuleNodes = $PolicyXml.SelectNodes('//FilePathRule | //FileHashRule | //FilePublisherRule')
+                    foreach ($RuleNode in $RuleNodes) {
+                        if ($RuleNode -is [System.Xml.XmlElement]) {
+                            [void]$RuleNode.SetAttribute('Description', $ApplicationID)
+                        }
+                    }
+                    $PolicyXml.Save($PolicyFilePath)
+                }
+                catch {
+                    Write-Line "Could not set ApplicationID as Description in policy file: ($PolicyFilePath)" -Type Warning
+                }
+            }
+        }
 
         # Create the AppLocker policy report
         New-AppLockerPolicyReport -FolderToScan $FolderToScan -ReportFilePath $ReportFilePath -ApplicationID $ApplicationID

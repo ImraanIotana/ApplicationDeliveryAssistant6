@@ -1,15 +1,16 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Security feature into the Intake tab.
+    Imports the AppLocker Import feature into the AppLocker tab.
 .DESCRIPTION
-    This function imports the Application Security feature into the Intake tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the AppLocker Import feature into the AppLocker tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureApplicationSecurity -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureAppLockerImport -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
     [System.Windows.Forms.GroupBox]
+    [System.String]
 .OUTPUTS
     No objects are returned to the pipeline.
 .NOTES
@@ -42,7 +43,7 @@ function Import-FeatureAppLockerImport {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'APPLICATION SECURITY'
+            Title           = 'APPLICATION IMPORT'
             Color           = $Color
             NumberOfRows    = 5
             GroupBoxAbove   = $GroupBoxAbove

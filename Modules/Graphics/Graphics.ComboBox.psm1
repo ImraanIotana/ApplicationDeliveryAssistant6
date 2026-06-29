@@ -59,6 +59,9 @@ function New-ComboBox {
         [Parameter(Mandatory=$false,HelpMessage='The DefaultButtonsArray that will be added to the object.')]
         [System.Object[][]]$Buttons,
 
+        [Parameter(Mandatory=$false,HelpMessage='The small buttons array that will be added to the object.')]
+        [System.Object[][]]$SmallButtons,
+
         [Parameter(Mandatory=$false,HelpMessage='The ToolTip text to display when hovering over the ComboBox.')]
         [System.String]$ToolTip,
 
@@ -169,6 +172,13 @@ function New-ComboBox {
             param($ChangedControl, $ChangedEvent)
             Set-UserSetting -PropertyName $ChangedControl.Tag.PropertyName -PropertyValue $ChangedControl.Text
         }.GetNewClosure())
+        # Keep editable ComboBox text in sync with user settings even when the user types a custom value.
+        if ($Type -eq 'Input') {
+            $NewComboBox.Add_TextChanged([System.EventHandler]{
+                param($ChangedControl, $ChangedEvent)
+                Set-UserSetting -PropertyName $ChangedControl.Tag.PropertyName -PropertyValue $ChangedControl.Text
+            }.GetNewClosure())
+        }
     }
 
     # DEFAULTVALUE
@@ -211,34 +221,54 @@ function New-ComboBox {
     }
 
     # BUTTONS
-    # Add the ButtonPropertiesArray
-    if ($Buttons.Count -gt 0) {
+    # Build regular and small button lines through one shared code path.
+    [System.Object[]]$ButtonGroups = @(
+        # Standard buttons render on the row below the ComboBox.
+        @{ Buttons = $Buttons      ; Row = ($RowNumber + 1) ; SizeType = $null   ; TagProperty = 'ButtonPropertiesArray' }
+        # Small buttons render on the same row as the ComboBox.
+        @{ Buttons = $SmallButtons ; Row = $RowNumber       ; SizeType = 'Small' ; TagProperty = 'SmallButtonPropertiesArray' }
+    )
+    foreach ($ButtonGroup in $ButtonGroups) {
+        # If there are no buttons defined for this group, skip to the next one.
+        if ($ButtonGroup.Buttons.Count -le 0) { continue }
+
         try {
-            # Initialize the ButtonPropertiesArray in the Tag property
-            $NewComboBox.Tag | Add-Member -MemberType NoteProperty -Name ButtonPropertiesArray -Value @()
-            # Add each button to the ButtonPropertiesArray
-            foreach ($Button in $Buttons) {
-                # Set the button properties
+            # Create a list of hashtables with button properties, to be used as input for the New-ButtonLine function.
+            [System.Collections.Generic.List[System.Collections.Hashtable]]$ButtonPropertiesList = New-Object 'System.Collections.Generic.List[System.Collections.Hashtable]'
+            foreach ($Button in $ButtonGroup.Buttons) {
+                # Set the button properties.
                 [System.Int32]$ColumnNumber = $Button[0]
                 [System.String]$ButtonText  = $Button[1]
-                # Create the hashtable
                 [System.Collections.Hashtable]$ButtonHashtable = @{
                     ColumnNumber    = $ColumnNumber
                     Text            = $ButtonText
                     Function        = switch ($ButtonText) {
                         'Browse'    { { [System.String]$FolderName = Select-Item -Folder ; if ($FolderName) { $NewComboBox.Text = $FolderName } }.GetNewClosure() }
-                        'Open'      { { if (Test-String -IsEmpty $NewComboBox.Text) { Write-Line 'The ComboBox is empty. The Open-action cannot be performed.' } else { Open-Folder -Path $NewComboBox.Text } }.GetNewClosure() }
-                        'Copy'      { { if (Test-String -IsEmpty $NewComboBox.Text) { Write-Line 'The ComboBox is empty. The Copy-action cannot be performed.' } else { Set-ClipBoard -Value $NewComboBox.Text ; Write-Line "The content of the ComboBox has been copied to the clipboard. ($($NewComboBox.Text))" } }.GetNewClosure() }
-                        'Paste'     { { $NewComboBox.Text = Get-ClipBoard ; Write-Line "The content of the clipboard has been pasted into the ComboBox. ($($NewComboBox.Text))" }.GetNewClosure() }
-                        'Default'   { { $NewComboBox.Text = $NewComboBox.Tag.DefaultValue ; Write-Line "The ComboBox has been reset to the default value: ($($NewComboBox.Text))" }.GetNewClosure() }
-                        'Clear'     { { $NewComboBox.Text = '' ; Write-Line 'The ComboBox has been cleared.' }.GetNewClosure() }
+                        'Open'      { { Invoke-ComboBoxAction -ComboBox $NewComboBox -Action 'Open' }.GetNewClosure() }
+                        'Copy'      { { Invoke-ComboBoxAction -ComboBox $NewComboBox -Action 'Copy' }.GetNewClosure() }
+                        'Paste'     { { Write-ClipBoardToComboBox -ComboBox $NewComboBox }.GetNewClosure() }
+                        'Default'   { { Reset-ComboBox -ComboBox $NewComboBox }.GetNewClosure() }
+                        'Clear'     { { Clear-ComboBox -ComboBox $NewComboBox }.GetNewClosure() }
                     }
                 }
-                # Add the hashtable to the ButtonPropertiesArray
-                $NewComboBox.Tag.ButtonPropertiesArray += $ButtonHashtable
+
+                # Only small button groups include the SizeType entry.
+                if ($ButtonGroup.SizeType) { $ButtonHashtable.SizeType = $ButtonGroup.SizeType }
+
+                [void]$ButtonPropertiesList.Add($ButtonHashtable)
             }
-            # Create the buttons
-            New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $NewComboBox.Tag.ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber ($RowNumber + 1)
+
+            # Convert the list to an array, as New-ButtonLine expects an array input.
+            [System.Collections.Hashtable[]]$ButtonPropertiesArray = $ButtonPropertiesList.ToArray()
+
+            # Store the generated button definitions on the ComboBox Tag for downstream use.
+            if (-not ($NewComboBox.Tag.PSObject.Properties.Name -contains $ButtonGroup.TagProperty)) {
+                $NewComboBox.Tag | Add-Member -MemberType NoteProperty -Name $ButtonGroup.TagProperty -Value @()
+            }
+            $NewComboBox.Tag.($ButtonGroup.TagProperty) = $ButtonPropertiesArray
+
+            # Create the buttons for this group.
+            New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ButtonPropertiesArray -ParentGroupBox $ParentGroupBox -RowNumber $ButtonGroup.Row
         }
         catch {
             Write-ErrorReport -ErrorRecord $_
@@ -259,6 +289,295 @@ function New-ComboBox {
     # POST-EXECUTION
     # If the ReturnComboBox switch is set, return the ComboBox object
     if ($ReturnComboBox.IsPresent) { $NewComboBox }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Resets the specified ComboBox to its configured default value.
+.DESCRIPTION
+    This function assigns the ComboBox default value from the Tag metadata back to the selection/text.
+    It also writes a status message to the host with the value that was applied.
+.EXAMPLE
+    Reset-ComboBox -ComboBox $MyComboBox
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Reset-ComboBox {
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ComboBox to reset.')]
+        [System.Windows.Forms.ComboBox]$ComboBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and reset the ComboBox immediately.')]
+        [System.Management.Automation.SwitchParameter]$Force
+    )
+
+    # PREPARATION
+    [System.String]$DefaultValue = [System.String]$ComboBox.Tag.DefaultValue
+
+    # VALIDATION
+    # Ensure there is a default value configured before resetting.
+    if (Test-String -IsEmpty $DefaultValue) {
+        Write-Line "The ComboBox ($($ComboBox.Tag.Label)) has no default value configured."
+        return
+    }
+
+    # Ask for confirmation only when the ComboBox currently contains a value and -Force is not specified.
+    if ((Test-String -IsPopulated $ComboBox.Text) -and -not $Force) {
+        [System.String]$Title   = 'Confirm Reset ComboBox'
+        [System.String]$Body    = "This will reset the current value:`n`n$($ComboBox.Text)`n`nto the default value:`n`n$DefaultValue`n`nDo you want to continue?"
+        [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
+        if (-not $UserHasConfirmed) { return }
+    }
+
+    # EXECUTION
+    # Prefer selecting an existing item that matches the default value.
+    [System.Object]$MatchingDefaultItem = $null
+    foreach ($Item in $ComboBox.Items) {
+        if ($null -eq $Item) { continue }
+
+        if ($Item -is [string] -and $Item -eq $DefaultValue) {
+            $MatchingDefaultItem = $Item
+            break
+        }
+
+        if ($null -ne $Item.PSObject.Properties['ComboBoxName'] -and $Item.ComboBoxName -eq $DefaultValue) {
+            $MatchingDefaultItem = $Item
+            break
+        }
+
+        if ($null -ne $Item.PSObject.Properties['TemplateName'] -and $Item.TemplateName -eq $DefaultValue) {
+            $MatchingDefaultItem = $Item
+            break
+        }
+    }
+
+    if ($null -ne $MatchingDefaultItem) {
+        $ComboBox.SelectedItem = $MatchingDefaultItem
+    }
+    else {
+        if ($ComboBox.DropDownStyle -eq [System.Windows.Forms.ComboBoxStyle]::DropDownList) {
+            Write-Line "The default value is not available in this ComboBox list. ($DefaultValue)"
+            return
+        }
+        $ComboBox.Text = $DefaultValue
+    }
+
+    Write-Line "The ComboBox ($($ComboBox.Tag.Label)) has been reset to the default value: ($($ComboBox.Text))"
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Clears the content of the specified ComboBox.
+.DESCRIPTION
+    This function clears the selected value and text in the provided ComboBox control.
+    It also writes a status message to the host after the ComboBox is cleared.
+.EXAMPLE
+    Clear-ComboBox -ComboBox $MyComboBox
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Clear-ComboBox {
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ComboBox to clear.')]
+        [System.Windows.Forms.ComboBox]$ComboBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and clear the ComboBox immediately.')]
+        [System.Management.Automation.SwitchParameter]$Force
+    )
+
+    # VALIDATION
+    # Ask for confirmation only when the ComboBox currently contains a value and -Force is not specified.
+    if ((Test-String -IsPopulated $ComboBox.Text) -and -not $Force) {
+        [System.String]$Title   = 'Confirm Clear ComboBox'
+        [System.String]$Body    = "This will clear the current value:`n`n$($ComboBox.Text)`n`nDo you want to continue?"
+        [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
+        if (-not $UserHasConfirmed) { return }
+    }
+
+    # EXECUTION
+    # Clear the ComboBox selection and text and write a status message.
+    $ComboBox.SelectedIndex = -1
+    $ComboBox.Text = ''
+    Write-Line "The ComboBox ($($ComboBox.Tag.Label)) has been cleared."
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Writes the current clipboard content to the specified ComboBox.
+.DESCRIPTION
+    This function retrieves the current clipboard content and applies it to the provided ComboBox control.
+    It also writes a status message to the host showing the value that was written.
+.EXAMPLE
+    Write-ClipBoardToComboBox -ComboBox $MyComboBox
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Write-ClipBoardToComboBox {
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ComboBox where the clipboard content will be written.')]
+        [System.Windows.Forms.ComboBox]$ComboBox,
+
+        [Parameter(Mandatory=$false,HelpMessage='Skip the confirmation prompt and write to the ComboBox immediately.')]
+        [System.Management.Automation.SwitchParameter]$Force
+    )
+
+    # VALIDATION
+    # Ensure the clipboard currently contains text that can be written to a ComboBox.
+    if (-not [System.Windows.Forms.Clipboard]::ContainsText()) {
+        Write-Line "The clipboard does not contain text that can be pasted into the ComboBox."
+        return
+    }
+
+    # PREPARATION
+    # Get and normalize clipboard content to a single string value.
+    [System.Object]$ClipboardContent = Get-ClipBoard
+    [System.String]$ClipboardText = switch ($ClipboardContent) {
+        { $null -eq $_ } { '' }
+        { $_ -is [System.Array] } { [System.String]::Join([System.Environment]::NewLine, $_) }
+        default { [System.String]$_ }
+    }
+
+    # VALIDATION
+    # Ask for confirmation only when the ComboBox already contains a value that would be overwritten.
+    if ((Test-String -IsPopulated $ComboBox.Text) -and -not $Force) {
+        [System.String]$Title   = 'Confirm Paste Clipboard Content'
+        [System.String]$Body    = "This will overwrite the current value with the following value:`n`n$ClipboardText`n`nDo you want to continue?"
+        [System.Boolean]$UserHasConfirmed = Get-UserConfirmation -Title $Title -Body $Body
+        if (-not $UserHasConfirmed) { return }
+    }
+
+    # EXECUTION
+    # Prefer selecting an existing item that matches the clipboard text.
+    [System.Object]$MatchingItem = $null
+    foreach ($Item in $ComboBox.Items) {
+        if ($null -eq $Item) { continue }
+
+        if ($Item -is [string] -and $Item -eq $ClipboardText) {
+            $MatchingItem = $Item
+            break
+        }
+
+        if ($null -ne $Item.PSObject.Properties['ComboBoxName'] -and $Item.ComboBoxName -eq $ClipboardText) {
+            $MatchingItem = $Item
+            break
+        }
+
+        if ($null -ne $Item.PSObject.Properties['TemplateName'] -and $Item.TemplateName -eq $ClipboardText) {
+            $MatchingItem = $Item
+            break
+        }
+    }
+
+    if ($null -ne $MatchingItem) {
+        $ComboBox.SelectedItem = $MatchingItem
+    }
+    else {
+        if ($ComboBox.DropDownStyle -eq [System.Windows.Forms.ComboBoxStyle]::DropDownList) {
+            Write-Line "The clipboard value is not available in this ComboBox list. ($ClipboardText)"
+            return
+        }
+        $ComboBox.Text = $ClipboardText
+    }
+
+    Write-Line "The content of the clipboard has been pasted into the ComboBox ($($ComboBox.Tag.Label)). ($($ComboBox.Text))"
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Performs the specified action on the given ComboBox, such as opening a folder or copying text.
+.DESCRIPTION
+    This function performs simple actions against a ComboBox value.
+    It validates the ComboBox content and executes the requested action.
+.EXAMPLE
+    Invoke-ComboBoxAction -ComboBox $MyComboBox -Action 'Open'
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+    [System.String]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : June 2026
+    Last Update     : June 2026
+#>
+####################################################################################################
+function Invoke-ComboBoxAction {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ComboBox on which the action will be performed.')]
+        [System.Windows.Forms.ComboBox]$ComboBox,
+
+        [Parameter(Mandatory=$true,HelpMessage='The action to be performed on the ComboBox.')]
+        [ValidateSet('Open','Copy')]
+        [System.String]$Action
+    )
+
+    # PREPARATION
+    # Get the text from the ComboBox.
+    [System.String]$ComboBoxContent = $ComboBox.Text
+
+    # VALIDATION
+    # Test if the ComboBox is empty when the action is Copy or Open.
+    if ((Test-String -IsEmpty $ComboBoxContent) -and ($Action -in @('Copy','Open'))) {
+        Write-Line "The ComboBox is empty. The $Action-action cannot be performed."
+        return
+    }
+
+    # EXECUTION
+    # Switch on the action.
+    switch ($Action) {
+        'Open'  { Open-Folder -Path $ComboBoxContent }
+        'Copy'  { Set-ClipBoard -Value $ComboBoxContent ; Write-Line "The content of the ComboBox has been copied to the clipboard. ($ComboBoxContent)" }
+    }
 }
 
 ### END OF FUNCTION

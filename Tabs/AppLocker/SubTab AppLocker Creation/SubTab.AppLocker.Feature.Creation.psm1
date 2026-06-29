@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Security feature into the Intake tab.
+    Imports the AppLocker Creation feature into the AppLocker tab.
 .DESCRIPTION
-    This function imports the Application Security feature into the Intake tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the AppLocker Creation feature into the AppLocker tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureApplicationSecurity -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureAppLockerCreation -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
@@ -42,7 +42,7 @@ function Import-FeatureAppLockerCreation {
         [System.Collections.Hashtable]$FeatureProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'APPLICATION SECURITY'
+            Title           = 'APPLOCKER CREATION'
             Color           = $Color
             NumberOfRows    = 5
             GroupBoxAbove   = $GroupBoxAbove
@@ -53,7 +53,7 @@ function Import-FeatureAppLockerCreation {
         # Ensure the flat storage key exists for this tab-feature pair and capture it.
         [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
 
-        # EXECUTION - TEXTBOXES
+        # EXECUTION - INPUT CONTROLS
         # Set the InstallationFolderTextBox properties
         [System.Collections.Hashtable]$InstallationFolderTextBoxProperties = @{
             RowNumber       = 1
@@ -83,10 +83,22 @@ function Import-FeatureAppLockerCreation {
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),@(6,'Paste'))
         }
-        # Create the TextBoxes
-        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FolderPath    = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupName   = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupSID    = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        # Set the Application ID ComboBox properties
+        [System.Collections.Hashtable]$ApplicationIDComboBoxProperties = @{
+            RowNumber       = 4
+            Label           = 'Application ID (Optional)'
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.ApplicationID"
+            ToolTip         = 'The unique identifier for the application associated with the AppLocker policies'
+            SizeType        = 'Medium'
+            Type            = 'Input'
+            ContentStringArray = Get-DSLDirectSubFolderNames
+            SmallButtons    = @(@(5,'Copy'),@(6,'Paste'),@(7,'Clear'))
+        }
+        # Create the input controls
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FolderPath      = New-TextBox @InstallationFolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupName     = New-TextBox @ADGroupNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupSID      = New-TextBox @ADGroupSIDTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.ComboBoxes[$SubKeyForBoxes].ApplicationID  = New-ComboBox @ApplicationIDComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
 
         # EXECUTION - BUTTONS
         # Set the Default Button properties
@@ -112,13 +124,14 @@ function Import-FeatureAppLockerCreation {
             Function        = {
                 [System.String]$FolderToScan        = $Global:Graphics.TextBoxes[$SubKeyForBoxes].FolderPath.Text
                 [System.String]$ADGroupSID          = $Global:Graphics.TextBoxes[$SubKeyForBoxes].ADGroupSID.Text
+                [System.String]$ApplicationID       = $Global:Graphics.ComboBoxes[$SubKeyForBoxes].ApplicationID.Text
                 [System.Object]$SelectedTemplate    = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection.SelectedItem
-                New-AppLockerFile -FolderToScan $FolderToScan -ADGroupSID $ADGroupSID -SelectedTemplate $SelectedTemplate -OpenOutputFolder
+                New-AppLockerFile -FolderToScan $FolderToScan -ADGroupSID $ADGroupSID -ApplicationID $ApplicationID -SelectedTemplate $SelectedTemplate -OpenOutputFolder
             }.GetNewClosure()
         }
         # Create the Buttons
         New-Button @ADGroupDefaultButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 3
-        New-Button @CreateButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 4
+        New-Button @CreateButton -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -RowNumber 5
         
         # OUTPUT
         # Return the GroupBox object

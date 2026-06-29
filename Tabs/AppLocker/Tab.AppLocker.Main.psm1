@@ -50,8 +50,9 @@ function Import-TabAppLocker {
         [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
 
         # Import the SubTabs
-        Import-SubTabAppLockerCreation -InputObject $InputObject -ParentTabControl $SubTabControl
-        Import-SubTabAppLockerSettings -InputObject $InputObject -ParentTabControl $SubTabControl
+        Import-SubTabAppLockerCreation  -InputObject $InputObject -ParentTabControl $SubTabControl
+        Import-SubTabAppLockerImport    -InputObject $InputObject -ParentTabControl $SubTabControl
+        Import-SubTabAppLockerSettings  -InputObject $InputObject -ParentTabControl $SubTabControl
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
