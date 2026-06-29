@@ -37,7 +37,6 @@ function Import-FeatureAppLockerCreation {
     )
 
     try {
-        # Build the AppLocker creation UI and wire up its controls.
         # EXECUTION - GROUPBOX
         # Feature properties
         [System.Collections.Hashtable]$FeatureProperties = @{

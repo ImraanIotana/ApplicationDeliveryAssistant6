@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the AppLocker tab.
+    Imports the Settings sub-tab into the AppLocker tab.
 .DESCRIPTION
-    This function imports the AppLocker tab by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the Settings sub-tab into the AppLocker tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
-    Import-TabAppLocker -ParentTabControl $MySubTabControl
+    Import-SubTabAppLockerSettings -InputObject $InputObject -ParentTabControl $MySubTabControl
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabControl]
@@ -15,11 +15,11 @@
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
     Version         : 6.0.0.0
     Author          : Imraan Iotana
-    Creation Date   : June 2026
+    Creation Date   : August 2025
     Last Update     : June 2026
 #>
 ####################################################################################################
-function Import-TabAppLocker {
+function Import-SubTabAppLockerSettings {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
@@ -34,24 +34,17 @@ function Import-TabAppLocker {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'APPLOCKER'
+            Title               = 'APPLOCKER SETTINGS'
             Version             = '6.0.0.0'
             BackGroundColor     = 'Blue'
         }
 
         # EXECUTION
-        # Create the hashtables for this tab in the Global Graphics object.
-        New-SubKeyForBoxes -TabName 'AppLocker' -FeatureName 'Main'
-
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
-        # Create the SubTabControl and add it to the TabPage
-        [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
-
-        # Import the SubTabs
-        Import-SubTabAppLockerCreation -InputObject $InputObject -ParentTabControl $SubTabControl
-        Import-SubTabAppLockerSettings -InputObject $InputObject -ParentTabControl $SubTabControl
+        # Import the Features
+        $null = Import-FeatureAppLockerSettings -InputObject $InputObject -ParentTabPage $ParentTabPage -Color 'GreenYellow'
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
