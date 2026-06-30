@@ -37,16 +37,34 @@
         Other           = '9. Archive\Other'
     }
 
+    # APPLOCKER SETTINGS
+    # Set the default AppLocker settings
+    AppLockerDefaultSettings    = @{
+        DevelopmentURL          = 'LDAP://servername.domain.nl/CN={DEVELOPM-75F6-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
+        TestURL                 = 'LDAP://servername.domain.nl/CN={TEST1234-ABCD-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
+        AcceptanceURL           = 'LDAP://servername.domain.nl/CN={ACCEPTAN-1234-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
+        ProductionURL           = 'LDAP://servername.domain.nl/CN={PRODUCTI-6098-4CBA-9233-E1512BF88ABA},CN=Policies,CN=System,DC=domain,DC=nl'
+    }
+
+    # MAIL TEMPLATES
+    # Set the mail templates for the Application Intake process
     MailTemplates = @{
         '1. Introductory Mail' = @{
-            Subject = 'TEST: Introductory Mail Subject'
-            Body    = 'TEST: Introductory Mail Body'
+            Subject = 'Introductie Intake APPNAME - (REFERENCENUMBER)'
+            Body    = 'Hallo NAAM,
+
+Ik mail in verband met de applicatie: APPNAME
+
+Ik wil hier graag de Intake van oppakken, en wilde graag een afspraak maken om de Intake te bespreken. Ik wilde vragen of je beschikbaar bent voor een korte call, zodat we de Intake kunnen doornemen.
+
+Als er vragen of onduidelijkheden zijn, laat het me gerust weten.
+
+Groet,
+NAAM'
         }
         '2. Request Source files' = @{
             Subject = 'Intake APPNAME - (REFERENCENUMBER)'
             Body    = 'Hallo NAAM,
-
-(Ik zal me even kort voorstellen. Ik ben een nieuwe collega van o.a. Daniel/Olaf, en houd me ook bezig met de Intake van applicaties voor de AVD/DWR/MWP.)
 
 Ik mail in verband met de applicatie: APPNAME
 
@@ -56,7 +74,7 @@ Ik wilde vragen of deze kan worden aangeleverd (Dit kan bijvoorbeeld via FTP, of
 Als er vragen of onduidelijkheden zijn, laat het me gerust weten.
 
 Groet,
-Imraan'
+NAAM'
         }
         '3. Request Intake Approval' = @{
             Subject = 'Goedkeuring Intakedocument APPNAME - (REFERENCENUMBER)'
@@ -71,11 +89,18 @@ Mocht je in de Installatie of Configuratie van de applicatie nog zaken tegenkome
 Als er vragen of onduidelijkheden zijn, laat het me gerust weten.
 
 Groet,
-Imraan'
+NAAM'
         }
         '4. Intake Reminder' = @{
-            Subject = 'TEST: Intake Reminder Subject'
-            Body    = 'TEST: Intake Reminder Body'
+            Subject = 'Reminder Goedkeuring Intakedocument APPNAME - (REFERENCENUMBER)'
+            Body    = 'Hallo NAAM,
+
+Dit is een herinnering voor de intake van de applicatie APPNAME.
+
+Als er vragen of onduidelijkheden zijn, laat het me gerust weten.
+
+Groet,
+NAAM'
         }
     }
 }
