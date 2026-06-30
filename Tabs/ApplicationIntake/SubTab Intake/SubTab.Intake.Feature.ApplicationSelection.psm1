@@ -85,11 +85,22 @@ function Import-FeatureIntakeApplicationSelection {
                 ColumnNumber    = 5
                 Text            = 'Refresh'
                 PNGFileName     = 'arrow_refresh'
-                SizeType        = 'Medium'
+                SizeType        = 'Small'
                 ToolTip         = 'Refresh the list of applications from the registry.'
                 Function        = {
                     Update-ComboBox -ComboBox $InstalledApplicationsComboBox -ApplicationsFromRegistry (Get-InstalledApplicationsFromRegistry)
                     Update-ComboBox -ComboBox $Global:Graphics.ComboBoxes[$SubKeyForBoxes].ApplicationShortcuts -Shortcuts (Get-Shortcuts -IncludeInternetShortcuts)
+                }.GetNewClosure()
+            }
+            @{
+                ColumnNumber    = 7
+                Text            = 'Clear All Fields'
+                PNGFileName     = 'textfield_delete'
+                SizeType        = 'Small'
+                ToolTip         = 'Clear all fields.'
+                Function        = {
+                    if (-not(Get-UserConfirmation -Title 'Clear All Fields' -Body "This will clear ALL fields in the intake form.`n`nAre you sure you want to continue?")) { return }
+                    Clear-IntakeFormFields
                 }.GetNewClosure()
             }
         )
@@ -242,3 +253,103 @@ function Import-SelectedApplicationToIntakeTextBoxes {
 
 ### END OF FUNCTION
 ####################################################################################################
+
+
+function Clear-IntakeFormFields {
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the Settings.')]
+        [System.Collections.Hashtable]$GlobalGraphicsObject = $Global:Graphics
+    )
+
+    if ($null -eq $GlobalGraphicsObject) {
+        Write-Line 'Global Graphics object is null. Nothing to clear.' -Type Warning
+        return
+    }
+
+    [System.Int32]$ClearedTextBoxes = 0
+    [System.Int32]$ClearedComboBoxes = 0
+
+    function Get-TargetIntakeNodes {
+        param (
+            [Parameter(Mandatory=$true)]
+            [System.Collections.IDictionary]$RootNode
+        )
+
+        [System.Collections.ArrayList]$TargetNodes = @()
+
+        foreach ($Key in $RootNode.Keys) {
+            [System.String]$NormalizedKey = ($Key -replace '\s+', '').ToLowerInvariant()
+
+            if (
+                $NormalizedKey -eq 'intake.applicationintake' -or
+                $NormalizedKey -eq 'applicationintake.intake' -or
+                $NormalizedKey -like 'applicationintake.*' -or
+                $NormalizedKey -like 'intake.applicationintake.*'
+            ) {
+                [void]$TargetNodes.Add($RootNode[$Key])
+            }
+        }
+
+        if ($RootNode.ContainsKey('ApplicationIntake')) {
+            [void]$TargetNodes.Add($RootNode.ApplicationIntake)
+        }
+
+        if ($RootNode.ContainsKey('Intake') -and $RootNode.Intake -is [System.Collections.IDictionary] -and $RootNode.Intake.ContainsKey('ApplicationIntake')) {
+            [void]$TargetNodes.Add($RootNode.Intake.ApplicationIntake)
+        }
+
+        return $TargetNodes
+    }
+
+    # Clear textboxes in Intake/ApplicationIntake subtree.
+    if ($GlobalGraphicsObject.ContainsKey('TextBoxes') -and $GlobalGraphicsObject.TextBoxes -is [System.Collections.IDictionary]) {
+        foreach ($Node in (Get-TargetIntakeNodes -RootNode $GlobalGraphicsObject.TextBoxes)) {
+            [System.Collections.Stack]$Stack = New-Object System.Collections.Stack
+            $Stack.Push($Node)
+
+            while ($Stack.Count -gt 0) {
+                [System.Object]$CurrentNode = $Stack.Pop()
+                if ($null -eq $CurrentNode) { continue }
+
+                if ($CurrentNode -is [System.Collections.IDictionary]) {
+                    foreach ($ChildKey in $CurrentNode.Keys) {
+                        $Stack.Push($CurrentNode[$ChildKey])
+                    }
+                    continue
+                }
+
+                if ($CurrentNode -is [System.Windows.Forms.TextBox]) {
+                    Clear-TextBox -TextBox $CurrentNode -Force
+                    $ClearedTextBoxes++
+                }
+            }
+        }
+    }
+
+    # Clear comboboxes in Intake/ApplicationIntake subtree.
+    if ($GlobalGraphicsObject.ContainsKey('ComboBoxes') -and $GlobalGraphicsObject.ComboBoxes -is [System.Collections.IDictionary]) {
+        foreach ($Node in (Get-TargetIntakeNodes -RootNode $GlobalGraphicsObject.ComboBoxes)) {
+            [System.Collections.Stack]$Stack = New-Object System.Collections.Stack
+            $Stack.Push($Node)
+
+            while ($Stack.Count -gt 0) {
+                [System.Object]$CurrentNode = $Stack.Pop()
+                if ($null -eq $CurrentNode) { continue }
+
+                if ($CurrentNode -is [System.Collections.IDictionary]) {
+                    foreach ($ChildKey in $CurrentNode.Keys) {
+                        $Stack.Push($CurrentNode[$ChildKey])
+                    }
+                    continue
+                }
+
+                if ($CurrentNode -is [System.Windows.Forms.ComboBox]) {
+                    Clear-ComboBox -ComboBox $CurrentNode -Force
+                    $ClearedComboBoxes++
+                }
+            }
+        }
+    }
+
+    Write-Line "Cleared $ClearedTextBoxes textboxes and $ClearedComboBoxes comboboxes in the Application Intake Form." -Type Info
+}
