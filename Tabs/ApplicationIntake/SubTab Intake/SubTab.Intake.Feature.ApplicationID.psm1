@@ -670,8 +670,12 @@ function New-MetaDataFile {
         }
 
         # PREPARATION
-        # Build metadata output path in 9. Archive\Metadata.
-        [System.String]$MetadataRelativePath = Join-Path -Path '9. Archive' -ChildPath 'Metadata'
+        # Build metadata output path from the selected template (with safe default fallback).
+        [System.String]$MetadataRelativePath = [System.String]$SelectedTemplate.ApplicationFolderSubFolders.Metadata
+        if (Test-String -IsEmpty $MetadataRelativePath) {
+            [System.String]$MetadataRelativePath = Join-Path -Path '9. Archive' -ChildPath 'Metadata'
+            Write-Line 'The selected customer template does not define ApplicationFolderSubFolders.Metadata. Using default path: (9. Archive\Metadata)' -Type Warning
+        }
         [System.String]$MetadataFolderPath = Join-Path -Path $ApplicationFolderPath -ChildPath $MetadataRelativePath
         if (-not (Test-Path -LiteralPath $MetadataFolderPath -PathType Container)) {
             New-Item -Path $MetadataFolderPath -ItemType Directory -Force | Out-Null
@@ -689,6 +693,7 @@ function New-MetaDataFile {
 
         # PREPARATION
         # Convert UI controls to serializable values.
+        # This keeps JSON creation resilient by stripping WinForms objects down to plain values.
         [ScriptBlock]$ConvertControlValue = {
             param (
                 [Parameter(Mandatory=$false)]
@@ -753,61 +758,105 @@ function New-MetaDataFile {
         if ($null -ne $SelectedTemplateForMetaData -and $SelectedTemplateForMetaData.PSObject.Properties['Content']) {
             [void]$SelectedTemplateForMetaData.PSObject.Properties.Remove('Content')
         }
+        # Remove redundant path aliases from SelectedTemplate in metadata output.
+        # These values duplicate information already present in FileName/Identity and folder sub-objects.
+        if ($null -ne $SelectedTemplateForMetaData -and $SelectedTemplateForMetaData.PSObject.Properties['TemplatePath']) {
+            [void]$SelectedTemplateForMetaData.PSObject.Properties.Remove('TemplatePath')
+        }
+        if ($null -ne $SelectedTemplateForMetaData -and $SelectedTemplateForMetaData.PSObject.Properties['FullName']) {
+            [void]$SelectedTemplateForMetaData.PSObject.Properties.Remove('FullName')
+        }
+        if ($null -ne $SelectedTemplateForMetaData -and $SelectedTemplateForMetaData.PSObject.Properties['Directory']) {
+            [void]$SelectedTemplateForMetaData.PSObject.Properties.Remove('Directory')
+        }
 
         # PREPARATION
-        # Resolve Intake sections from flattened keys first, then fallback to legacy nested paths.
-        [System.Object]$FormalSection = $null
-        [System.Object]$CustomSection = $null
-        [System.Object]$SecuritySection = $null
-        [System.Windows.Forms.TextBox]$DetectionTextBox = $null
+        # Local resolver helpers keep Graphics.TextBoxes lookups centralized and compact.
+        [ScriptBlock]$GetTextBoxSection = {
+            param (
+                [Parameter(Mandatory=$true)]
+                [System.String[]]$SectionKeys,
 
-        foreach ($Key in $Global:Graphics.TextBoxes.Keys) {
-            [System.Object]$Section = $Global:Graphics.TextBoxes[$Key]
-            if ($null -eq $Section -or $Section -isnot [System.Collections.IDictionary]) { continue }
+                [Parameter(Mandatory=$false)]
+                [System.String[]]$PreferredRootKeys = @()
+            )
 
-            if ($Section.ContainsKey('FormalProperties') -and $null -eq $FormalSection) {
-                $FormalSection = $Section.FormalProperties
+            if ($Global:Graphics.TextBoxes -isnot [System.Collections.IDictionary]) { return $null }
+
+            # Build a deterministic root list: preferred keys first, then discovered keys without duplicates.
+            [System.Collections.Generic.List[System.String]]$SearchRoots = @()
+            foreach ($RootKey in ($PreferredRootKeys + @($Global:Graphics.TextBoxes.Keys))) {
+                [System.String]$RootKeyString = [System.String]$RootKey
+                if (-not [System.String]::IsNullOrWhiteSpace($RootKeyString) -and -not $SearchRoots.Contains($RootKeyString)) {
+                    $SearchRoots.Add($RootKeyString)
+                }
             }
-            if ($Section.ContainsKey('CustomProperties') -and $null -eq $CustomSection) {
-                $CustomSection = $Section.CustomProperties
+
+            foreach ($RootKey in $SearchRoots) {
+                [System.Object]$RootNode = $Global:Graphics.TextBoxes[$RootKey]
+                if ($RootNode -isnot [System.Collections.IDictionary]) { continue }
+
+                foreach ($SectionKey in $SectionKeys) {
+                    if ($RootNode.ContainsKey($SectionKey)) {
+                        return $RootNode[$SectionKey]
+                    }
+                }
             }
-            if ($Section.ContainsKey('Security') -and $null -eq $SecuritySection) {
-                $SecuritySection = $Section.Security
-            }
-            if ($Section.ContainsKey('DetectionFile') -and $null -eq $DetectionTextBox) {
-                $DetectionTextBox = $Section.DetectionFile
-            }
-            if ($Section.ContainsKey('Detection') -and $null -eq $DetectionTextBox -and $Section.Detection -is [System.Collections.IDictionary] -and $Section.Detection.ContainsKey('DetectionFile')) {
-                $DetectionTextBox = $Section.Detection.DetectionFile
-            }
+
+            return $null
         }
 
-        if ($null -eq $FormalSection -or $null -eq $CustomSection -or $null -eq $SecuritySection -or $null -eq $DetectionTextBox) {
-            if ($Global:Graphics.TextBoxes.ContainsKey('ApplicationIntake') -and $Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary]) {
-                [System.String]$FormalPropertiesKey = 'FormalApplicationProperties'
-                if (-not $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($FormalPropertiesKey)) { $FormalPropertiesKey = 'FormalProperties' }
+        [ScriptBlock]$GetDetectionTextBox = {
+            param (
+                [Parameter(Mandatory=$false)]
+                [System.String[]]$PreferredRootKeys = @('ApplicationIntake')
+            )
 
-                if ($null -eq $FormalSection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($FormalPropertiesKey)) {
-                    $FormalSection = $Global:Graphics.TextBoxes.ApplicationIntake.$FormalPropertiesKey
-                }
-                if ($null -eq $CustomSection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) {
-                    $CustomSection = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties
-                }
-                if ($null -eq $SecuritySection -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Security')) {
-                    $SecuritySection = $Global:Graphics.TextBoxes.ApplicationIntake.Security
-                }
-                if ($null -eq $DetectionTextBox -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('DetectionFile')) {
-                    $DetectionTextBox = $Global:Graphics.TextBoxes.ApplicationIntake.DetectionFile
-                }
-                if ($null -eq $DetectionTextBox -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('Detection') -and $Global:Graphics.TextBoxes.ApplicationIntake.Detection -is [System.Collections.IDictionary] -and $Global:Graphics.TextBoxes.ApplicationIntake.Detection.ContainsKey('DetectionFile')) {
-                    $DetectionTextBox = $Global:Graphics.TextBoxes.ApplicationIntake.Detection.DetectionFile
+            if ($Global:Graphics.TextBoxes -isnot [System.Collections.IDictionary]) { return $null }
+
+            [System.Collections.Generic.List[System.String]]$SearchRoots = @()
+            foreach ($RootKey in ($PreferredRootKeys + @($Global:Graphics.TextBoxes.Keys))) {
+                [System.String]$RootKeyString = [System.String]$RootKey
+                if (-not [System.String]::IsNullOrWhiteSpace($RootKeyString) -and -not $SearchRoots.Contains($RootKeyString)) {
+                    $SearchRoots.Add($RootKeyString)
                 }
             }
+
+            foreach ($RootKey in $SearchRoots) {
+                [System.Object]$RootNode = $Global:Graphics.TextBoxes[$RootKey]
+                if ($RootNode -isnot [System.Collections.IDictionary]) { continue }
+
+                if ($RootNode.ContainsKey('DetectionFile') -and $RootNode.DetectionFile -is [System.Windows.Forms.TextBox]) {
+                    return $RootNode.DetectionFile
+                }
+
+                # Legacy layouts may nest DetectionFile under a Detection node.
+                if ($RootNode.ContainsKey('Detection') -and
+                    $RootNode.Detection -is [System.Collections.IDictionary] -and
+                    $RootNode.Detection.ContainsKey('DetectionFile') -and
+                    $RootNode.Detection.DetectionFile -is [System.Windows.Forms.TextBox]) {
+                    return $RootNode.Detection.DetectionFile
+                }
+            }
+
+            return $null
         }
+
+        # Resolve Intake sections and detection textbox.
+        [System.Object]$FormalSection = (& $GetTextBoxSection -SectionKeys @('FormalProperties', 'FormalApplicationProperties') -PreferredRootKeys @('ApplicationIntake'))
+        [System.Object]$CustomSection = (& $GetTextBoxSection -SectionKeys @('CustomProperties') -PreferredRootKeys @('ApplicationIntake'))
+        [System.Object]$SecuritySection = (& $GetTextBoxSection -SectionKeys @('Security') -PreferredRootKeys @('ApplicationIntake'))
+        [System.Windows.Forms.TextBox]$DetectionTextBox = (& $GetDetectionTextBox)
 
         if ($null -eq $FormalSection -or $null -eq $CustomSection -or $null -eq $SecuritySection -or $null -eq $DetectionTextBox) {
             throw 'Unable to resolve Intake textbox sections (Formal, Custom, Security) and DetectionFile from Graphics.TextBoxes.'
         }
+
+        # PREPARATION
+        # Resolve extra document information section from Intake Extras (with legacy fallback).
+        [System.Object]$ExtraDocumentSection = (& $GetTextBoxSection -SectionKeys @('ExtraDocumentInformation') -PreferredRootKeys @('IntakeExtras', 'IntakeSettings'))
+        [System.Windows.Forms.TextBox]$UserFullNameTextBox = if ($ExtraDocumentSection -is [System.Collections.IDictionary] -and $ExtraDocumentSection.ContainsKey('UserFullName')) { $ExtraDocumentSection.UserFullName } else { $null }
+        [System.Windows.Forms.TextBox]$UserEmailAddressTextBox = if ($ExtraDocumentSection -is [System.Collections.IDictionary] -and $ExtraDocumentSection.ContainsKey('UserEmailAddress')) { $ExtraDocumentSection.UserEmailAddress } else { $null }
 
         # EXECUTION
         # Build the metadata payload from the current Intake state.
@@ -832,8 +881,8 @@ function New-MetaDataFile {
             DetectionFileVersion        = Get-Item -LiteralPath $DetectionTextBox.Text -ErrorAction SilentlyContinue | Select-Object -ExpandProperty VersionInfo -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FileVersion -ErrorAction SilentlyContinue
             Bitness                     = Get-FileBitness -Path $DetectionTextBox.Text
             # Extra document information
-            UserFullName                = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserFullName.Text
-            UserEmailAddress            = $Global:Graphics.TextBoxes.IntakeSettings.ExtraDocumentInformation.UserEmailAddress.Text
+            UserFullName                = if ($null -ne $UserFullNameTextBox) { $UserFullNameTextBox.Text } else { $null }
+            UserEmailAddress            = if ($null -ne $UserEmailAddressTextBox) { $UserEmailAddressTextBox.Text } else { $null }
             SelectedTemplate            = $SelectedTemplateForMetaData
         }
 
