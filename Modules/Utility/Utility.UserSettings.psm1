@@ -329,19 +329,21 @@ function Get-UserSetting {
 .SYNOPSIS
     Gets the configured output folder path from User Settings.
 .DESCRIPTION
-    This function retrieves the saved output folder path from the configured User Settings registry path.
+    This function retrieves the saved output folder path from User Settings using the flattened property key structure used by New-SubKeyForBoxes.
+    It resolves the key by scanning Global:Graphics.TextBoxes for the requested output folder property name (default: UserOutputFolder).
 .EXAMPLE
     Get-OutputFolder
 .INPUTS
     [PSCustomObject]
+    [System.String]
 .OUTPUTS
     [System.String] The configured output folder path.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
+    Version         : 6.0.0.1
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : July 2026
 #>
 ####################################################################################################
 function Get-OutputFolder {
@@ -351,15 +353,43 @@ function Get-OutputFolder {
         [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
         [PSCustomObject]$InputObject = $Global:ApplicationObject,
 
-        [Parameter(Mandatory=$false,HelpMessage='The name of the User Setting to retrieve.')]
-        [System.String]$PropertyName = 'TextBoxes.ApplicationSettings.FolderSettings.UserOutputFolder'
+        [Parameter(Mandatory=$false,HelpMessage='The property name for the output folder.')]
+        [System.String]$OutputFolderPropertyName = 'UserOutputFolder'
     )
 
     try {
+        # PREPARATION
+        # Resolve PropertyName dynamically by finding the key containing UserOutputFolder.
+        [System.Collections.Generic.List[System.String]]$MatchingSubKeys = [System.Collections.Generic.List[System.String]]::new()
+
+        # Prefer the active graphics key that already contains the UserOutputFolder control.
+        if ($Global:Graphics -and $Global:Graphics.ContainsKey('TextBoxes')) {
+            [System.Collections.IDictionary]$TextBoxesRoot = $Global:Graphics.TextBoxes
+            foreach ($TextBoxSubKey in $TextBoxesRoot.Keys) {
+                if ($TextBoxesRoot[$TextBoxSubKey] -is [System.Collections.IDictionary] -and $TextBoxesRoot[$TextBoxSubKey].Contains($OutputFolderPropertyName)) {
+                    [void]$MatchingSubKeys.Add([System.String]$TextBoxSubKey)
+                }
+            }
+        }
+
+        # If no key was found, throw an error to indicate that the output folder setting cannot be resolved.
+        if ($MatchingSubKeys.Count -eq 0) {
+            throw "Could not resolve OutputFolder setting key. No TextBoxes entry containing $OutputFolderPropertyName was found."
+        }
+        # If multiple keys were found, throw an error to indicate that the output folder setting is ambiguous.
+        if ($MatchingSubKeys.Count -gt 1) {
+            throw "Could not resolve OutputFolder setting key uniquely. Multiple TextBoxes entries contain $OutputFolderPropertyName: $([System.String]::Join(', ', $MatchingSubKeys))."
+        }
+
+        # Use the resolved SubKey to construct the full property name for User Settings.
+        [System.String]$ResolvedSubKeyForBoxes  = $MatchingSubKeys[0]
+        [System.String]$ResolvedPropertyName    = "TextBoxes.$ResolvedSubKeyForBoxes.$OutputFolderPropertyName"
+
         # EXECUTION
         # Get the output folder path from User Settings.
-        [System.String]$OutputFolder = Get-UserSetting -PropertyName $PropertyName
+        [System.String]$OutputFolder = Get-UserSetting -InputObject $InputObject -PropertyName $ResolvedPropertyName
 
+        # POST-EXECUTION
         # Return the output folder value.
         $OutputFolder
     }

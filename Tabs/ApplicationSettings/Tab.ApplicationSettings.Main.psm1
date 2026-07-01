@@ -13,10 +13,10 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
+    Version         : 6.0.0.1
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : July 2026
 #>
 ####################################################################################################
 function Import-TabApplicationSettings {
@@ -30,20 +30,22 @@ function Import-TabApplicationSettings {
     )
 
     try {
+        # PREPARATION - TAB PROPERTIES
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'SETTINGS'
-            Version             = '6.0.0.0'
+            Version             = '6.0.0.1'
             BackGroundColor     = 'Cornsilk'
         }
 
+        # EXECUTION - TAB
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
+        # EXECUTION - SUBTABS
         # Create the SubTabControl and add it to the TabPage
         [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
-
         # Import the SubTabs
         Import-SubTabGeneralSettings -InputObject $InputObject -ParentTabControl $SubTabControl
     }

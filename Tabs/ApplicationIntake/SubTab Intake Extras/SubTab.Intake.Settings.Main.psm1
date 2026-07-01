@@ -69,9 +69,9 @@ function Import-SubTabIntakeExtras {
 
         # EXECUTION - FEATURES
         # Import the Features and store the returned GroupBoxes in variables to be used as the GroupBoxAbove parameter for the next Feature
-        $TemplateSelectionGroupBox          = Import-FeatureIntakeCustomerTemplateSelection -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage
-        $ExtraDocumentInformationGroupBox   = Import-FeatureExtraDocumentInformation        -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage -GroupBoxAbove $TemplateSelectionGroupBox
-        $null                               = Import-FeatureIntakeMailTemplateSelection     -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ExtraDocumentInformationGroupBox
+        #$TemplateSelectionGroupBox          = Import-FeatureIntakeCustomerTemplateSelection -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage
+        #$ExtraDocumentInformationGroupBox   = Import-FeatureExtraDocumentInformation        -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage# -GroupBoxAbove $TemplateSelectionGroupBox
+        $null                               = Import-FeatureIntakeMailTemplateSelection     -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage #-GroupBoxAbove $ExtraDocumentInformationGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

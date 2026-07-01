@@ -30,6 +30,7 @@ function Import-SubTabGeneralSettings {
     )
 
     try {
+        # PREPARATION - TAB PROPERTIES
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
@@ -38,11 +39,15 @@ function Import-SubTabGeneralSettings {
             BackGroundColor     = 'Cornsilk'
         }
 
+        # EXECUTION - TAB
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
+        # EXECUTION - FEATURES
         # Import the Features
-        $null = Import-FeatureUserFolders -InputObject $InputObject -ParentTabPage $ParentTabPage
+        $TemplateSelectionGroupBox          = Import-FeatureIntakeCustomerTemplateSelection -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage
+        $ExtraDocumentInformationGroupBox   = Import-FeatureExtraDocumentInformation        -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage -GroupBoxAbove $TemplateSelectionGroupBox
+        $null                               = Import-FeatureUserFolders                     -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $ExtraDocumentInformationGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

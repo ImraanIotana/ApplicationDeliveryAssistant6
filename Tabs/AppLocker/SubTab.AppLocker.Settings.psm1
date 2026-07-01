@@ -115,7 +115,7 @@ function Import-FeatureAppLockerSettings {
         # Set the AppLockerDEVURL properties
         [System.Collections.Hashtable]$AppLockerDEVURL = @{
             RowNumber       = 1
-            Label           = 'AppLocker DEV LDAP Path'
+            Label           = 'AppLocker LDAP DEV'
             PropertyName    = "TextBoxes.$SubKeyForBoxes.AppLockerDEVURL"
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the DEVELOPMENT environment'
             DefaultValue    = 'LDAP://servername.domain.nl/CN={DEVELOPM-75F6-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
@@ -125,7 +125,7 @@ function Import-FeatureAppLockerSettings {
         # Set the AppLockerTSTURL properties
         [System.Collections.Hashtable]$AppLockerTSTURL = @{
             RowNumber       = 4
-            Label           = 'AppLocker TEST LDAP Path'
+            Label           = 'AppLocker LDAP TEST'
             PropertyName    = "TextBoxes.$SubKeyForBoxes.AppLockerTSTURL"
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the TEST environment'
             DefaultValue    = 'LDAP://servername.domain.nl/CN={TEST1234-ABCD-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
@@ -135,7 +135,7 @@ function Import-FeatureAppLockerSettings {
         # Set the AppLockerACCURL properties
         [System.Collections.Hashtable]$AppLockerACCURL = @{
             RowNumber       = 7
-            Label           = 'AppLocker ACC LDAP Path'
+            Label           = 'AppLocker LDAP ACC'
             PropertyName    = "TextBoxes.$SubKeyForBoxes.AppLockerACCURL"
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the ACCEPTANCE environment'
             DefaultValue    = 'LDAP://servername.domain.nl/CN={ACCEPTAN-1234-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
@@ -145,7 +145,7 @@ function Import-FeatureAppLockerSettings {
         # Set the AppLockerPRDURL properties
         [System.Collections.Hashtable]$AppLockerPRDURL = @{
             RowNumber       = 10
-            Label           = 'AppLocker PRD LDAP Path'
+            Label           = 'AppLocker LDAP PRD'
             PropertyName    = "TextBoxes.$SubKeyForBoxes.AppLockerPRDURL"
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the PRODUCTION environment'
             DefaultValue    = 'LDAP://servername.domain.nl/CN={PRODUCTI-6098-4CBA-9233-E1512BF88ABA},CN=Policies,CN=System,DC=domain,DC=nl'
