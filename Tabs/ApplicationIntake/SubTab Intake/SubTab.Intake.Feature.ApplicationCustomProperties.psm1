@@ -60,7 +60,7 @@ function Import-FeatureApplicationCustomProperties {
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Custom Vendor Name'
-            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomProperties.VendorName"
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomVendorName"
             ToolTip         = 'The custom name of the vendor of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
@@ -69,7 +69,7 @@ function Import-FeatureApplicationCustomProperties {
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Custom Application Name'
-            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationName"
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomApplicationName"
             ToolTip         = 'The custom name of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
@@ -79,20 +79,26 @@ function Import-FeatureApplicationCustomProperties {
         [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
             RowNumber       = 3
             Label           = 'Custom Application Version'
-            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationVersion"
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.CustomApplicationVersion"
             ToolTip         = 'The custom version of the application'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Copy'),(6,'Paste'))
         }
 
+        # Keep legacy nested section aliases for compatibility with existing call sites.
         if (-not $Global:Graphics.TextBoxes.$SubKeyForBoxes.ContainsKey('CustomProperties')) {
             $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties = @{}
         }
 
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.VendorName         = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationName    = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
-        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationVersion = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomVendorName = New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomApplicationName = New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomApplicationVersion = New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+
+        # Legacy aliases
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.VendorName = $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomVendorName
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationName = $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomApplicationName
+        $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomProperties.ApplicationVersion = $Global:Graphics.TextBoxes.$SubKeyForBoxes.CustomApplicationVersion
 
         # Return the GroupBox object
         $FeatureGroupBox

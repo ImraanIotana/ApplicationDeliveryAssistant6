@@ -181,34 +181,32 @@ function New-ApplicationIDFromTextBoxes {
     )
     
     try {
-        # VALIDATION
-        # Define the TextBoxes to get the text from
-        [System.String[]]$TextBoxesToGetTextFrom = @(
-            'VendorName'
-            'ApplicationName'
-            'ApplicationVersion'
-        )
-        # Resolve the custom properties section from flattened keys first, then fallback to legacy nested path.
-        [System.Object]$CustomSection = $null
-        foreach ($Key in $Global:Graphics.TextBoxes.Keys) {
-            [System.Object]$Section = $Global:Graphics.TextBoxes[$Key]
-            if ($Section -is [System.Collections.IDictionary] -and $Section.ContainsKey('CustomProperties')) {
-                $CustomSection = $Section.CustomProperties
-                break
-            }
+        # PREPARATION
+        # Resolve custom property textboxes using flattened keys first, then legacy section fallback.
+        [System.String[]]$PreferredRoots = @('applicationintake.intake', 'ApplicationIntake')
+        [System.Windows.Forms.TextBox]$CustomVendorNameTextBox = Get-TextBoxObject -TextBoxName 'CustomVendorName' -PreferredRootKeys $PreferredRoots
+        [System.Windows.Forms.TextBox]$CustomApplicationNameTextBox = Get-TextBoxObject -TextBoxName 'CustomApplicationName' -PreferredRootKeys $PreferredRoots
+        [System.Windows.Forms.TextBox]$CustomApplicationVersionTextBox = Get-TextBoxObject -TextBoxName 'CustomApplicationVersion' -PreferredRootKeys $PreferredRoots
+
+        if ($null -eq $CustomVendorNameTextBox) {
+            $CustomVendorNameTextBox = Get-TextBoxObject -TextBoxName 'VendorName' -PreferredRootKeys $PreferredRoots -SectionKeys @('CustomProperties')
         }
-        if ($null -eq $CustomSection -and $Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary] -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey('CustomProperties')) {
-            $CustomSection = $Global:Graphics.TextBoxes.ApplicationIntake.CustomProperties
+        if ($null -eq $CustomApplicationNameTextBox) {
+            $CustomApplicationNameTextBox = Get-TextBoxObject -TextBoxName 'ApplicationName' -PreferredRootKeys $PreferredRoots -SectionKeys @('CustomProperties')
         }
-        if ($null -eq $CustomSection) {
-            throw 'Unable to resolve Intake CustomProperties textboxes from Graphics.TextBoxes.'
+        if ($null -eq $CustomApplicationVersionTextBox) {
+            $CustomApplicationVersionTextBox = Get-TextBoxObject -TextBoxName 'ApplicationVersion' -PreferredRootKeys $PreferredRoots -SectionKeys @('CustomProperties')
         }
 
-        # Create a hashtable to store the trimmed values of the TextBoxes
-        [System.Collections.Hashtable]$TrimmedValues = @{}
-        # Loop through the TextBoxes, get the text, trim it and store it in the hashtable
-        foreach ($TextBoxName in $TextBoxesToGetTextFrom) {
-            $TrimmedValues[$TextBoxName] = ($CustomSection.$TextBoxName.Text -replace '\s+', '')
+        if ($null -eq $CustomVendorNameTextBox -or $null -eq $CustomApplicationNameTextBox -or $null -eq $CustomApplicationVersionTextBox) {
+            throw 'Unable to resolve Intake custom property textboxes from Graphics.TextBoxes.'
+        }
+
+        # Create a hashtable to store the trimmed values.
+        [System.Collections.Hashtable]$TrimmedValues = @{
+            VendorName = ($CustomVendorNameTextBox.Text -replace '\s+', '')
+            ApplicationName = ($CustomApplicationNameTextBox.Text -replace '\s+', '')
+            ApplicationVersion = ($CustomApplicationVersionTextBox.Text -replace '\s+', '')
         }
         # Validate that none of the trimmed values are empty
         foreach ($Key in $TrimmedValues.Keys) {
@@ -715,92 +713,51 @@ function New-MetaDataFile {
         }
 
         # PREPARATION
-        # Local resolver helpers keep Graphics.TextBoxes lookups centralized and compact.
-        [ScriptBlock]$GetTextBoxSection = {
-            param (
-                [Parameter(Mandatory=$true)]
-                [System.String[]]$SectionKeys,
+        # Resolve intake textboxes through the shared Graphics.TextBoxes resolver.
+        [System.Windows.Forms.TextBox]$FormalVendorNameTextBox = Get-TextBoxObject -TextBoxName 'FormalVendorName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake')
+        [System.Windows.Forms.TextBox]$FormalApplicationNameTextBox = Get-TextBoxObject -TextBoxName 'FormalApplicationName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake')
+        [System.Windows.Forms.TextBox]$FormalApplicationVersionTextBox = Get-TextBoxObject -TextBoxName 'FormalApplicationVersion' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake')
 
-                [Parameter(Mandatory=$false)]
-                [System.String[]]$PreferredRootKeys = @()
-            )
+        [System.Windows.Forms.TextBox]$CustomVendorNameTextBox = Get-TextBoxObject -TextBoxName 'CustomVendorName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake')
+        [System.Windows.Forms.TextBox]$CustomApplicationNameTextBox = Get-TextBoxObject -TextBoxName 'CustomApplicationName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake')
+        [System.Windows.Forms.TextBox]$CustomApplicationVersionTextBox = Get-TextBoxObject -TextBoxName 'CustomApplicationVersion' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake')
 
-            if ($Global:Graphics.TextBoxes -isnot [System.Collections.IDictionary]) { return $null }
-
-            # Build a deterministic root list: preferred keys first, then discovered keys without duplicates.
-            [System.Collections.Generic.List[System.String]]$SearchRoots = @()
-            foreach ($RootKey in ($PreferredRootKeys + @($Global:Graphics.TextBoxes.Keys))) {
-                [System.String]$RootKeyString = [System.String]$RootKey
-                if (-not [System.String]::IsNullOrWhiteSpace($RootKeyString) -and -not $SearchRoots.Contains($RootKeyString)) {
-                    $SearchRoots.Add($RootKeyString)
-                }
-            }
-
-            foreach ($RootKey in $SearchRoots) {
-                [System.Object]$RootNode = $Global:Graphics.TextBoxes[$RootKey]
-                if ($RootNode -isnot [System.Collections.IDictionary]) { continue }
-
-                foreach ($SectionKey in $SectionKeys) {
-                    if ($RootNode.ContainsKey($SectionKey)) {
-                        return $RootNode[$SectionKey]
-                    }
-                }
-            }
-
-            return $null
+        if ($null -eq $FormalVendorNameTextBox) {
+            $FormalVendorNameTextBox = Get-TextBoxObject -TextBoxName 'VendorName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('FormalProperties', 'FormalApplicationProperties')
+        }
+        if ($null -eq $FormalApplicationNameTextBox) {
+            $FormalApplicationNameTextBox = Get-TextBoxObject -TextBoxName 'ApplicationName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('FormalProperties', 'FormalApplicationProperties')
+        }
+        if ($null -eq $FormalApplicationVersionTextBox) {
+            $FormalApplicationVersionTextBox = Get-TextBoxObject -TextBoxName 'ApplicationVersion' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('FormalProperties', 'FormalApplicationProperties')
         }
 
-        [ScriptBlock]$GetDetectionTextBox = {
-            param (
-                [Parameter(Mandatory=$false)]
-                [System.String[]]$PreferredRootKeys = @('ApplicationIntake')
-            )
-
-            if ($Global:Graphics.TextBoxes -isnot [System.Collections.IDictionary]) { return $null }
-
-            [System.Collections.Generic.List[System.String]]$SearchRoots = @()
-            foreach ($RootKey in ($PreferredRootKeys + @($Global:Graphics.TextBoxes.Keys))) {
-                [System.String]$RootKeyString = [System.String]$RootKey
-                if (-not [System.String]::IsNullOrWhiteSpace($RootKeyString) -and -not $SearchRoots.Contains($RootKeyString)) {
-                    $SearchRoots.Add($RootKeyString)
-                }
-            }
-
-            foreach ($RootKey in $SearchRoots) {
-                [System.Object]$RootNode = $Global:Graphics.TextBoxes[$RootKey]
-                if ($RootNode -isnot [System.Collections.IDictionary]) { continue }
-
-                if ($RootNode.ContainsKey('DetectionFile') -and $RootNode.DetectionFile -is [System.Windows.Forms.TextBox]) {
-                    return $RootNode.DetectionFile
-                }
-
-                # Legacy layouts may nest DetectionFile under a Detection node.
-                if ($RootNode.ContainsKey('Detection') -and
-                    $RootNode.Detection -is [System.Collections.IDictionary] -and
-                    $RootNode.Detection.ContainsKey('DetectionFile') -and
-                    $RootNode.Detection.DetectionFile -is [System.Windows.Forms.TextBox]) {
-                    return $RootNode.Detection.DetectionFile
-                }
-            }
-
-            return $null
+        if ($null -eq $CustomVendorNameTextBox) {
+            $CustomVendorNameTextBox = Get-TextBoxObject -TextBoxName 'VendorName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('CustomProperties')
+        }
+        if ($null -eq $CustomApplicationNameTextBox) {
+            $CustomApplicationNameTextBox = Get-TextBoxObject -TextBoxName 'ApplicationName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('CustomProperties')
+        }
+        if ($null -eq $CustomApplicationVersionTextBox) {
+            $CustomApplicationVersionTextBox = Get-TextBoxObject -TextBoxName 'ApplicationVersion' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('CustomProperties')
         }
 
-        # Resolve Intake sections and detection textbox.
-        [System.Object]$FormalSection = (& $GetTextBoxSection -SectionKeys @('FormalProperties', 'FormalApplicationProperties') -PreferredRootKeys @('ApplicationIntake'))
-        [System.Object]$CustomSection = (& $GetTextBoxSection -SectionKeys @('CustomProperties') -PreferredRootKeys @('ApplicationIntake'))
-        [System.Object]$SecuritySection = (& $GetTextBoxSection -SectionKeys @('Security') -PreferredRootKeys @('ApplicationIntake'))
-        [System.Windows.Forms.TextBox]$DetectionTextBox = (& $GetDetectionTextBox)
+        [System.Windows.Forms.TextBox]$InstallationFolderTextBox = Get-TextBoxObject -TextBoxName 'InstallationFolder' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('Security')
+        [System.Windows.Forms.TextBox]$ADGroupNameTextBox = Get-TextBoxObject -TextBoxName 'ADGroupName' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('Security')
+        [System.Windows.Forms.TextBox]$ADGroupSIDTextBox = Get-TextBoxObject -TextBoxName 'ADGroupSID' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('Security')
 
-        if ($null -eq $FormalSection -or $null -eq $CustomSection -or $null -eq $SecuritySection -or $null -eq $DetectionTextBox) {
-            throw 'Unable to resolve Intake textbox sections (Formal, Custom, Security) and DetectionFile from Graphics.TextBoxes.'
+        [System.Windows.Forms.TextBox]$DetectionTextBox = Get-TextBoxObject -TextBoxName 'DetectionFile' -PreferredRootKeys @('applicationintake.intake', 'ApplicationIntake') -SectionKeys @('Detection')
+
+        # Resolve extra document information textboxes from Application Settings and legacy layouts.
+        [System.Windows.Forms.TextBox]$UserFullNameTextBox = Get-TextBoxObject -TextBoxName 'UserFullName' -PreferredRootKeys @('applicationsettings.generalsettings', 'GeneralSettings', 'IntakeExtras', 'IntakeSettings') -SectionKeys @('ExtraDocumentInformation')
+        [System.Windows.Forms.TextBox]$UserEmailAddressTextBox = Get-TextBoxObject -TextBoxName 'UserEmailAddress' -PreferredRootKeys @('applicationsettings.generalsettings', 'GeneralSettings', 'IntakeExtras', 'IntakeSettings') -SectionKeys @('ExtraDocumentInformation')
+
+        if ($null -eq $FormalVendorNameTextBox -or $null -eq $FormalApplicationNameTextBox -or $null -eq $FormalApplicationVersionTextBox -or
+            $null -eq $CustomVendorNameTextBox -or $null -eq $CustomApplicationNameTextBox -or $null -eq $CustomApplicationVersionTextBox -or
+            $null -eq $InstallationFolderTextBox -or $null -eq $ADGroupNameTextBox -or $null -eq $ADGroupSIDTextBox -or
+            $null -eq $DetectionTextBox) {
+            throw 'Unable to resolve required Intake textboxes (Formal, Custom, Security, DetectionFile) from Graphics.TextBoxes.'
         }
-
-        # PREPARATION
-        # Resolve extra document information section from Intake Extras (with legacy fallback).
-        [System.Object]$ExtraDocumentSection = (& $GetTextBoxSection -SectionKeys @('ExtraDocumentInformation') -PreferredRootKeys @('IntakeExtras', 'IntakeSettings'))
-        [System.Windows.Forms.TextBox]$UserFullNameTextBox = if ($ExtraDocumentSection -is [System.Collections.IDictionary] -and $ExtraDocumentSection.ContainsKey('UserFullName')) { $ExtraDocumentSection.UserFullName } else { $null }
-        [System.Windows.Forms.TextBox]$UserEmailAddressTextBox = if ($ExtraDocumentSection -is [System.Collections.IDictionary] -and $ExtraDocumentSection.ContainsKey('UserEmailAddress')) { $ExtraDocumentSection.UserEmailAddress } else { $null }
 
         # EXECUTION
         # Build the metadata payload from the current Intake state.
@@ -809,17 +766,17 @@ function New-MetaDataFile {
             CreatedOn                   = Get-TimeStamp -ForHost
             ApplicationID               = $ApplicationID
             # Formal properties
-            FormalVendorName            = $FormalSection.VendorName.Text
-            FormalApplicationName       = $FormalSection.ApplicationName.Text
-            FormalApplicationVersion    = $FormalSection.ApplicationVersion.Text
+            FormalVendorName            = $FormalVendorNameTextBox.Text
+            FormalApplicationName       = $FormalApplicationNameTextBox.Text
+            FormalApplicationVersion    = $FormalApplicationVersionTextBox.Text
             # Custom properties
-            CustomVendorName            = $CustomSection.VendorName.Text
-            CustomApplicationName       = $CustomSection.ApplicationName.Text
-            CustomApplicationVersion    = $CustomSection.ApplicationVersion.Text
+            CustomVendorName            = $CustomVendorNameTextBox.Text
+            CustomApplicationName       = $CustomApplicationNameTextBox.Text
+            CustomApplicationVersion    = $CustomApplicationVersionTextBox.Text
             # Security properties
-            InstallationFolder          = $SecuritySection.InstallationFolder.Text
-            ADGroupName                 = $SecuritySection.ADGroupName.Text
-            ADGroupSID                  = $SecuritySection.ADGroupSID.Text
+            InstallationFolder          = $InstallationFolderTextBox.Text
+            ADGroupName                 = $ADGroupNameTextBox.Text
+            ADGroupSID                  = $ADGroupSIDTextBox.Text
             # Other properties
             DetectionFile               = $DetectionTextBox.Text
             DetectionFileVersion        = Get-Item -LiteralPath $DetectionTextBox.Text -ErrorAction SilentlyContinue | Select-Object -ExpandProperty VersionInfo -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FileVersion -ErrorAction SilentlyContinue

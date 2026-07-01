@@ -554,3 +554,95 @@ function Switch-PasswordVisibility {
 
 ### END OF FUNCTION
 ####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Resolves a TextBox from Graphics.TextBoxes by logical name.
+.DESCRIPTION
+    Searches flattened TextBox sections first, then optional named nested sections,
+    and finally legacy nested sections.
+.EXAMPLE
+    Get-TextBoxObject -TextBoxName 'ApplicationID'
+.EXAMPLE
+    Get-TextBoxObject -TextBoxName 'FormalVendorName' -PreferredRootKeys @('applicationintake.intake')
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.Windows.Forms.TextBox] when found; otherwise $null.
+#>
+####################################################################################################
+function Get-TextBoxObject {
+    [CmdletBinding()]
+    [OutputType([System.Windows.Forms.TextBox])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The TextBox key name to resolve from Graphics.TextBoxes.')]
+        [System.String]$TextBoxName,
+
+        [Parameter(Mandatory=$false,HelpMessage='Optional preferred root keys to search first in Graphics.TextBoxes.')]
+        [System.String[]]$PreferredRootKeys = @(),
+
+        [Parameter(Mandatory=$false,HelpMessage='Optional nested section keys to search under each root before generic nested traversal.')]
+        [System.String[]]$SectionKeys = @()
+    )
+
+    if ($Global:Graphics.TextBoxes -is [System.Collections.IDictionary]) {
+        [System.Collections.Generic.List[System.String]]$SearchRoots = @()
+        foreach ($RootKey in ($PreferredRootKeys + @($Global:Graphics.TextBoxes.Keys))) {
+            [System.String]$RootKeyString = [System.String]$RootKey
+            if (-not [System.String]::IsNullOrWhiteSpace($RootKeyString) -and -not $SearchRoots.Contains($RootKeyString)) {
+                $SearchRoots.Add($RootKeyString)
+            }
+        }
+
+        foreach ($ParentKey in $SearchRoots) {
+            [System.Object]$ParentNode = $Global:Graphics.TextBoxes[$ParentKey]
+            if ($ParentNode -isnot [System.Collections.IDictionary]) { continue }
+
+            # Flattened layout: TextBox stored directly in the section hashtable.
+            if ($ParentNode.ContainsKey($TextBoxName) -and $ParentNode[$TextBoxName] -is [System.Windows.Forms.TextBox]) {
+                return $ParentNode[$TextBoxName]
+            }
+
+            # Optional named section lookup: root -> section -> TextBox.
+            foreach ($SectionKey in $SectionKeys) {
+                if ($ParentNode.ContainsKey($SectionKey) -and
+                    $ParentNode[$SectionKey] -is [System.Collections.IDictionary] -and
+                    $ParentNode[$SectionKey].ContainsKey($TextBoxName) -and
+                    $ParentNode[$SectionKey][$TextBoxName] -is [System.Windows.Forms.TextBox]) {
+                    return $ParentNode[$SectionKey][$TextBoxName]
+                }
+            }
+
+            # Legacy nested layout: one additional level (tab -> subtab -> TextBox).
+            foreach ($SubTabKey in $ParentNode.Keys) {
+                [System.Object]$SubTabNode = $ParentNode[$SubTabKey]
+                if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey($TextBoxName) -and $SubTabNode[$TextBoxName] -is [System.Windows.Forms.TextBox]) {
+                    return $SubTabNode[$TextBoxName]
+                }
+            }
+        }
+    }
+
+    if (($Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($TextBoxName)) {
+        if ($Global:Graphics.TextBoxes.ApplicationIntake[$TextBoxName] -is [System.Windows.Forms.TextBox]) {
+            return $Global:Graphics.TextBoxes.ApplicationIntake[$TextBoxName]
+        }
+    }
+
+    if ($Global:Graphics.TextBoxes.ApplicationIntake -is [System.Collections.IDictionary]) {
+        foreach ($SectionKey in $SectionKeys) {
+            if ($Global:Graphics.TextBoxes.ApplicationIntake.ContainsKey($SectionKey) -and
+                $Global:Graphics.TextBoxes.ApplicationIntake[$SectionKey] -is [System.Collections.IDictionary] -and
+                $Global:Graphics.TextBoxes.ApplicationIntake[$SectionKey].ContainsKey($TextBoxName) -and
+                $Global:Graphics.TextBoxes.ApplicationIntake[$SectionKey][$TextBoxName] -is [System.Windows.Forms.TextBox]) {
+                return $Global:Graphics.TextBoxes.ApplicationIntake[$SectionKey][$TextBoxName]
+            }
+        }
+    }
+
+    return $null
+}
+### END OF FUNCTION
+####################################################################################################

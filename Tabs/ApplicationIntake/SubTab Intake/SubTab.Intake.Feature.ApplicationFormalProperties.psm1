@@ -61,7 +61,7 @@ function Import-FeatureApplicationFormalProperties {
         [System.Collections.Hashtable]$VendorNameTextBoxProperties = @{
             RowNumber       = 1
             Label           = 'Formal Vendor Name'
-            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalProperties.VendorName"
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalVendorName"
             ToolTip         = 'The formal name of the vendor of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
@@ -72,7 +72,7 @@ function Import-FeatureApplicationFormalProperties {
         [System.Collections.Hashtable]$ApplicationNameTextBoxProperties = @{
             RowNumber       = 2
             Label           = 'Formal Application Name'
-            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalProperties.ApplicationName"
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalApplicationName"
             ToolTip         = 'The formal name of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
@@ -83,7 +83,7 @@ function Import-FeatureApplicationFormalProperties {
         [System.Collections.Hashtable]$ApplicationVersionTextBoxProperties = @{
             RowNumber       = 3
             Label           = 'Formal Application Version'
-            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalProperties.ApplicationVersion"
+            PropertyName    = "TextBoxes.$SubKeyForBoxes.FormalApplicationVersion"
             ToolTip         = 'The formal version of the application'
             SizeType        = 'Medium'
             Type            = 'Output'
@@ -95,9 +95,14 @@ function Import-FeatureApplicationFormalProperties {
         }
 
         # Create the TextBoxes
-        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.VendorName         = [System.Windows.Forms.TextBox](New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
-        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.ApplicationName    = [System.Windows.Forms.TextBox](New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
-        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.ApplicationVersion = [System.Windows.Forms.TextBox](New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalVendorName = [System.Windows.Forms.TextBox](New-TextBox @VendorNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalApplicationName = [System.Windows.Forms.TextBox](New-TextBox @ApplicationNameTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalApplicationVersion = [System.Windows.Forms.TextBox](New-TextBox @ApplicationVersionTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox)
+
+        # Legacy aliases
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.VendorName = $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalVendorName
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.ApplicationName = $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalApplicationName
+        $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalProperties.ApplicationVersion = $Global:Graphics.TextBoxes[$SubKeyForBoxes].FormalApplicationVersion
 
         # Return the GroupBox object
         $FeatureGroupBox
