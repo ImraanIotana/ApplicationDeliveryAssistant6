@@ -802,4 +802,58 @@ function Set-ComboBoxContent {
 ### END OF FUNCTION
 ####################################################################################################
 
+####################################################################################################
+<#
+.SYNOPSIS
+    Resolves a ComboBox from Graphics.ComboBoxes by logical name.
+.DESCRIPTION
+    Searches flattened ComboBox sections first, then legacy nested sections,
+    and finally the legacy ApplicationIntake fallback node.
+.EXAMPLE
+    Get-ComboBoxObject -ComboBoxName 'TemplateSelection'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.Windows.Forms.ComboBox] when found; otherwise $null.
+#>
+####################################################################################################
+function Get-ComboBoxObject {
+    [CmdletBinding()]
+    [OutputType([System.Windows.Forms.ComboBox])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ComboBox key name to resolve from Graphics.ComboBoxes.')]
+        [System.String]$ComboBoxName
+    )
+
+    if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
+        foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
+            [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
+            if ($ParentNode -isnot [System.Collections.IDictionary]) { continue }
+
+            # Flattened layout: ComboBox stored directly in the section hashtable.
+            if ($ParentNode.ContainsKey($ComboBoxName) -and $ParentNode.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
+                return $ParentNode.$ComboBoxName
+            }
+
+            # Legacy nested layout: one additional level (tab -> subtab -> ComboBox).
+            foreach ($SubTabKey in $ParentNode.Keys) {
+                [System.Object]$SubTabNode = $ParentNode.$SubTabKey
+                if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey($ComboBoxName) -and $SubTabNode.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
+                    return $SubTabNode.$ComboBoxName
+                }
+            }
+        }
+    }
+
+    if (($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey($ComboBoxName)) {
+        if ($Global:Graphics.ComboBoxes.ApplicationIntake.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
+            return $Global:Graphics.ComboBoxes.ApplicationIntake.$ComboBoxName
+        }
+    }
+
+    return $null
+}
+### END OF FUNCTION
+####################################################################################################
+
 

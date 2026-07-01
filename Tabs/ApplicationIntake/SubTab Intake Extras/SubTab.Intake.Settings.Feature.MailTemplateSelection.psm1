@@ -88,7 +88,16 @@ function Import-FeatureIntakeMailTemplateSelection {
                 PNGFileName     = 'arrow_refresh'
                 SizeType        = 'Small'
                 ToolTip         = 'Refresh the list of mail templates from the selected customer settings file.'
-                Function        = { Update-ComboBox -ComboBox $MailTemplateSelectionComboBox -MailTemplates (Get-MailTemplates) }.GetNewClosure()
+                Function        = {
+                    [System.String]$SettingsFilePath = $null
+                    [System.Windows.Forms.ComboBox]$TemplateSelectionComboBox = Get-ComboBoxObject -ComboBoxName 'TemplateSelection'
+
+                    if ($null -ne $TemplateSelectionComboBox -and $null -ne $TemplateSelectionComboBox.SelectedItem -and $null -ne $TemplateSelectionComboBox.SelectedItem.PSObject.Properties['TemplatePath']) {
+                        $SettingsFilePath = [System.String]$TemplateSelectionComboBox.SelectedItem.TemplatePath
+                    }
+
+                    Update-ComboBox -ComboBox $MailTemplateSelectionComboBox -MailTemplates (Get-MailTemplates -SettingsFilePath $SettingsFilePath)
+                }.GetNewClosure()
             }
         )
         # Set the action button properties
@@ -272,25 +281,7 @@ function Get-MailTemplates {
     # Prefer the customer template currently selected in Intake Settings.
     if (Test-String -IsEmpty $SettingsFilePath) {
         # First preference: currently selected customer template in the Template Selection combo box.
-        [System.Object]$TemplateSelectionComboBox = $null
-        if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
-            foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
-                [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
-                if ($ParentNode -is [System.Collections.IDictionary]) {
-                    foreach ($SubTabKey in $ParentNode.Keys) {
-                        [System.Object]$SubTabNode = $ParentNode.$SubTabKey
-                        if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey('TemplateSelection')) {
-                            $TemplateSelectionComboBox = $SubTabNode.TemplateSelection
-                            break
-                        }
-                    }
-                }
-                if ($null -ne $TemplateSelectionComboBox) { break }
-            }
-        }
-        if ($null -eq $TemplateSelectionComboBox -and ($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey('TemplateSelection')) {
-            $TemplateSelectionComboBox = $Global:Graphics.ComboBoxes.ApplicationIntake.TemplateSelection
-        }
+        [System.Windows.Forms.ComboBox]$TemplateSelectionComboBox = Get-ComboBoxObject -ComboBoxName 'TemplateSelection'
         if ($null -ne $TemplateSelectionComboBox -and $null -ne $TemplateSelectionComboBox.SelectedItem) {
             $SettingsFilePath = $TemplateSelectionComboBox.SelectedItem.TemplatePath
         }

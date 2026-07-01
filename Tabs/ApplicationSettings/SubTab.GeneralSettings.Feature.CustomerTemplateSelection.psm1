@@ -76,12 +76,18 @@ function Import-FeatureCustomerTemplateSelection {
         $TemplateSelectionComboBox.Add_SelectedIndexChanged([System.EventHandler]{
             param($ChangedControl, $ChangedEvent)
 
-            [System.Windows.Forms.ComboBox]$MailTemplateSelection = $Global:Graphics.ComboBoxes[$SubKeyForBoxes].MailTemplateSelection # TODO: fix this to be more robust and not rely on the SubKeyForBoxes being the same for both ComboBoxes. Consider passing the SubKeyForBoxes as a parameter to this function or storing it in a more accessible location.
+            [System.Windows.Forms.ComboBox]$MailTemplateSelection = Get-ComboBoxObject -ComboBoxName 'MailTemplateSelection'
+            [System.String]$SettingsFilePath = $null
+
+            if ($null -ne $ChangedControl -and $null -ne $ChangedControl.SelectedItem -and $null -ne $ChangedControl.SelectedItem.PSObject.Properties['TemplatePath']) {
+                $SettingsFilePath = [System.String]$ChangedControl.SelectedItem.TemplatePath
+            }
+
             if ($null -eq $MailTemplateSelection -or $MailTemplateSelection.IsDisposed) {
                 return
             }
 
-            Update-ComboBox -ComboBox $MailTemplateSelection -MailTemplates (Get-MailTemplates)
+            Update-ComboBox -ComboBox $MailTemplateSelection -MailTemplates (Get-MailTemplates -SettingsFilePath $SettingsFilePath)
         }.GetNewClosure())
 
         # EXECUTION - BUTTONS
@@ -93,12 +99,7 @@ function Import-FeatureCustomerTemplateSelection {
                 PNGFileName     = 'information'
                 SizeType        = 'Small'
                 ToolTip         = 'View details of the selected template.'
-                Function        = {
-                    Write-Line "Template Identity: $($TemplateSelectionComboBox.SelectedItem.Identity)" -Type Special
-                    Write-Line "Template Path: $($TemplateSelectionComboBox.SelectedItem.TemplatePath)" -Type Info
-                    Write-Line "Template Application SubFolders:" -Type Info
-                    $TemplateSelectionComboBox.SelectedItem.ApplicationFolderSubFolders.GetEnumerator() | Sort-Object -Property Value | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
-                }.GetNewClosure()
+                Function        = { Write-CustomerTemplateToHost -ComboBox $TemplateSelectionComboBox }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 6
@@ -126,6 +127,74 @@ function Import-FeatureCustomerTemplateSelection {
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Writes details of the selected customer template to the host.
+.DESCRIPTION
+    This function reads the selected item from the Customer Template Selection ComboBox and writes
+    key template details (identity, path, and configured application subfolders) to the host.
+.EXAMPLE
+    Write-CustomerTemplateToHost -ComboBox $Global:Graphics.ComboBoxes.ApplicationSettings.TemplateSelection
+.PARAMETER ComboBox
+    Required ComboBox containing customer template items.
+.INPUTS
+    [System.Windows.Forms.ComboBox]
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
+    Version         : 6.0.0.1
+    Author          : Imraan Iotana
+    Creation Date   : July 2026
+    Last Update     : July 2026
+#>
+####################################################################################################
+function Write-CustomerTemplateToHost {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The customer template ComboBox.')]
+        [System.Windows.Forms.ComboBox]$ComboBox
+    )
+
+    # VALIDATION
+    # If the ComboBox is null or disposed, write a warning and return.
+    if ($null -eq $ComboBox -or $ComboBox.IsDisposed) {
+        Write-Line 'The customer template ComboBox is not available.' -Type Warning
+        return
+    }
+
+    # VALIDATION
+    # If no item is selected in the ComboBox, write a warning and return.
+    if ($null -eq $ComboBox.SelectedItem) {
+        Write-Line 'No customer template is selected.' -Type Warning
+        return
+    }
+
+    # PREPARATION
+    # Read the selected template once and write the key template fields.
+    [System.Object]$SelectedTemplate = $ComboBox.SelectedItem
+
+    # EXECUTION
+    # Write key details for the selected customer template.
+    Write-Line "Template Identity: $($SelectedTemplate.Identity)" -Type Special
+    Write-Line "Template Path: $($SelectedTemplate.TemplatePath)" -Type Info
+    Write-Line 'Template Application SubFolders:' -Type Info
+
+    # EXECUTION
+    # Write configured subfolder mappings when available.
+    if ($null -ne $SelectedTemplate.ApplicationFolderSubFolders -and $SelectedTemplate.ApplicationFolderSubFolders -is [System.Collections.IDictionary]) {
+        $SelectedTemplate.ApplicationFolderSubFolders.GetEnumerator() | Sort-Object -Property Value | Format-Table -Property Name, Value -AutoSize | Out-String | Write-Host
+    }
+    else {
+        Write-Line 'No ApplicationFolderSubFolders are defined on the selected template.' -Type Warning
     }
 }
 

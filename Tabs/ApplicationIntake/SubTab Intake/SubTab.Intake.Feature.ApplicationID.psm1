@@ -255,62 +255,6 @@ function New-ApplicationIDFromTextBoxes {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Resolves a ComboBox from Graphics.ComboBoxes by logical name.
-.DESCRIPTION
-    Searches flattened ComboBox sections first, then legacy nested sections,
-    and finally the legacy ApplicationIntake fallback node.
-.EXAMPLE
-    Get-GraphicsComboBoxByName -ComboBoxName 'TemplateSelection'
-.INPUTS
-    [System.String]
-.OUTPUTS
-    [System.Windows.Forms.ComboBox] when found; otherwise $null.
-#>
-####################################################################################################
-function Get-GraphicsComboBoxByName {
-    [CmdletBinding()]
-    [OutputType([System.Windows.Forms.ComboBox])]
-    param (
-        [Parameter(Mandatory=$true,HelpMessage='The ComboBox key name to resolve from Graphics.ComboBoxes.')]
-        [System.String]$ComboBoxName
-    )
-
-    if ($Global:Graphics.ComboBoxes -is [System.Collections.IDictionary]) {
-        foreach ($ParentKey in $Global:Graphics.ComboBoxes.Keys) {
-            [System.Object]$ParentNode = $Global:Graphics.ComboBoxes.$ParentKey
-            if ($ParentNode -isnot [System.Collections.IDictionary]) { continue }
-
-            # Flattened layout: ComboBox stored directly in the section hashtable.
-            if ($ParentNode.ContainsKey($ComboBoxName) -and $ParentNode.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
-                return $ParentNode.$ComboBoxName
-            }
-
-            # Legacy nested layout: one additional level (tab -> subtab -> ComboBox).
-            foreach ($SubTabKey in $ParentNode.Keys) {
-                [System.Object]$SubTabNode = $ParentNode.$SubTabKey
-                if (($SubTabNode -is [System.Collections.IDictionary]) -and $SubTabNode.ContainsKey($ComboBoxName) -and $SubTabNode.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
-                    return $SubTabNode.$ComboBoxName
-                }
-            }
-        }
-    }
-
-    if (($Global:Graphics.ComboBoxes.ApplicationIntake -is [System.Collections.IDictionary]) -and $Global:Graphics.ComboBoxes.ApplicationIntake.ContainsKey($ComboBoxName)) {
-        if ($Global:Graphics.ComboBoxes.ApplicationIntake.$ComboBoxName -is [System.Windows.Forms.ComboBox]) {
-            return $Global:Graphics.ComboBoxes.ApplicationIntake.$ComboBoxName
-        }
-    }
-
-    return $null
-}
-
-### END OF FUNCTION
-####################################################################################################
-
-
-####################################################################################################
-<#
-.SYNOPSIS
     Resolves the Intake Security section from Graphics.TextBoxes.
 .DESCRIPTION
     Searches flattened Intake sections first, then falls back to the legacy
@@ -393,7 +337,7 @@ function New-ApplicationFolder {
         # 2) Resolve template selection and target folder structure.
         # PREPARATION
         # Resolve the selected customer template.
-        [System.Object]$TemplateSelectionComboBox = Get-GraphicsComboBoxByName -ComboBoxName 'TemplateSelection'
+        [System.Object]$TemplateSelectionComboBox = Get-ComboBoxObject -ComboBoxName 'TemplateSelection'
         [System.Object]$SelectedTemplate = if ($null -ne $TemplateSelectionComboBox) { $TemplateSelectionComboBox.SelectedItem } else { $null }
         if ($null -eq $SelectedTemplate) {
             Write-Line 'No customer template selected. Please select a template first. No action has been taken.'
@@ -448,7 +392,7 @@ function New-ApplicationFolder {
 
         # 4) Add optional exports and generated files that depend on UI selections.
         # Export selected application registry details to the template-defined Archive\Other folder.
-        [System.Object]$InstalledApplicationsComboBox = Get-GraphicsComboBoxByName -ComboBoxName 'InstalledApplications'
+        [System.Object]$InstalledApplicationsComboBox = Get-ComboBoxObject -ComboBoxName 'InstalledApplications'
         [System.Object]$SelectedInstalledApplication = if ($null -ne $InstalledApplicationsComboBox) { $InstalledApplicationsComboBox.SelectedItem } else { $null }
         [System.String]$SelectedRegistryPath = if ($null -ne $SelectedInstalledApplication) { $SelectedInstalledApplication.RegistryPath } else { $null }
         [System.String]$OtherRelativePath = [System.String]$ApplicationFolderSubFolders.Other
@@ -463,7 +407,7 @@ function New-ApplicationFolder {
             Write-Line 'No installed application selected. Skipping registry export.' -Type Warning
         }
 
-        [System.Object]$ApplicationShortcutsComboBox = Get-GraphicsComboBoxByName -ComboBoxName 'ApplicationShortcuts'
+        [System.Object]$ApplicationShortcutsComboBox = Get-ComboBoxObject -ComboBoxName 'ApplicationShortcuts'
         Export-ShortcutInformation -ApplicationFolderPath $NewFolderPath -ShortcutComboBox $ApplicationShortcutsComboBox
 
         [System.Object]$SecuritySection = Get-IntakeSecuritySection
