@@ -99,7 +99,7 @@ function Import-FeatureIntakeApplicationSelection {
                 SizeType        = 'Small'
                 ToolTip         = 'Clear all fields.'
                 Function        = {
-                    if (-not(Get-UserConfirmation -Title 'Clear All Fields' -Body "This will clear ALL fields in the intake form.`n`nAre you sure you want to continue?")) { return }
+                    if (-not(Get-UserConfirmation -Title 'Clear All Fields' -Body "This will CLEAR ALL fields in the intake form.`n`nAre you sure you want to continue?")) { return }
                     Clear-IntakeFormFields
                 }.GetNewClosure()
             }
