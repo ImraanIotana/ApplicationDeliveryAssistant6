@@ -13,10 +13,10 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
+    Version         : 6.0.0.1
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : July 2026
 #>
 ####################################################################################################
 function Import-SubTabGeneralSettings {
@@ -35,9 +35,11 @@ function Import-SubTabGeneralSettings {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'GENERAL SETTINGS'
-            Version             = '6.0.0.0'
+            Version             = '6.0.0.1'
             BackGroundColor     = 'Cornsilk'
         }
+        # Set the main color for the GroupBoxes in this sub-tab
+        [System.String]$MainColor = 'Brown'
 
         # EXECUTION - TAB
         # Create the TabPage
@@ -45,9 +47,9 @@ function Import-SubTabGeneralSettings {
 
         # EXECUTION - FEATURES
         # Import the Features
-        $TemplateSelectionGroupBox          = Import-FeatureIntakeCustomerTemplateSelection -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage
-        $ExtraDocumentInformationGroupBox   = Import-FeatureExtraDocumentInformation        -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage -GroupBoxAbove $TemplateSelectionGroupBox
-        $null                               = Import-FeatureUserFolders                     -InputObject $InputObject -ParentTabPage $ParentTabPage -GroupBoxAbove $ExtraDocumentInformationGroupBox
+        $TemplateSelectionGroupBox          = Import-FeatureCustomerTemplateSelection   -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage
+        $ExtraDocumentInformationGroupBox   = Import-FeatureExtraDocumentInformation    -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage -GroupBoxAbove $TemplateSelectionGroupBox
+        $null                               = Import-FeatureUserFolders                 -InputObject $InputObject -Color $MainColor -ParentTabPage $ParentTabPage -GroupBoxAbove $ExtraDocumentInformationGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

@@ -1,26 +1,27 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Selection feature into the Intake sub-tab.
+    Imports the Customer Template Selection feature into the General Settings sub-tab.
 .DESCRIPTION
-    This function imports the Application Selection feature into the Intake sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Customer Template Selection feature into the General Settings sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureIntakeApplicationSelection -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureCustomerTemplateSelection -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
     [System.Windows.Forms.GroupBox]
+    [System.String]
 .OUTPUTS
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. All rights reserved.
-    Version         : 6.0.0.0
+    Version         : 6.0.0.1
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : June 2026
+    Last Update     : July 2026
 #>
 ####################################################################################################
-function Import-FeatureIntakeCustomerTemplateSelection {
+function Import-FeatureCustomerTemplateSelection {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -30,7 +31,7 @@ function Import-FeatureIntakeCustomerTemplateSelection {
         [Parameter(Mandatory=$true,HelpMessage='The Parent TabPage to which this Feature will be added.')]
         [System.Windows.Forms.TabPage]$ParentTabPage,
 
-        [Parameter(Mandatory=$false,HelpMessage='The GroupBox above which this Feature will be added.')]
+        [Parameter(Mandatory=$false,HelpMessage='The GroupBox underneath which this Feature will be added.')]
         [System.Windows.Forms.GroupBox]$GroupBoxAbove,
 
         [Parameter(Mandatory=$false,HelpMessage='The color of the GroupBox.')]
@@ -38,9 +39,9 @@ function Import-FeatureIntakeCustomerTemplateSelection {
     )
 
     try {
-        # EXECUTION - GROUPBOX
-        # Feature properties
-        [System.Collections.Hashtable]$FeatureProperties = @{
+        # PREPARATION - GROUPBOX PROPERTIES
+        # Set the GroupBox properties
+        [System.Collections.Hashtable]$GroupBoxProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
             Title           = 'CUSTOMER TEMPLATE SELECTION'
@@ -48,34 +49,20 @@ function Import-FeatureIntakeCustomerTemplateSelection {
             NumberOfRows    = 1
             GroupBoxAbove   = $GroupBoxAbove
         }
+        # EXECUTION - GROUPBOX
         # Create the GroupBox
-        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @FeatureProperties -OnSubTab
+        [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @GroupBoxProperties -OnSubTab
 
-        # Derive graphics keys from the current tab hierarchy
-        [System.Windows.Forms.TabControl]$ParentTabControl = $ParentTabPage.Parent
-        [System.Windows.Forms.Control]$ParentTab = if ($ParentTabControl -is [System.Windows.Forms.TabControl]) { $ParentTabControl.Parent } else { $null }
-        [System.String]$GraphicsParentKey = if ($ParentTab -is [System.Windows.Forms.TabPage]) { $ParentTab.Text } else { $null }
-        [System.String]$GraphicsSubTabKey = ([System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ToTitleCase($ParentTabPage.Text.ToLower()) -replace '\s+', '')
-
-        # Build the ComboBox property path used by New-ComboBox
-        [System.String]$TemplateSelectionPropertyName = "ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.TemplateSelection"
-
-        # Create Graphics hashtable entries for this tab path when they do not already exist
-        if ($GraphicsParentKey) {
-            if (-not $Global:Graphics.ComboBoxes.ContainsKey($GraphicsParentKey) -or $Global:Graphics.ComboBoxes.$GraphicsParentKey -isnot [System.Collections.IDictionary]) {
-                $Global:Graphics.ComboBoxes.$GraphicsParentKey = @{}
-            }
-            if (-not $Global:Graphics.ComboBoxes.$GraphicsParentKey.ContainsKey($GraphicsSubTabKey)) {
-                $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey = @{}
-            }
-        }
+        # EXECUTION - SUBKEY
+        # Create a unique SubKey for the TextBoxes and ComboBoxes
+        [System.String]$SubKeyForBoxes = New-SubKeyForBoxes -ParentTabPage $ParentTabPage -PassThru
 
         # EXECUTION - COMBOBOXES
         # Set the ComboBox properties
         [System.Collections.Hashtable]$SelectedApplicationComboBoxProperties = @{
             RowNumber           = 1
             Label               = 'Select Customer Template'
-            PropertyName        = $TemplateSelectionPropertyName
+            PropertyName        = "ComboBoxes.$SubKeyForBoxes.TemplateSelection"
             ToolTip             = 'The list of customer templates to select from.'
             SizeType            = 'Medium'
             CustomerTemplates   = Get-CustomerTemplates
@@ -83,13 +70,13 @@ function Import-FeatureIntakeCustomerTemplateSelection {
         }
         # Create the ComboBox
         [System.Windows.Forms.ComboBox]$TemplateSelectionComboBox = New-ComboBox @SelectedApplicationComboBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnComboBox
-        $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.TemplateSelection = $TemplateSelectionComboBox
+        $Global:Graphics.ComboBoxes[$SubKeyForBoxes].TemplateSelection = $TemplateSelectionComboBox
 
         # When the selected customer template changes, refresh the mail template list as well.
         $TemplateSelectionComboBox.Add_SelectedIndexChanged([System.EventHandler]{
             param($ChangedControl, $ChangedEvent)
 
-            [System.Windows.Forms.ComboBox]$MailTemplateSelection = $Global:Graphics.ComboBoxes.$GraphicsParentKey.$GraphicsSubTabKey.MailTemplateSelection
+            [System.Windows.Forms.ComboBox]$MailTemplateSelection = $Global:Graphics.ComboBoxes[$SubKeyForBoxes].MailTemplateSelection # TODO: fix this to be more robust and not rely on the SubKeyForBoxes being the same for both ComboBoxes. Consider passing the SubKeyForBoxes as a parameter to this function or storing it in a more accessible location.
             if ($null -eq $MailTemplateSelection -or $MailTemplateSelection.IsDisposed) {
                 return
             }

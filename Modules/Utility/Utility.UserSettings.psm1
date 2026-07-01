@@ -378,7 +378,7 @@ function Get-OutputFolder {
         }
         # If multiple keys were found, throw an error to indicate that the output folder setting is ambiguous.
         if ($MatchingSubKeys.Count -gt 1) {
-            throw "Could not resolve OutputFolder setting key uniquely. Multiple TextBoxes entries contain $OutputFolderPropertyName: $([System.String]::Join(', ', $MatchingSubKeys))."
+            throw "Could not resolve OutputFolder setting key uniquely. Multiple TextBoxes entries contain ${OutputFolderPropertyName}: $([System.String]::Join(', ', $MatchingSubKeys))."
         }
 
         # Use the resolved SubKey to construct the full property name for User Settings.

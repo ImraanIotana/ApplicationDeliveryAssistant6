@@ -23,6 +23,7 @@
 ####################################################################################################
 function Import-FeatureUserFolders {
     [CmdletBinding()]
+    [OutputType([System.Windows.Forms.GroupBox])]
     param (
         [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
         [PSCustomObject]$InputObject,
