@@ -108,7 +108,7 @@ function Import-FeatureApplicationMaintenance {
                             Show-ApplicationChangeLog -InputObject $InputObject
                         }
                         'GENERAL: Check for Updates' {
-                            Write-Line 'Check for Updates is not implemented yet.' -Type Warning
+                            Invoke-ApplicationUpdateCheck -InputObject $InputObject
                         }
                         'GENERAL: Install Application to Folder' {
                             Install-ApplicationToFolder -InputObject $InputObject
