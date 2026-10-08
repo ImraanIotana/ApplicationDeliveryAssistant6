@@ -7,7 +7,7 @@ Getting started
 3. Double-click Start Application Delivery Assistant.cmd.
 4. Optional: install the application in a folder of your choice with the Install Application to Folder action on the SETTINGS tab, Maintenance sub-tab, and create your own Start Menu or Desktop shortcut with the Create Startmenu Shortcut or Create Desktop Shortcut actions.
 
-Version 6.9.1
+Version 6.9.1  
 October 2026
 - ADA Settings - Maintenance: Added the Install Application to Folder action. After choosing a folder, the application is copied to an 'Application Delivery Assistant' subfolder (a staged copy that is published only when complete; the .git, .vs and .vscode folders are not copied). An existing installation in that folder is kept as a backup named '<folder>.previous' (one backup is kept) and restored if publishing fails. A folder that is not empty and does not contain an installation, a drive root, a folder inside the running application folder, and a folder without write access are refused. Afterwards the application offers to create Start Menu and Desktop shortcuts for the installed copy and to start it. Installed copies contain an Installed.marker file.
 - General: The startup messages now show a tip about the launcher and the Install Application to Folder action, unless the application runs from an installed copy.
@@ -16,9 +16,10 @@ October 2026
 - General: The copyright notice in the README, the startup message and all file headers now states that the application is licensed under the Apache License 2.0, instead of 'All rights reserved'. The Start Application Delivery Assistant.lnk shortcut was removed from the repository; shortcuts are created from the application. Older changelog entries no longer name specific customers.
 - ADA Settings - Maintenance: The Check for Updates action now works. It reads the version of StartAssistant.ps1 on GitHub (https only), compares it with the running version and reports whether the application is up to date. When a newer version exists, it offers to update. The update downloads the ZIP file of the public repository to a temporary folder, extracts it with the safe ZIP extraction, and checks that it is a complete application, that it is newer, and that all scripts parse without errors. After confirmation the application closes, and a helper script waits until it has ended, replaces the application folder with the staged copy (the previous version is kept as '<folder>.previous' and restored when the replacement fails), and starts the application again. Development copies (a folder with a .git folder) and folders whose parent folder cannot be written to are not updated. Settings in the registry and Customer Templates in the roaming profile are not affected; extra files you placed in the application folder remain in the '.previous' folder.
 - General: The ZipFileOnGithub and VersionFileOnGithub settings now point to the public repository (the raw StartAssistant.ps1 for the version). Added the Utility Update module.
-- General: Updated startup, Settings tab, Maintenance sub-tab, Application Maintenance, Utility Installation, Utility Update, Application Settings data file and Write-WelcomeMessage metadata to Version 6.9.1.
+- General: Added a .gitignore for installation markers, backups and temporary files, and made the version and date lines of the changelog separate lines on GitHub. The Production LDAP placeholder in the AppLocker settings now clearly reads as a placeholder.
+- General: Updated startup, Settings tab, Maintenance sub-tab, Application Maintenance, AppLocker Settings (Import-FeatureAppLockerSettings), Utility Installation, Utility Update, Application Settings data file and Write-WelcomeMessage metadata to Version 6.9.1.
 
-Version 6.9.0
+Version 6.9.0  
 October 2026
 - ADA Settings - Maintenance: Added a Check for Updates action to the Application Maintenance list. Only the UI entry is present; the update check itself is not implemented yet.
 - Application Intake - Intake Templates: Added Export ZIP and Import ZIP buttons to the Available Customer Templates group. Export ZIP packages the selected built-in or user customer template bundle, with its Word templates, into a Customer Extension ZIP file in the output folder without prompting. The extension version is derived automatically from the newest file in the bundle (Year.Month.Day.HHmm, for example 2026.10.5.1432), and a SHA-256 content fingerprint of all bundle files is stored in the Extension.psd1 descriptor together with the name, TemplateId, folder and manifest names, and minimum application version. Import ZIP extracts a Customer Extension in a temporary folder, validates it (descriptor, application version requirement, safe folder name, content fingerprint, every template manifest and Word template), refuses templates that are already built in or installed from another folder, and compares it with an installed copy by fingerprint and version. After confirmation it installs the bundle into the roaming Customer Templates folder transactionally, keeps the previous version in a Customer Template Backups folder (the newest 3 backups per template folder are kept and older ones are removed automatically), warns when the installed copy was changed locally, and refreshes the template list. Customer Extensions may only contain .psd1 and .dotx files: Export ZIP refuses other file types, subfolder values that are rooted or use .., and open Word lock files, and Import ZIP checks the archive before extracting it (at most 200 entries, 50 MB per file and 100 MB in total, measured on the real decompressed bytes; only Extension.psd1 at the root; no unsafe entry names or disallowed file types) and rejects unsafe application subfolder paths in the templates.
@@ -30,29 +31,29 @@ October 2026
 - Customer Templates: Removed a customer file transfer reference from the ADA Default request source files mail template.
 - General: Added the Customer Extension helper module and updated startup, Application Maintenance, Application Intake and Intake Templates runtime, Customer Template List, and Get-CustomerTemplates metadata to Version 6.9.0.
 
-Version 6.8.1
+Version 6.8.1  
 September 2026
 - Tools - Folders: Folder comparison now displays sortable file-level differences for files found only in one folder, newer timestamps, and changed content. Full-row status colors distinguish Folder 1 from Folder 2, and the results window uses the folder_lightbulb icon. Double-clicking opens the relevant file in File Explorer; same-time content differences prompt the user to choose a folder. Large comparisons retain a confirmation prompt before hashing; if declined, path, size, and timestamp differences are still shown.
 - General: Updated startup, Folders sub-tab, and folder-comparison function metadata to Version 6.8.1.
 
-Version 6.8.0
+Version 6.8.0  
 September 2026
 - Utilities - Compression: Added reusable native .NET ZIP64 creation, extraction, integrity testing, and streaming archive-entry replacement helpers.
 - DSL Management - Search: Wired archive and restore operations to the native streaming ZIP64 helpers with an owned progress dialog, while retaining the legacy PowerShell archive path behind a fallback switch.
 - General: Updated startup, Launcher, DSL Search, and Utility Compression version metadata to Version 6.8.0.
 
-Version 6.7.2
+Version 6.7.2  
 September 2026
 - Launcher - System Folders: Replaced the Windows button with Start Menu, opening the all-users Start Menu Programs folder and using the application_side_tree icon.
 - Launcher - User Folders: Replaced Downloads with Start Menu, opening the current user's Start Menu Programs folder with the application_side_tree icon; Output Folder remains unchanged.
 - General: Updated startup versioning, Launcher tab runtime version, and touched function metadata to Version 6.7.2.
 
-Version 6.7.1
+Version 6.7.1  
 September 2026
 - DSL Management - Documentation: Fixed the customer-template prompt appearing when a dossier already exists but no copied Word template is present. The existing dossier now opens directly; missing documentation still follows the template fallback workflow.
 - General: Updated startup versioning and touched function metadata to Version 6.7.1.
 
-Version 6.7.0
+Version 6.7.0  
 September 2026
 - Tools - Other: Added an MSI group below Ping Computers with MSI-only browsing and generation of Install.cmd and Uninstall.cmd beside the selected package.
 - Tools - Other: Generated CMD files use relative MSI paths, verbose logs in TEMP, restart prevention, installer exit codes, and concise REM explanations; existing files require overwrite confirmation. Generation does not execute or elevate the scripts.
@@ -60,7 +61,7 @@ September 2026
 - Utilities: Moved Explorer-copied path normalization into shared file utilities and added quoted-path support to direct MSI command-file generation calls.
 - General: Updated startup and touched function metadata for Version 6.7.0.
 
-Version 6.6.1
+Version 6.6.1  
 September 2026
 - Customer Templates: Limited built-in template discovery to the default customer template and made it the fallback selection. ADA Default and the extended folder structure customer template remain in the repository and can be re-enabled by uncommenting their discovery paths; no new UI controls were added.
 - Application Intake - Desktop Application: Missing Detection File / MSI now prompts for confirmation before creating the application folder, instead of failing partway through with a cascade of errors.
@@ -68,7 +69,7 @@ September 2026
 - Application Intake - Desktop Application: Metadata resolution and creation errors now propagate once to the existing rollback/error-reporting logic instead of being swallowed and surfacing as confusing follow-on errors.
 - General: Updated touched Application Intake function metadata and startup versioning to Version 6.6.1.
 
-Version 6.6.0
+Version 6.6.0  
 September 2026
 - Application Intake - Word Documents: Added support for generating both Dossier and TAT (Technical Acceptance Test) Word documents (`<Customer> TAT <ApplicationID>.docx`) during Application Intake.
 - Customer Templates: Added `TatTemplateName` configuration to the customer templates for `<Customer> TAT APPLICATIONID.dotx`.
@@ -84,12 +85,12 @@ September 2026
 - DSL Management - Documentation: Writes fallback-generated documents to the customer template's configured Documentation folder inside the selected DSL application package.
 - General: Updated startup versioning and touched modules to Version 6.6.0.
 
-Version 6.5.4
+Version 6.5.4  
 September 2026
 - General: Added unblocking of the modules.
 - Tools - Files: File comparison now accepts Explorer-copied paths enclosed in double quotes.
 
-Version 6.5.3
+Version 6.5.3  
 September 2026
 - DSL Management - Search: Changed the Documentation action to open existing documentation or report the template and metadata inputs for deferred document generation.
 - DSL Management - Search: Added a confirmation popup asking whether to create the dossier document when no dossier exists but the copied template is available.
@@ -98,20 +99,20 @@ September 2026
 - Word: Moved reusable document generation into the shared Word module so Application Intake and DSL Management use the same creation workflow.
 - General: Updated startup versioning to Version 6.5.3.
 
-Version 6.5.2
+Version 6.5.2  
 August 2026
 - Application Intake - Desktop Application: Formal Application Properties fields (Vendor Name, Application Name, and Application Version) are now writable, matching the behavior of Custom Application Properties.
 - Application Intake - Desktop Application: Updated the Desktop Application subtab runtime (`Import-SubTabIntake`) to Version 6.5.2.
 - General: Updated touched function metadata and startup versioning to Version 6.5.2.
 
-Version 6.5.1
+Version 6.5.1  
 August 2026
 - Maintenance: Added a read-only `GENERAL: View Change Log` action that displays the application README changelog without allowing edits.
 - Application Intake - Desktop Application: Stores document-ready bitness text including the detection file path in metadata JSON.
 - Document Generation: Restores the detection-file sentence from stored metadata when the target detection file is not available on the current computer.
 - General: Updated touched function metadata to Version 6.5.1.
 
-Version 6.5.0
+Version 6.5.0  
 August 2026
 - Application Intake - Desktop Application: Added a Customize dialog beside Application ID for persisted optional Application Folder Name prefix, template-driven selectable postfix values, and a shared separator selected from no separator, space, underscore, hyphen, spaced hyphen, or a custom value, without changing Application ID.
 - Application Intake - Desktop Application: Added an editable Application Folder Name field below Application ID; it defaults from ID generation and determines the created package folder without changing the Application ID used by artifacts.
@@ -126,7 +127,7 @@ August 2026
 - Customer Templates: Added ApplicationFolderPostfixOptions to every built-in application-folder settings file for per-customer folder-name postfix choices; shared folder creation now ignores non-folder option values safely.
 - General: Updated the application, Application Intake and Desktop Application runtimes, and touched function metadata to Version 6.5.0.
 
-Version 6.4.1
+Version 6.4.1  
 August 2026
 - DSL Management - Search: Split Search helpers into a dedicated helper module and separated active DSL results from archive results in the UI.
 - DSL Management - Search: Added Open Documentation and Open Log actions for selected DSL folders, including support for matching Word documents and lifecycle logs inside archived ZIP packages.
@@ -135,7 +136,7 @@ August 2026
 - Module Utility: Moved application log viewer functions into Utility Logging for reuse and expanded folder information output with total recursive subfolder and file counts.
 - General: Updated the application, DSL Management runtime versions, and touched function metadata to Version 6.4.1.
 
-Version 6.4.0
+Version 6.4.0  
 August 2026
 - Tools: Added a new Hyper-V subtab with virtual machine location, hardware, configuration, and selection groupboxes.
 - Tools - Hyper-V: Added elevated Windows 11 virtual machine creation with VHDX, memory, processor count, generation, virtual switch, ISO boot, Secure Boot, and virtual TPM configuration, plus a Replace Existing workflow and stray-VHDX cleanup.
@@ -146,7 +147,7 @@ August 2026
 - General: Restored the alternating Tools subtab color sequence after inserting Hyper-V between Certificates and UDF.
 - General: Updated the application, Tools subtab runtime versions, and touched function metadata to Version 6.4.0.
 
-Version 6.3.4
+Version 6.3.4  
 August 2026
 - Tools - UDF: Replaced obsolete smoke-test terminology with workspace terminology in the workspace creation interface, documentation, generated folder names, and status output.
 - Tools - Drivers: Added a busy message and fresh inventory refresh when Show All is selected, matching the Certificates workflow.
@@ -154,7 +155,7 @@ August 2026
 - Custom Application: Replaced Provider managed with (No Version), treating that selection as an empty version and omitting the version component from generated Application IDs.
 - General: Updated the application, UDF tab runtime version, and touched function metadata to Version 6.3.4.
 
-Version 6.3.3
+Version 6.3.3  
 August 2026
 - Application Intake: Renamed the Intake Extras subtab, folder, modules, and import function to Intake Templates.
 - Customer Templates: Moved the complete customer template inventory and management interface into Intake Templates and removed the dedicated Customer Templates subtab.
@@ -164,13 +165,13 @@ August 2026
 - User Settings: Added backward-compatible TextBox and ComboBox setting migrations from Intake Extras to Intake Templates.
 - General: Updated the application, affected tab runtime versions, and touched function metadata to Version 6.3.3.
 
-Version 6.3.2
+Version 6.3.2  
 August 2026
 - Application Intake: Renamed the Desktop and Custom Application subtab folders and module files to the consistent Intake Desktop Application and Intake Custom Application naming convention.
 - Custom Application: Moved Vendor / Publisher before Application Name in the Application Identity section to match the Desktop Application workflow.
 - General: Updated the application and affected Application Intake runtime versions to 6.3.2.
 
-Version 6.3.1
+Version 6.3.1  
 August 2026
 - Application Intake: Centralized whitespace-normalized Vendor_Application_Version ID construction for Desktop and Custom Application workflows.
 - Application Intake: Scoped Desktop and Custom Application ID control resolution so duplicate control names cannot cross sub-tab boundaries.
@@ -191,7 +192,7 @@ August 2026
 - General: Standardized Custom Application and shared intake function help blocks, inline lifecycle comments, and Version 6.3.1 metadata.
 - General: Updated the application, Application Intake, and Custom Application runtime versions to 6.3.1.
 
-Version 6.3.0
+Version 6.3.0  
 August 2026
 - Application Intake: Added a Custom Application subtab after Desktop Application as the foundation for incremental intake UI development for web applications and other nonstandard application types.
 - Custom Application: Added the Application Type group with a persisted selector for web applications, PWAs, browser extensions, scripts or automation, services or APIs, virtual applications, custom launchers, and other application types.
@@ -208,21 +209,21 @@ August 2026
 - Custom Application: Added a confirmed Clear All Fields workflow scoped to persisted controls in the Custom Application subtab.
 - General: Updated the application and Application Intake runtime versions to 6.3.0.
 
-Version 6.2.2
+Version 6.2.2  
 August 2026
 - User Settings: Added startup migration of persisted Application Intake TextBox and ComboBox registry properties to the Desktop Application paths.
 - User Settings: Preserved populated settings at their current paths, restored values where the new paths were missing or empty, and removed obsolete properties to prevent duplicate leaf-name resolution errors.
 - Module Utility: Added reusable User Setting property-prefix migration for backward-compatible control-path renames.
 - General: Finalized Version 6.2.2 and synchronized the application, Application Intake, Desktop Application, and touched module metadata.
 
-Version 6.2.1
+Version 6.2.1  
 August 2026
 - Application Intake: Renamed the Intake subtab to Desktop Application to distinguish the existing locally installed application workflow from future custom application intake functionality.
 - Application Intake: Updated the flattened graphics roots for Desktop Application TextBox and ComboBox controls while keeping established internal function and module names compatible.
 - Application Intake: Fixed Clear All Fields so it resolves and clears every TextBox and ComboBox registered under the Desktop Application subtab without affecting sibling subtabs.
 - General: Continued three-segment versioning and updated the application version to 6.2.1.
 
-Version 6.2.0
+Version 6.2.0  
 August 2026
 - Customer Templates: Added a dedicated Application Intake subtab with sortable built-in and user template inventory.
 - Customer Templates: Added roaming template storage, dual-root discovery, folder access, template information, transactional Make Copy, and guarded Recycle Bin deletion workflows.
@@ -240,7 +241,7 @@ August 2026
 - General: Refactored compatible certificate, UDF, DSL, and customer-template dialogs or path actions to use shared helpers.
 - General: Adopted three-segment versioning and updated the application version to 6.2.0.
 
-Version 6.1.0
+Version 6.1.0  
 August 2026
 - Tools - Certificates: Added Certificates as the second Tools subtab after Drivers and standardized its modules to the SubTab.Certificates Feature/Helpers naming convention.
 - Tools - Certificates: Added certificate search, results, selected-certificate actions, and import controls.
@@ -265,7 +266,7 @@ August 2026
 - Module Graphics: Added reusable typed ListView column sorting and migrated Drivers to the shared helper.
 - General: Adopted three-segment versioning and updated the application version to 6.1.0.
 
-Version 6.0.3.0
+Version 6.0.3.0  
 August 2026
 - Module ApplicationIntake: Added correlated lifecycle logging for folder, metadata, shortcut, Word, registry, AppLocker, UDF, and workflow completion events.
 - Module ApplicationIntake: Added artifact-focused workflow actions that log only verified file and folder outputs.
@@ -275,7 +276,7 @@ August 2026
 - Modules Utility and Word: Added optional PassThru output contracts for registry, AppLocker, UDF, and Word artifact creation.
 - General: Updated the application version to 6.0.3.0 so lifecycle CSV entries report the matching ToolVersion.
 
-Version 6.0.2.0
+Version 6.0.2.0  
 August 2026
 - Tools - Drivers: Added searchable driver inventory, recent-driver filtering, typed column sorting, and quick/full package details.
 - Tools - Drivers: Added exact SHA-256 Driver Store mapping, associated-device information, and direct access to package folders.
@@ -288,7 +289,7 @@ August 2026
 - Tools - UDF: Relocated UDF modules under Tools and standardized filenames to the SubTab.UDF Feature/Helpers naming convention.
 - General: Updated the application and touched Drivers, Graphics, and Utility version metadata to 6.0.2.0.
 
-Version 6.0.1.0
+Version 6.0.1.0  
 August 2026
 - Module DSL Management - Settings: Added Software Library Archive path textbox configuration for DSL archive location.
 - Module DSL Management - Search: Added dual-listview workflow for active DSL folders and archived zip files.
@@ -299,7 +300,7 @@ August 2026
 - Module Utility: Enhanced Write-FilePropertiesToHost with file size output in bytes, MB, and GB.
 - General: Updated touched DSL and utility function version headers to 6.0.1.0.
 
-Version 6.0.0.6
+Version 6.0.0.6  
 August 2026
 - Tools - Other - Ping Computers: Added optional Port field and validation (1-65535) for Test-NetConnection and IP Report.
 - Tools - Other - Ping Computers: Added shared helper module for Ping feature input validation and Test-NetConnection core logic.
@@ -309,7 +310,7 @@ August 2026
 - Module Graphics: Added Compact and Tiny TextBox size support used by the new optional Port field.
 - General: Updated touched function comment blocks and Other sub-tab metadata to Version 6.0.0.6.
 
-Version 6.0.0.5
+Version 6.0.0.5  
 August 2026
 - Module Graphics: Added reusable ListView helpers for batch updates, row selection by text/index, and value-cell hit testing.
 - Module UDF: Refactored inline edit/list refresh flows to use shared ListView helpers, reducing overlap and improving maintainability.
@@ -318,7 +319,7 @@ August 2026
 - Module UDF: Added user-facing gray status lines for edit start, cancel, no-change, and auto-save on focus change.
 - General: Standardized updated function comment blocks to Version 6.0.0.5 for touched ListView-related helpers.
 
-Version 6.0.0.4
+Version 6.0.0.4  
 August 2026
 - Module UDF: Added dedicated DeploymentObjectCatalog.psd1 metadata catalog usage for object picker/default definitions.
 - Module UDF: Expanded and standardized deployment object catalog metadata and display naming.
@@ -327,29 +328,29 @@ August 2026
 - Module UDF: Improved catalog maintainability by sorting object definitions by category and PickerOrder.
 - Assets UDF: Rebuilt UniversalDeploymentFramework.zip to include the latest catalog metadata updates.
 
-Version 6.0.0.3
+Version 6.0.0.3  
 July 2026
 - Module ApplicationIntake: Improved shortcut metadata icon path fallback for document output.
 - Module ApplicationIntake: Prevented duplicate shortcut export folders during document generation.
 - Module ApplicationIntake: Improved Document Generation template selection and input validation behavior.
 
-Version 6.0.0
+Version 6.0.0  
 May 2026
 - Complete rewrite of the application.
 - Renamed application from Packaging Assistent to Application Delivery Assistant.
 
-Version 5.7.2
+Version 5.7.2  
 February 2026
 - ModuleSettings: Updated to 5.7.2
 
-Version 5.7.1
+Version 5.7.1  
 February 2026
 - ModuleGraphics: Added MenuBar and Help Items.
 - ModuleGraphics: Added Default Functions to TextBoxes.
 - ModuleGraphics: Added Default Icons.
 - ModuleAppLocker: Merged 3 submodules.
 
-Version 5.7.0
+Version 5.7.0  
 January 2026
 - General: Converted ModuleLauncher to Powershell Module.
 - General: Converted ModuleGraphics to Powershell Module.

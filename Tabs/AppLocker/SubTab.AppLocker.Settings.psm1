@@ -76,10 +76,10 @@ function Import-SubTabAppLockerSettings {
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.3.3
+    Version         : 6.9.1
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : July 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-FeatureAppLockerSettings {
@@ -148,7 +148,7 @@ function Import-FeatureAppLockerSettings {
             RowNumber       = 10
             Label           = 'AppLocker LDAP PRD'
             ToolTip         = 'Enter the LDAP path for AppLocker policies in the PRODUCTION environment'
-            DefaultValue    = 'LDAP://servername.domain.nl/CN={PRODUCTI-6098-4CBA-9233-E1512BF88ABA},CN=Policies,CN=System,DC=domain,DC=nl'
+            DefaultValue    = 'LDAP://servername.domain.nl/CN={PRODUCTI-1234-4AA2-89D0-034917004AA3},CN=Policies,CN=System,DC=domain,DC=nl'
             SizeType        = 'Large'
             Buttons         = @(@(1,'Copy'),@(2,'Paste'),@(5,'Default'))
         }

@@ -1,0 +1,8 @@
+# Installed copies and update backups
+Installed.marker
+*.previous/
+.*.partial-*/
+
+# Temporary files
+~$*
+*.tmp
