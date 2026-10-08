@@ -13,7 +13,7 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.9.0
+    Version         : 6.9.2
     Author          : Imraan Iotana
     Creation Date   : May 2026
     Last Update     : October 2026
@@ -35,7 +35,7 @@ function Import-TabApplicationIntake {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'APPLICATION INTAKE'
-            Version             = '6.9.0'
+            Version             = '6.9.2'
             BackGroundColor     = 'RoyalBlue'
         }
 

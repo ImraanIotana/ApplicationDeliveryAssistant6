@@ -7,6 +7,11 @@ Getting started
 3. Double-click Start Application Delivery Assistant.cmd.
 4. Optional: install the application in a folder of your choice with the Install Application to Folder action on the SETTINGS tab, Maintenance sub-tab, and create your own Start Menu or Desktop shortcut with the Create Startmenu Shortcut or Create Desktop Shortcut actions.
 
+Version 6.9.2  
+October 2026
+- Application Intake - Intake Templates: Import Template from ZIP now also accepts a ZIP file that wraps a Customer Extension, such as the 'Download ZIP' of a GitHub repository (for example ADA-KPN-Extension-main.zip). When the selected ZIP file has no Extension.psd1 at its root and contains exactly one other ZIP file, that inner ZIP file (at most 50 MB, copied with a hard byte limit) is used, and it goes through the same checks as any other extension: file types, size limits, content fingerprint and descriptor. A wrapper with more than one ZIP file is refused with a clear message. Before this, importing such a file stopped with 'The ZIP file contains a file type that is not allowed'.
+- General: Updated startup, Application Intake tab, Intake Templates sub-tab and Customer Extension helper metadata to Version 6.9.2.
+
 Version 6.9.1  
 October 2026
 - ADA Settings - Maintenance: Added the Install Application to Folder action. After choosing a folder, the application is copied to an 'Application Delivery Assistant' subfolder (a staged copy that is published only when complete; the .git, .vs and .vscode folders are not copied). An existing installation in that folder is kept as a backup named '<folder>.previous' (one backup is kept) and restored if publishing fails. A folder that is not empty and does not contain an installation, a drive root, a folder inside the running application folder, and a folder without write access are refused. Afterwards the application offers to create Start Menu and Desktop shortcuts for the installed copy and to start it. Installed copies contain an Installed.marker file.

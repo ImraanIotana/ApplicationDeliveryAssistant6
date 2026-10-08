@@ -9,7 +9,7 @@
     SHA-256 content fingerprint identifies whether the bundle content changed.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.9.0
+    Version         : 6.9.2
     Author          : Imraan Iotana
     Creation Date   : October 2026
     Last Update     : October 2026
@@ -853,6 +853,92 @@ function Install-CustomerExtensionBundle {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Finds the Customer Extension ZIP file inside a ZIP file that wraps it, such as a GitHub 'Download ZIP' of a repository.
+.DESCRIPTION
+    A Customer Extension has an Extension.psd1 at its root. When the selected ZIP file has none, but contains exactly
+    one other ZIP file (any folder), that inner ZIP file is copied to the destination path, within the size limit.
+    The returned file is validated afterwards like any other extension. When the selected ZIP file is not a wrapper,
+    its own path is returned. A wrapper with more than one ZIP file is refused, because the choice would be a guess.
+.EXAMPLE
+    Get-CustomerExtensionZipFromWrapper -ZipPath 'C:\Downloads\ADA-KPN-Extension-main.zip' -InnerZipPath 'C:\Temp\Inner.zip'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.9.2
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Get-CustomerExtensionZipFromWrapper {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ZIP file that the user selected.')]
+        [System.String]$ZipPath,
+
+        [Parameter(Mandatory=$true,HelpMessage='The path where an inner ZIP file is saved.')]
+        [System.String]$InnerZipPath,
+
+        [Parameter(Mandatory=$false,HelpMessage='The maximum size of the inner ZIP file in bytes.')]
+        [System.Int64]$MaximumBytes = 50MB
+    )
+
+    Add-Type -AssemblyName System.IO.Compression -ErrorAction Stop
+    Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
+    [System.IO.Compression.ZipArchive]$Archive = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    try {
+        [System.IO.Compression.ZipArchiveEntry[]]$Files = @($Archive.Entries | Where-Object { -not ($_.FullName.EndsWith('/') -or $_.FullName.EndsWith('\')) })
+        if (@($Files | Where-Object { $_.FullName -eq 'Extension.psd1' }).Count -gt 0) { return $ZipPath }
+        [System.IO.Compression.ZipArchiveEntry[]]$InnerZips = @($Files | Where-Object { $_.Name.EndsWith('.zip',[System.StringComparison]::OrdinalIgnoreCase) })
+        if ($InnerZips.Count -eq 0) { return $ZipPath }
+        if ($InnerZips.Count -gt 1) {
+            throw "The selected ZIP file contains $($InnerZips.Count) ZIP files. Extract it and import the Customer Extension ZIP file you want."
+        }
+
+        [System.IO.Compression.ZipArchiveEntry]$Inner = $InnerZips[0]
+        [System.String]$InnerName = $Inner.FullName.Replace('\','/')
+        if ($InnerName.StartsWith('/') -or ($InnerName -match '^[A-Za-z]:') -or (@($InnerName.Split('/') | Where-Object { $_ -eq '..' }).Count -gt 0)) {
+            throw "The ZIP file contains an unsafe entry name. ($($Inner.FullName))"
+        }
+        if ($Inner.Length -gt $MaximumBytes) {
+            throw "The ZIP file inside the selected ZIP file is too large. ($($Inner.FullName))"
+        }
+
+        # Copy with a hard byte limit instead of trusting the declared size
+        [System.IO.Stream]$InStream = $Inner.Open()
+        [System.IO.FileStream]$OutStream = [System.IO.File]::Open($InnerZipPath,[System.IO.FileMode]::CreateNew,[System.IO.FileAccess]::Write,[System.IO.FileShare]::None)
+        try {
+            [System.Byte[]]$Buffer = New-Object System.Byte[] 65536
+            [System.Int64]$Total = 0
+            [System.Int32]$Read = 0
+            while (($Read = $InStream.Read($Buffer,0,$Buffer.Length)) -gt 0) {
+                $Total += $Read
+                if ($Total -gt $MaximumBytes) { throw "The ZIP file inside the selected ZIP file is too large. ($($Inner.FullName))" }
+                $OutStream.Write($Buffer,0,$Read)
+            }
+        }
+        finally {
+            $OutStream.Dispose()
+            $InStream.Dispose()
+        }
+        Write-Line "The selected ZIP file wraps a Customer Extension. Importing: ($($Inner.Name))" -Type Info
+        return $InnerZipPath
+    }
+    finally {
+        $Archive.Dispose()
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+####################################################################################################
+<#
+.SYNOPSIS
     Imports a Customer Extension ZIP file chosen by the user.
 .DESCRIPTION
     Lets the user pick a ZIP file, extracts and validates it in a temporary folder, compares it with
@@ -865,7 +951,7 @@ function Install-CustomerExtensionBundle {
 .OUTPUTS
     No objects are returned to the pipeline.
 .NOTES
-    Version         : 6.9.0
+    Version         : 6.9.2
 #>
 ####################################################################################################
 function Import-CustomerTemplateExtensionFromFile {
@@ -876,6 +962,7 @@ function Import-CustomerTemplateExtensionFromFile {
     )
 
     [System.String]$StagingFolder = ''
+    [System.String]$InnerZipPath = ''
     try {
         # PREPARATION - FILE SELECTION
         [System.Windows.Forms.Form]$Owner = $ListView.FindForm()
@@ -899,6 +986,9 @@ function Import-CustomerTemplateExtensionFromFile {
         # EXECUTION - EXTRACT AND VALIDATE
         # Everything is verified in a temporary folder before any installed template is touched
         $StagingFolder = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ('ADA-CustomerExtensionImport-' + [System.Guid]::NewGuid().ToString('N'))
+        # A ZIP file that wraps the extension (a GitHub 'Download ZIP') is unwrapped first and then validated like any other extension
+        $InnerZipPath = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath ('ADA-CustomerExtensionInner-' + [System.Guid]::NewGuid().ToString('N') + '.zip')
+        $ZipPath = Get-CustomerExtensionZipFromWrapper -ZipPath $ZipPath -InnerZipPath $InnerZipPath
         Test-CustomerExtensionArchive -ArchivePath $ZipPath
         [void](Expand-ZipArchive -ArchivePath $ZipPath -DestinationPath $StagingFolder)
         [PSCustomObject]$Content = Get-CustomerExtensionContent -ExtractedFolder $StagingFolder -ApplicationVersion ([System.Version]$Global:ApplicationObject.Version)
@@ -972,6 +1062,9 @@ function Import-CustomerTemplateExtensionFromFile {
     finally {
         if ((-not [System.String]::IsNullOrWhiteSpace($StagingFolder)) -and (Test-Path -LiteralPath $StagingFolder)) {
             Remove-Item -LiteralPath $StagingFolder -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        if ((-not [System.String]::IsNullOrWhiteSpace($InnerZipPath)) -and (Test-Path -LiteralPath $InnerZipPath)) {
+            Remove-Item -LiteralPath $InnerZipPath -Force -ErrorAction SilentlyContinue
         }
     }
 }
