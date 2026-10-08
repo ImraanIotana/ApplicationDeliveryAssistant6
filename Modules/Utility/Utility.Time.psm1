@@ -1,0 +1,109 @@
+####################################################################################################
+<#
+.SYNOPSIS
+    Returns a timestamp in a format suitable for filenames.
+.DESCRIPTION
+    This function returns the current timestamp. If the -ForFileName switch is used, the timestamp is formatted in a way that is suitable for use in filenames.
+.EXAMPLE
+    Get-TimeStamp -ForFileName
+.INPUTS
+    [System.Management.Automation.SwitchParameter]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : April 2026
+    Last Update     : April 2026
+#>
+####################################################################################################
+function Get-TimeStamp {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$false,ParameterSetName='ForFileName',HelpMessage='Returns the timestamp in a format suitable for filenames.')]
+        [System.Management.Automation.SwitchParameter]$ForFileName,
+
+        [Parameter(Mandatory=$false,ParameterSetName='ForHost',HelpMessage='Returns the timestamp in a format suitable for display.')]
+        [System.Management.Automation.SwitchParameter]$ForHost
+    )
+
+    # PROPERTIES
+    # Get the UTC TimeStamp
+    [System.DateTime]$UTCTimeStamp = (Get-Date).ToUniversalTime()
+
+    # Set the context
+    [System.Collections.Hashtable]$CTX = @{
+        ParameterSetName        = $PSCmdlet.ParameterSetName
+        TimeStampForFileName    = $UTCTimeStamp.ToString('yyyy_MM_dd_HHmm')
+        TimeStampDateForHost    = $UTCTimeStamp.ToString('yyyy-MM-dd')
+        TimeStampTimeForHost    = $UTCTimeStamp.ToString('HH:mm:ss.fff')
+        TimeStampDefault        = $UTCTimeStamp.ToString()
+        Output                  = [System.String]::Empty
+    }
+
+    # EXECUTION
+    # Switch the timestamp format based on the ParameterSetName
+    $CTX.Output = switch ($CTX.ParameterSetName) {
+        'ForFileName'   { $CTX.TimeStampForFileName }
+        'ForHost'       { "[$($CTX.TimeStampDateForHost) $($CTX.TimeStampTimeForHost)]" }
+        Default         { $CTX.TimeStampDefault }
+    }
+
+    # Return the output
+    $CTX.Output
+}
+
+# END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Stops the load timer and reports elapsed time.
+.DESCRIPTION
+    This function stops the load timer that was started at the beginning of the application and reports the elapsed time in seconds.
+    If the load timer was not started, a fail message is written to the host.
+.EXAMPLE
+    Stop-LoadTimer
+.INPUTS
+    None.
+.OUTPUTS
+    No objects are returned to the pipeline.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.0.0.0
+    Author          : Imraan Iotana
+    Creation Date   : April 2026
+    Last Update     : April 2026
+#>
+####################################################################################################
+function Stop-LoadTimer {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false,HelpMessage='The ApplicationObject containing the settings.')]
+        [PSCustomObject]$InputObject
+    )
+        
+    # EXECUTION
+    # Stop the load timer and report elapsed time
+    if ($InputObject.LoadTimer) {
+
+        # Stop the stopwatch
+        $InputObject.LoadTimer.Stop()
+        # Get the elapsed time in seconds and round to 2 decimal places
+        [double]$Seconds = $InputObject.LoadTimer.Elapsed.TotalSeconds
+        [string]$RoundedSeconds = $Seconds.ToString("F2")
+        # Write the elapsed time to the host
+        Write-Line "Loading time: $RoundedSeconds seconds"
+
+    } else {
+        # Write a fail message if the load timer was not started
+        Write-Line "The Load Timer was not started. The elapsed time cannot be determined." -Type Fail
+    }
+}
+
+# END OF FUNCTION
+####################################################################################################
