@@ -9,7 +9,7 @@
     '<Folder>.previous') and starts the application again.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.9.1
+    Version         : 6.9.5
     Author          : Imraan Iotana
     Creation Date   : October 2026
     Last Update     : October 2026
@@ -34,9 +34,14 @@ param (
     [Parameter(Mandatory=$true)][System.String]$StagingFolder,
     [Parameter(Mandatory=$true)][System.String]$StagedRoot,
     [Parameter(Mandatory=$true)][System.String]$InstallFolder,
-    [Parameter(Mandatory=$true)][System.String]$NewVersion
+    [Parameter(Mandatory=$true)][System.String]$NewVersion,
+    [Parameter(Mandatory=$false)][System.String]$ReadyFile = ''
 )
 $ErrorActionPreference = 'Stop'
+# Tell the application that this helper has started, so the application knows it is safe to close
+if (-not [System.String]::IsNullOrWhiteSpace($ReadyFile)) {
+    try { [System.IO.File]::WriteAllText($ReadyFile,'ready') } catch { }
+}
 $Host.UI.RawUI.WindowTitle = 'Application Delivery Assistant - Update'
 try {
     Write-Host 'Waiting for the Application Delivery Assistant to close...'
@@ -264,7 +269,9 @@ function Invoke-ApplicationUpdateCheck {
     Refuses development copies (a folder with a .git folder) and folders that cannot be written to. Downloads the
     ZIP file to a temporary folder, extracts it, checks that it is a newer, complete application with scripts that
     parse without errors, and starts a helper script. After confirmation the application closes, the helper
-    replaces the application folder (keeping '<Folder>.previous') and starts the application again.
+    replaces the application folder (keeping '<Folder>.previous') and starts the application again. The application
+    only closes after the helper script has confirmed that it is running. If the helper cannot be started (it is
+    tried twice), the application stays open and nothing is changed.
 .EXAMPLE
     Install-ApplicationUpdate -InputObject $Global:ApplicationObject
 .INPUTS
@@ -273,7 +280,7 @@ function Invoke-ApplicationUpdateCheck {
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.9.1
+    Version         : 6.9.5
     Author          : Imraan Iotana
     Creation Date   : October 2026
     Last Update     : October 2026
@@ -388,6 +395,7 @@ function Install-ApplicationUpdate {
             $ParentInfo = Get-Process -Id $ParentProcess.ParentProcessId -ErrorAction SilentlyContinue
             if (($null -ne $ParentInfo) -and ($ParentInfo.ProcessName -eq 'cmd')) { $ParentProcessId = [System.Int32]$ParentInfo.Id }
         }
+        [System.String]$ReadyFile = Join-Path -Path $WorkFolder -ChildPath 'Helper.ready'
         [System.String[]]$ArgumentList = @(
             '-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $HelperPath + '"'),
             '-ProcessId',[System.String]$PID,
@@ -395,9 +403,34 @@ function Install-ApplicationUpdate {
             '-StagingFolder',('"' + $StagingFolder + '"'),
             '-StagedRoot',('"' + $StagedRoot + '"'),
             '-InstallFolder',('"' + $InstallFolder + '"'),
-            '-NewVersion',[System.String]$NewVersion
+            '-NewVersion',[System.String]$NewVersion,
+            '-ReadyFile',('"' + $ReadyFile + '"')
         )
-        Start-Process -FilePath (Join-Path -Path $env:WINDIR -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe') -ArgumentList $ArgumentList -WorkingDirectory $env:TEMP -ErrorAction Stop | Out-Null
+        # The application only closes when the helper is really running. A helper that stops during startup is started once more.
+        [System.Boolean]$HelperRunning = $false
+        [System.String]$HelperProblem = ''
+        foreach ($Attempt in 1..2) {
+            try {
+                $HelperProcess = Start-Process -FilePath (Join-Path -Path $env:WINDIR -ChildPath 'System32\WindowsPowerShell\v1.0\powershell.exe') -ArgumentList $ArgumentList -WorkingDirectory $env:TEMP -PassThru -ErrorAction Stop
+            }
+            catch {
+                $HelperProblem = $_.Exception.Message
+                continue
+            }
+            [System.DateTime]$Deadline = (Get-Date).AddSeconds(20)
+            while ((-not (Test-Path -LiteralPath $ReadyFile)) -and (-not $HelperProcess.HasExited) -and ((Get-Date) -lt $Deadline)) {
+                Start-Sleep -Milliseconds 200
+            }
+            if ((Test-Path -LiteralPath $ReadyFile) -or (-not $HelperProcess.HasExited)) {
+                $HelperRunning = $true
+                break
+            }
+            $HelperProblem = 'The update helper stopped during startup. (Exit code 0x{0:X})' -f $HelperProcess.ExitCode
+        }
+        if (-not $HelperRunning) {
+            Write-Line "The update helper could not be started, so the application was not closed and nothing was changed. Try again later. ($HelperProblem)" -Type Warning
+            return
+        }
         $HandedOver = $true
         Write-Line "The update to version $NewVersion has started. The application closes now and starts again when the update is finished." -Type Success
 

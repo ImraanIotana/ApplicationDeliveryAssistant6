@@ -7,6 +7,11 @@ Getting started
 3. Double-click Start Application Delivery Assistant.cmd.
 4. Optional: install the application in a folder of your choice with the Install Application to Folder action on the SETTINGS tab, Maintenance sub-tab, and create your own Start Menu or Desktop shortcut with the Create Startmenu Shortcut or Create Desktop Shortcut actions.
 
+Version 6.9.5  
+October 2026
+- ADA Settings - Maintenance: A more reliable update. The application now only closes after the update helper has confirmed that it is running. Before this, an update could close the application while the helper failed to start (Windows error 0xc0000142), leaving nothing to restart it. Now the helper is tried twice, and when it cannot be started the application stays open, nothing is changed and a message explains why. Note: the first update to 6.9.5 still uses the helper of the version you are updating from, so this protection is active for updates after that.
+- General: Updated startup, Utility Update module and Install-ApplicationUpdate metadata to Version 6.9.5.
+
 Version 6.9.4  
 October 2026
 - General: The LAUNCHER tab now uses a deep ink color (#1B2430) instead of ForestGreen, to match the Iotana logo and improve the contrast with the group box labels. To go back, set the tab color in Import-TabLauncher to 'ForestGreen'.
