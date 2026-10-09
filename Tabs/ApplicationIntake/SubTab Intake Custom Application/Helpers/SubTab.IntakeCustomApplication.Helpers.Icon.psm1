@@ -51,6 +51,12 @@ function Resolve-CustomApplicationIconSourcePath {
     Converts the optional icon source, or an executable fallback, into package-local files used by documentation and shortcut creation.
 .OUTPUTS
     [PSCustomObject] containing SourcePath, PngPath, and IcoPath.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.9.3
+    Author          : Imraan Iotana
+    Creation Date   : August 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Export-CustomApplicationIconFiles {
@@ -84,7 +90,6 @@ function Export-CustomApplicationIconFiles {
     [System.Drawing.Image]$Image = $null
     [System.Drawing.Bitmap]$Bitmap = $null
     [System.IO.FileStream]$IconStream = $null
-    [System.IntPtr]$IconHandle = [System.IntPtr]::Zero
 
     # EXECUTION - FORMAT-SPECIFIC CONVERSION
     try {
@@ -103,28 +108,11 @@ function Export-CustomApplicationIconFiles {
             $Bitmap.Save($PngPath,[System.Drawing.Imaging.ImageFormat]::Png)
         }
         elseif ($Extension -in @('.png','.jpg','.jpeg','.bmp','.gif')) {
+            # WinForms shortcuts require ICO or executable resources. Convert before opening the source so the file is not locked.
+            ConvertTo-IconFile -Path $SourcePath -Destination $IcoPath -Force | Out-Null
             $Image = [System.Drawing.Image]::FromFile($SourcePath)
             $Bitmap = New-Object System.Drawing.Bitmap($Image)
             $Bitmap.Save($PngPath,[System.Drawing.Imaging.ImageFormat]::Png)
-
-            # WinForms shortcuts require ICO or executable resources, so convert the supplied image to ICO.
-            if (-not ('ApplicationDeliveryAssistant.NativeIconMethods' -as [System.Type])) {
-                Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-namespace ApplicationDeliveryAssistant {
-    public static class NativeIconMethods {
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool DestroyIcon(IntPtr handle);
-    }
-}
-'@
-            }
-            $IconHandle = $Bitmap.GetHicon()
-            [System.Drawing.Icon]$HandleIcon = [System.Drawing.Icon]::FromHandle($IconHandle)
-            $Icon = [System.Drawing.Icon]$HandleIcon.Clone()
-            $IconStream = [System.IO.File]::Open($IcoPath,[System.IO.FileMode]::Create)
-            $Icon.Save($IconStream)
         }
         else {
             throw "Unsupported icon source extension: ($Extension)"
@@ -135,9 +123,6 @@ namespace ApplicationDeliveryAssistant {
         if ($null -ne $Bitmap) { $Bitmap.Dispose() }
         if ($null -ne $Image) { $Image.Dispose() }
         if ($null -ne $Icon) { $Icon.Dispose() }
-        if ($IconHandle -ne [System.IntPtr]::Zero -and ('ApplicationDeliveryAssistant.NativeIconMethods' -as [System.Type])) {
-            [void][ApplicationDeliveryAssistant.NativeIconMethods]::DestroyIcon($IconHandle)
-        }
     }
 
     # VALIDATION - WRITTEN ICON FILES

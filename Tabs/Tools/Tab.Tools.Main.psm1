@@ -13,10 +13,10 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.4.0
+    Version         : 6.9.3
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : August 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-TabTools {
@@ -35,7 +35,7 @@ function Import-TabTools {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'TOOLS'
-            Version             = '6.4.0'
+            Version             = '6.9.3'
             BackGroundColor     = 'DarkBlue'
         }
 

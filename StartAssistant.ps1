@@ -27,7 +27,7 @@ try {
     [PSCustomObject]$Global:ApplicationObject = @{
         # Application properties
         Name        = [System.String]'Application Delivery Assistant'
-        Version     = [System.Version]'6.9.2'
+        Version     = [System.Version]'6.9.3'
         RootFolder  = [System.String]$PSScriptRoot
         LoadTimer   = [System.Diagnostics.Stopwatch]::StartNew()
     }

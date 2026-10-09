@@ -609,6 +609,281 @@ function Write-FilePropertiesToHost {
         Write-ErrorReport -ErrorRecord $_
     }
 }
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Resolves the .ico path that an image conversion will write.
+.DESCRIPTION
+    An empty destination writes the icon next to the source image, using the same file name.
+    An existing folder receives that same file name. A path that already ends in .ico is used as given.
+.EXAMPLE
+    Resolve-IconFileDestination -Path 'C:\Images\Logo.png'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.9.3
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Resolve-IconFileDestination {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The source image path.')]
+        [System.String]$Path,
+
+        [Parameter(Mandatory=$false,HelpMessage='An existing folder, an .ico file path, or empty to write next to the source.')]
+        [AllowNull()][AllowEmptyString()]
+        [System.String]$Destination
+    )
+
+    # PREPARATION - SOURCE NAME
+    [System.String]$IconFileName = [System.IO.Path]::GetFileNameWithoutExtension($Path) + '.ico'
+    if (Test-String -IsEmpty $Destination) {
+        return (Join-Path -Path (Split-Path -Path $Path -Parent) -ChildPath $IconFileName)
+    }
+
+    # EXECUTION - FOLDER OR EXPLICIT ICO PATH
+    if (Test-Path -LiteralPath $Destination -PathType Container) {
+        return (Join-Path -Path $Destination -ChildPath $IconFileName)
+    }
+    if ([System.IO.Path]::GetExtension($Destination).ToLowerInvariant() -eq '.ico') {
+        return $Destination
+    }
+
+    throw "The destination must be an existing folder or an .ico file path. ($Destination)"
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Converts an image file to a Windows .ico file.
+.DESCRIPTION
+    Builds a multi-size icon (16, 24, 32, 48, 64, 128 and 256 pixels) from a PNG, JPG, BMP, GIF, or TIFF image.
+    The image keeps its proportions and is centered on a transparent square. WinForms and Windows shortcuts can use the result.
+.EXAMPLE
+    ConvertTo-IconFile -Path 'C:\Images\Logo.png' -Force
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [PSCustomObject]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.9.3
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function ConvertTo-IconFile {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The image file to convert.')]
+        [System.String]$Path,
+
+        [Parameter(Mandatory=$false,HelpMessage='An existing folder, an .ico file path, or empty to write next to the source.')]
+        [AllowNull()][AllowEmptyString()]
+        [System.String]$Destination,
+
+        [Parameter(Mandatory=$false,HelpMessage='Overwrite an existing destination file.')]
+        [System.Management.Automation.SwitchParameter]$Force
+    )
+
+    # PREPARATION - DRAWING ASSEMBLY
+    Add-Type -AssemblyName System.Drawing
+
+    # VALIDATION - SOURCE
+    if (-not (Confirm-FilePath -Path $Path -Name 'Source Image')) {
+        return $null
+    }
+    [System.String[]]$AllowedExtensions = @('.png','.jpg','.jpeg','.bmp','.gif','.tif','.tiff')
+    [System.String]$Extension = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
+    if ($AllowedExtensions -notcontains $Extension) {
+        throw "The source must be a PNG, JPG, BMP, GIF, or TIFF image. ($Extension)"
+    }
+
+    # PREPARATION - DESTINATION
+    [System.String]$IconPath = Resolve-IconFileDestination -Path $Path -Destination $Destination
+    if ([System.String]::Equals($Path, $IconPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "The destination cannot be the same file as the source. ($IconPath)"
+    }
+    [System.String]$IconFolder = Split-Path -Path $IconPath -Parent
+    if (-not (Test-Path -LiteralPath $IconFolder -PathType Container)) {
+        throw "The destination folder does not exist. ($IconFolder)"
+    }
+    if ((Test-Path -LiteralPath $IconPath -PathType Leaf) -and (-not $Force.IsPresent)) {
+        throw "The destination already exists. Use -Force to overwrite it. ($IconPath)"
+    }
+
+    # PREPARATION - ICON SIZES
+    [System.Int32[]]$IconSizes = @(16, 24, 32, 48, 64, 128, 256)
+    [System.Collections.Generic.List[byte[]]]$IconImages = New-Object 'System.Collections.Generic.List[byte[]]'
+    [System.Drawing.Image]$SourceImage = $null
+    [System.IO.MemoryStream]$SourceStream = $null
+    [System.String]$TemporaryIconPath = $IconPath + '.tmp'
+
+    try {
+        # EXECUTION - LOAD SOURCE WITHOUT LOCKING THE FILE
+        [System.Byte[]]$SourceBytes = [System.IO.File]::ReadAllBytes($Path)
+        $SourceStream = New-Object System.IO.MemoryStream(,$SourceBytes)
+        $SourceImage = [System.Drawing.Image]::FromStream($SourceStream)
+        if ($SourceImage.Width -lt 1 -or $SourceImage.Height -lt 1) {
+            throw "The source image has no visible size. ($Path)"
+        }
+
+        foreach ($IconSize in $IconSizes) {
+            [System.Drawing.Bitmap]$IconBitmap = $null
+            [System.Drawing.Graphics]$IconGraphics = $null
+            try {
+                # EXECUTION - DRAW A SQUARE FRAME WITHOUT STRETCHING THE IMAGE
+                $IconBitmap = New-Object System.Drawing.Bitmap($IconSize, $IconSize, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+                $IconGraphics = [System.Drawing.Graphics]::FromImage($IconBitmap)
+                $IconGraphics.Clear([System.Drawing.Color]::Transparent)
+                $IconGraphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+                $IconGraphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+                $IconGraphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+                $IconGraphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
+
+                [System.Double]$Scale = [System.Math]::Min(($IconSize / $SourceImage.Width), ($IconSize / $SourceImage.Height))
+                [System.Int32]$DrawWidth = [System.Math]::Max(1, [System.Math]::Min($IconSize, [System.Int32][System.Math]::Round($SourceImage.Width * $Scale)))
+                [System.Int32]$DrawHeight = [System.Math]::Max(1, [System.Math]::Min($IconSize, [System.Int32][System.Math]::Round($SourceImage.Height * $Scale)))
+                [System.Int32]$DrawX = ($IconSize - $DrawWidth) -shr 1
+                [System.Int32]$DrawY = ($IconSize - $DrawHeight) -shr 1
+                $IconGraphics.DrawImage($SourceImage, (New-Object System.Drawing.Rectangle($DrawX, $DrawY, $DrawWidth, $DrawHeight)))
+
+                # EXECUTION - COPY PIXELS INTO A BOTTOM-UP 32-BIT ICO IMAGE AND AND-MASK
+                [System.Drawing.Imaging.BitmapData]$BitmapData = $IconBitmap.LockBits(
+                    (New-Object System.Drawing.Rectangle(0, 0, $IconSize, $IconSize)),
+                    [System.Drawing.Imaging.ImageLockMode]::ReadOnly,
+                    [System.Drawing.Imaging.PixelFormat]::Format32bppArgb
+                )
+                try {
+                    [System.Int32]$Stride = $BitmapData.Stride
+                    if ($Stride -ne ($IconSize * 4)) {
+                        throw "The drawn icon frame is not tightly packed 32-bit pixel data. (Size $IconSize, stride $Stride)"
+                    }
+                    [System.Byte[]]$Pixels = New-Object System.Byte[] ($Stride * $IconSize)
+                    [System.Runtime.InteropServices.Marshal]::Copy($BitmapData.Scan0, $Pixels, 0, $Pixels.Length)
+
+                    [System.Int32]$MaskStride = [System.Int32](([System.Math]::Ceiling($IconSize / 32.0)) * 4)
+                    [System.Int32]$XorSize = $IconSize * $IconSize * 4
+                    [System.Int32]$MaskSize = $MaskStride * $IconSize
+                    [System.Byte[]]$ImageBytes = New-Object System.Byte[] (40 + $XorSize + $MaskSize)
+                    [System.Array]::Copy([System.BitConverter]::GetBytes([System.Int32]40), 0, $ImageBytes, 0, 4)
+                    [System.Array]::Copy([System.BitConverter]::GetBytes([System.Int32]$IconSize), 0, $ImageBytes, 4, 4)
+                    [System.Array]::Copy([System.BitConverter]::GetBytes([System.Int32]($IconSize * 2)), 0, $ImageBytes, 8, 4)
+                    [System.Array]::Copy([System.BitConverter]::GetBytes([System.UInt16]1), 0, $ImageBytes, 12, 2)
+                    [System.Array]::Copy([System.BitConverter]::GetBytes([System.UInt16]32), 0, $ImageBytes, 14, 2)
+                    [System.Array]::Copy([System.BitConverter]::GetBytes([System.Int32]($XorSize + $MaskSize)), 0, $ImageBytes, 20, 4)
+
+                    for ([System.Int32]$Row = 0; $Row -lt $IconSize; $Row++) {
+                        [System.Int32]$SourceRow = ($IconSize - 1 - $Row) * $Stride
+                        [System.Array]::Copy($Pixels, $SourceRow, $ImageBytes, (40 + ($Row * $IconSize * 4)), ($IconSize * 4))
+                        [System.Int32]$MaskRow = 40 + $XorSize + ($Row * $MaskStride)
+                        for ([System.Int32]$Column = 0; $Column -lt $IconSize; $Column++) {
+                            [System.Int32]$AlphaIndex = $SourceRow + ($Column * 4) + 3
+                            [System.Int32]$MaskIndex = $MaskRow + ($Column -shr 3)
+                            if ($Pixels[$AlphaIndex] -eq 0) {
+                                [System.Byte]$MaskBit = [System.Byte](0x80 -shr ($Column % 8))
+                                $ImageBytes[$MaskIndex] = $ImageBytes[$MaskIndex] -bor $MaskBit
+                            }
+                        }
+                    }
+
+                    $IconImages.Add($ImageBytes)
+                }
+                finally {
+                    $IconBitmap.UnlockBits($BitmapData)
+                }
+            }
+            finally {
+                if ($null -ne $IconGraphics) { $IconGraphics.Dispose() }
+                if ($null -ne $IconBitmap) { $IconBitmap.Dispose() }
+            }
+        }
+
+        # EXECUTION - WRITE THE ICO CONTAINER, THEN CONFIRM WINDOWS CAN LOAD IT
+        [System.Int32]$ImageOffset = 6 + (16 * $IconImages.Count)
+        [System.IO.FileStream]$IconStream = $null
+        [System.IO.BinaryWriter]$IconWriter = $null
+        [System.Drawing.Icon]$WrittenIcon = $null
+        try {
+            $IconStream = [System.IO.File]::Open($TemporaryIconPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+            $IconWriter = New-Object System.IO.BinaryWriter($IconStream)
+            $IconWriter.Write([System.UInt16]0)
+            $IconWriter.Write([System.UInt16]1)
+            $IconWriter.Write([System.UInt16]$IconImages.Count)
+            for ([System.Int32]$ImageIndex = 0; $ImageIndex -lt $IconImages.Count; $ImageIndex++) {
+                [System.Byte[]]$ImageBytes = $IconImages[$ImageIndex]
+                [System.Int32]$StoredSize = $IconSizes[$ImageIndex]
+                [System.Byte]$DirectorySize = 0
+                if ($StoredSize -lt 256) { $DirectorySize = [System.Byte]$StoredSize }
+                $IconWriter.Write($DirectorySize)
+                $IconWriter.Write($DirectorySize)
+                $IconWriter.Write([System.Byte]0)
+                $IconWriter.Write([System.Byte]0)
+                $IconWriter.Write([System.UInt16]1)
+                $IconWriter.Write([System.UInt16]32)
+                $IconWriter.Write([System.UInt32]$ImageBytes.Length)
+                $IconWriter.Write([System.UInt32]$ImageOffset)
+                $ImageOffset += $ImageBytes.Length
+            }
+            foreach ($ImageBytes in $IconImages) {
+                $IconWriter.Write($ImageBytes)
+            }
+            $IconWriter.Flush()
+            $IconWriter.Dispose()
+            $IconWriter = $null
+            $IconStream.Dispose()
+            $IconStream = $null
+
+            $WrittenIcon = New-Object System.Drawing.Icon($TemporaryIconPath)
+            if ($WrittenIcon.Width -lt 1) {
+                throw "Windows could not load the written icon. ($TemporaryIconPath)"
+            }
+        }
+        finally {
+            if ($null -ne $WrittenIcon) { $WrittenIcon.Dispose() }
+            if ($null -ne $IconWriter) { $IconWriter.Dispose() }
+            elseif ($null -ne $IconStream) { $IconStream.Dispose() }
+        }
+
+        [System.IO.File]::Copy($TemporaryIconPath, $IconPath, $true)
+        Remove-Item -LiteralPath $TemporaryIconPath -Force
+    }
+    catch {
+        if (Test-Path -LiteralPath $TemporaryIconPath -PathType Leaf) {
+            Remove-Item -LiteralPath $TemporaryIconPath -Force -ErrorAction SilentlyContinue
+        }
+        throw
+    }
+    finally {
+        if ($null -ne $SourceImage) { $SourceImage.Dispose() }
+        if ($null -ne $SourceStream) { $SourceStream.Dispose() }
+    }
+
+    # OUTPUT - WRITTEN ICON
+    return [PSCustomObject]@{
+        Path  = $IconPath
+        Sizes = ($IconSizes -join ', ')
+    }
+}
+
 ### END OF FUNCTION
 ####################################################################################################
 

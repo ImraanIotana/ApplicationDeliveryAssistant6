@@ -319,10 +319,10 @@ function Show-ModalDialog {
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.2.0
+    Version         : 6.9.3
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Initialize-MainForm {
@@ -339,8 +339,12 @@ function Initialize-MainForm {
         [System.Windows.Forms.Form]$NewForm     = New-Object System.Windows.Forms.Form
         # Get the graphical settings from the main object
         [System.Collections.Hashtable]$Settings = $InputObject.GraphicalSettings
-        # Set the form title
-        [System.String]$FormTitle               = "$($InputObject.Name) - Version $($InputObject.Version)"
+        # Set the form title, including the account and computer this copy is running as
+        [System.String]$CurrentUser             = [System.Environment]::UserName
+        [System.String]$CurrentMachine          = [System.Environment]::MachineName
+        if ([System.String]::IsNullOrWhiteSpace($CurrentUser)) { $CurrentUser = [System.String]$env:USERNAME }
+        if ([System.String]::IsNullOrWhiteSpace($CurrentMachine)) { $CurrentMachine = [System.String]$env:COMPUTERNAME }
+        [System.String]$FormTitle               = "$($InputObject.Name) - Version $($InputObject.Version) (User $CurrentUser on machine $CurrentMachine)"
         # Set the form size based
         [System.Drawing.Size]$FormSize          = New-Object System.Drawing.Size($Settings.MainForm.Width, $Settings.MainForm.Height)
         # Set the properties of the new Form
