@@ -27,14 +27,19 @@ try {
     [PSCustomObject]$Global:ApplicationObject = @{
         # Application properties
         Name        = [System.String]'Application Delivery Assistant'
-        Version     = [System.Version]'6.9.3'
+        Version     = [System.Version]'6.9.4'
         RootFolder  = [System.String]$PSScriptRoot
         LoadTimer   = [System.Diagnostics.Stopwatch]::StartNew()
     }
-    # Unblock the modules
-    Get-ChildItem -Path $PSScriptRoot -Recurse -File | Unblock-File -ErrorAction SilentlyContinue
-    # Import the modules
-    Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | ForEach-Object { Import-Module -Name $_.FullName -Force }
+    # Unblock only the blocked files, skipping the .git folder
+    Get-ChildItem -Path $PSScriptRoot -Force | Where-Object { $_.Name -ne '.git' } | Get-ChildItem -Recurse -File |
+        Where-Object { Get-Item -LiteralPath $_.FullName -Stream 'Zone.Identifier' -ErrorAction SilentlyContinue } | Unblock-File -ErrorAction SilentlyContinue
+    # Move the window to the top-left corner before the other modules load, so the window is in place straight away
+    $FormModulePath = Join-Path -Path $PSScriptRoot -ChildPath 'Modules\Graphics\Graphics.Form.psm1'
+    Import-Module -Name $FormModulePath -Force
+    Move-WindowToTopLeft
+    # Import the other modules
+    Get-ChildItem -Path $PSScriptRoot -Filter *.psm1 -File -Recurse | Where-Object { $_.FullName -ne $FormModulePath } | ForEach-Object { Import-Module -Name $_.FullName -Force }
     # Start the application
     Start-Application
 }

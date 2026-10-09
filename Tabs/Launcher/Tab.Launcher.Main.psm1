@@ -13,10 +13,10 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.8.0
+    Version         : 6.9.4
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : September 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-TabLauncher {
@@ -30,13 +30,17 @@ function Import-TabLauncher {
     )
 
     try {
+        # PREPARATION - TAB COLOR
+        # Deep ink, matching the Iotana logo. To go back one step, use the previous color: 'ForestGreen'
+        [System.String]$TabBackGroundColor = '#1B2430'
+
         # PREPARATION - TAB PROPERTIES
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'LAUNCHER'
-            Version             = '6.8.0'
-            BackGroundColor     = 'ForestGreen'
+            Version             = '6.9.4'
+            BackGroundColor     = $TabBackGroundColor
         }
 
         # EXECUTION - TAB

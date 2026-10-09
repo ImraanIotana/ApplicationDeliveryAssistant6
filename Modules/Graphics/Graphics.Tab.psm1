@@ -192,10 +192,10 @@ function New-SubTabControl {
     [System.Windows.Forms.TabPage]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.0.0.1
+    Version         : 6.9.4
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : May 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function New-TabPage {
@@ -230,7 +230,14 @@ function New-TabPage {
         # Set the Title of the TabPage
         $NewTabPage.Text = $Title
         # Set the BackGroundColor if provided
-        if ($BackGroundColor) { $NewTabPage.BackColor = $BackGroundColor }
+        if ($BackGroundColor) {
+            # A hex value like '#1B2430' must be converted, a color name is coerced by WinForms
+            if ($BackGroundColor -match '^#[0-9A-Fa-f]{6}$') {
+                $NewTabPage.BackColor = [System.Drawing.ColorTranslator]::FromHtml($BackGroundColor)
+            } else {
+                $NewTabPage.BackColor = $BackGroundColor
+            }
+        }
 
         # EXECUTION - ADD THE TABPAGE TO THE PARENT TABCONTROL
         # Add the TabPage to the Parent TabControl
