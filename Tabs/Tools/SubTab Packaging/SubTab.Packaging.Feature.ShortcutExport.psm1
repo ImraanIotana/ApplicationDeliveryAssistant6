@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Shortcut Export feature into the Other sub-tab.
+    Imports the Shortcut Export feature into the Packaging sub-tab.
 .DESCRIPTION
-    This function imports the Shortcut Export feature into the Other sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Shortcut Export feature into the Packaging sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
     The ComboBox setup follows the 6.0.0.3 graphics pattern where New-ComboBox handles
     PropertyName generation and flattened graphics registration directly.
 .EXAMPLE
@@ -17,10 +17,10 @@
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.3.3
+    Version         : 6.10.0
     Author          : Imraan Iotana
     Creation Date   : June 2026
-    Last Update     : July 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-FeatureShortcutExport {

@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the MSI Setup feature into the Other sub-tab.
+    Imports the MSI Setup feature into the Packaging sub-tab.
 .DESCRIPTION
-    This function imports the MSI Setup feature into the Other sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the MSI Setup feature into the Packaging sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
     It provides an MSI file selection field and a button for creating install and uninstall CMD files beside the selected MSI.
 .EXAMPLE
     Import-FeatureMSISetup -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
@@ -15,10 +15,10 @@
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant.
-    Version         : 6.7.0
+    Version         : 6.10.0
     Author          : Imraan Iotana
     Creation Date   : September 2026
-    Last Update     : September 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-FeatureMSISetup {

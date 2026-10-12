@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the INNO Setup feature into the Other sub-tab.
+    Imports the INNO Setup feature into the Packaging sub-tab.
 .DESCRIPTION
-    This function imports the INNO Setup feature into the Other sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the INNO Setup feature into the Packaging sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
     Import-FeatureINNOSetup -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
@@ -14,10 +14,10 @@
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.0.0.1
+    Version         : 6.10.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : July 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-FeatureINNOSetup {

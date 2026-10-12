@@ -13,10 +13,10 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.7.0
+    Version         : 6.10.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : September 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-SubTabToolsOther {
@@ -35,7 +35,7 @@ function Import-SubTabToolsOther {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'OTHER'
-            Version             = '6.7.0'
+            Version             = '6.10.0'
             BackGroundColor     = 'DarkBlue'
         }
         # Set the main color for the GroupBoxes in this sub-tab
@@ -48,11 +48,8 @@ function Import-SubTabToolsOther {
         # EXECUTION - FEATURES
         # Import the Features and store the returned GroupBoxes in variables to be used as the GroupBoxAbove parameter for the next Feature
         $PingComputersGroupBox = Import-FeaturePingComputer -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor
-        $MSISetupGroupBox = Import-FeatureMSISetup -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $PingComputersGroupBox
-        $ISSSetupGroupBox = Import-FeatureISSSetup -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $MSISetupGroupBox
-        $INNOSetupGroupBox = Import-FeatureINNOSetup -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $ISSSetupGroupBox
-        $ShowLogFileGridViewGroupBox = Import-FeatureShowLogFileGridView -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $INNOSetupGroupBox
-        $null = Import-FeatureShortcutExport -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $ShowLogFileGridViewGroupBox
+        $ConvertImageToIconGroupBox = Import-FeatureConvertImageToIcon -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $PingComputersGroupBox
+        $null = Import-FeatureShowLogFileGridView -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $ConvertImageToIconGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

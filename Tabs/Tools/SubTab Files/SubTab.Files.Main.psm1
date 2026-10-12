@@ -13,7 +13,7 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.9.3
+    Version         : 6.10.0
     Author          : Imraan Iotana
     Creation Date   : May 2026
     Last Update     : October 2026
@@ -35,7 +35,7 @@ function Import-SubTabFiles {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'FILES'
-            Version             = '6.9.3'
+            Version             = '6.10.0'
             BackGroundColor     = 'DarkBlue'
         }
         # Set the main color for the GroupBoxes in this sub-tab
@@ -49,8 +49,7 @@ function Import-SubTabFiles {
         # Import the Features
         $FilePropertiesGroupBox = Import-FeatureFileProperties -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor
         $CompareFilesGroupBox   = Import-FeatureCompareFiles -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $FilePropertiesGroupBox
-        $FileBitnessGroupBox    = Import-FeatureFileBitness -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $CompareFilesGroupBox
-        $null                   = Import-FeatureConvertImageToIcon -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $FileBitnessGroupBox
+        $null                   = Import-FeatureFileBitness -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $CompareFilesGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
