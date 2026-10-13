@@ -10,6 +10,7 @@ Getting started
 Version 6.10.1  
 October 2026
 - ADA Settings: The GENERAL SETTINGS and MAINTENANCE sub-tabs were removed. The SETTINGS tab now shows everything on one page, in this order: FOLDER SETTINGS (My Output Folder), TAB COLOR SELECTION and APPLICATION MAINTENANCE. The features themselves work as before.
+- General: The launcher was renamed from Start Application Delivery Assistant.cmd to Start Application.cmd. The install and update actions and the tip in the console now use the new name.
 - General: Updated startup and Application Settings tab metadata to Version 6.10.1.
 
 Version 6.10.0  
