@@ -246,6 +246,52 @@ function Set-UserSetting {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Gets the User Setting property names that the currently registered TextBoxes and ComboBoxes are bound to.
+.DESCRIPTION
+    This function collects the PropertyName from the Tag of every control in Graphics.TextBoxes and Graphics.ComboBoxes.
+    It is used to tell current settings apart from stale registry values left behind by moved or renamed tabs.
+.EXAMPLE
+    Get-LiveControlPropertyName
+.INPUTS
+    None.
+.OUTPUTS
+    [System.String[]] The PropertyNames of all registered controls.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.10.2
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Get-LiveControlPropertyName {
+    [CmdletBinding()]
+    [OutputType([System.String[]])]
+    param ()
+
+    [System.Collections.Generic.List[System.String]]$PropertyNames = [System.Collections.Generic.List[System.String]]::new()
+    foreach ($Store in @($Global:Graphics.TextBoxes, $Global:Graphics.ComboBoxes)) {
+        if ($Store -isnot [System.Collections.IDictionary]) { continue }
+        foreach ($Section in $Store.Values) {
+            if ($Section -isnot [System.Collections.IDictionary]) { continue }
+            foreach ($Control in $Section.Values) {
+                if (($null -ne $Control) -and ($null -ne $Control.Tag) -and ($null -ne $Control.Tag.PSObject.Properties['PropertyName'])) {
+                    [System.String]$Name = [System.String]$Control.Tag.PropertyName
+                    if (-not [System.String]::IsNullOrWhiteSpace($Name)) { $PropertyNames.Add($Name) }
+                }
+            }
+        }
+    }
+    return $PropertyNames.ToArray()
+}
+
+# END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Gets a specific User Setting value from the registry.
 .DESCRIPTION
     This function reads a single User Setting value from the configured User Settings registry path.
@@ -262,10 +308,10 @@ function Set-UserSetting {
     [System.String] The value of the requested User Setting.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.6.0
+    Version         : 6.10.2
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : July 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Get-UserSetting {
@@ -314,6 +360,12 @@ function Get-UserSetting {
                     $CurrentPropertyName.EndsWith(".$PropertyLeaf", [System.StringComparison]::OrdinalIgnoreCase)
                 }
             )
+            # When multiple matches exist (e.g. stale keys left over from a moved or renamed tab), prefer the keys that live controls are bound to
+            if ($LeafMatches.Count -gt 1) {
+                [System.String[]]$LivePropertyNames = Get-LiveControlPropertyName
+                [System.String[]]$LiveMatches = @($LeafMatches | Where-Object { $LivePropertyNames -contains $_ })
+                if ($LiveMatches.Count -ge 1) { $LeafMatches = $LiveMatches }
+            }
             # Validate that the PropertyLeaf is unique
             if ($LeafMatches.Count -gt 1) {
                 [System.String]$MatchList = ($LeafMatches | Sort-Object) -join ', '

@@ -13,7 +13,7 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.10.1
+    Version         : 6.10.2
     Author          : Imraan Iotana
     Creation Date   : May 2026
     Last Update     : October 2026
@@ -35,7 +35,7 @@ function Import-TabApplicationSettings {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'SETTINGS'
-            Version             = '6.10.1'
+            Version             = '6.10.2'
             BackGroundColor     = 'Cornsilk'
         }
         # Set the main color for the GroupBoxes in this tab

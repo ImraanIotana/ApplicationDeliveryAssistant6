@@ -15,7 +15,7 @@
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.9.1
+    Version         : 6.10.2
     Author          : Imraan Iotana
     Creation Date   : July 2026
     Last Update     : October 2026
@@ -68,6 +68,7 @@ function Import-FeatureApplicationMaintenance {
             'USER SETTINGS: Export User Settings (JSON)',
             'USER SETTINGS: Export User Settings (CLIXML)',
             'USER SETTINGS: Import User Settings (JSON/CLIXML)',
+            'USER SETTINGS: Remove Unused Settings',
             'USER SETTINGS: Reset User Settings'
         )
 
@@ -127,6 +128,9 @@ function Import-FeatureApplicationMaintenance {
                         }
                         'USER SETTINGS: Import User Settings (JSON/CLIXML)' {
                             Import-ApplicationMaintenanceSettings -InputObject $InputObject
+                        }
+                        'USER SETTINGS: Remove Unused Settings' {
+                            Invoke-ApplicationMaintenanceRemoveUnusedSettings -InputObject $InputObject
                         }
                         'USER SETTINGS: Reset User Settings' {
                             Invoke-ApplicationMaintenanceResetSettings -InputObject $InputObject
@@ -244,6 +248,120 @@ function Show-ApplicationChangeLog {
             [void]$ChangeLogForm.ShowDialog()
         }
         $ChangeLogForm.Dispose()
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Removes user settings that no control in the application uses anymore.
+.DESCRIPTION
+    Stale TextBox and ComboBox settings stay in the registry when a control is moved or renamed.
+    This function finds the TextBoxes.* and ComboBoxes.* values that no registered control is bound to.
+    When a stale value has the same leaf name as a current control whose own value is empty, the stale value is copied to that control first.
+    After confirmation the stale values are removed.
+.EXAMPLE
+    Invoke-ApplicationMaintenanceRemoveUnusedSettings -InputObject $MyApplicationObject
+.INPUTS
+    [PSCustomObject]
+.OUTPUTS
+    No objects are returned to the pipeline
+.NOTES
+    This script is part of the Application Delivery Assistant Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.10.2
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Invoke-ApplicationMaintenanceRemoveUnusedSettings {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The ApplicationObject containing the Settings.')]
+        [PSCustomObject]$InputObject
+    )
+
+    try {
+        # PREPARATION - INPUT
+        # Read the configured user settings registry path
+        [System.String]$UserSettingsRegistryPath = [System.String]$InputObject.ApplicationSettings.UserSettingsRegistryPath
+        if ((Test-String -IsEmpty $UserSettingsRegistryPath) -or -not (Test-Path -Path $UserSettingsRegistryPath)) {
+            Write-Line 'The User Settings registry path does not exist; there is nothing to clean up.' -Type Warning
+            return
+        }
+
+        # PREPARATION - LIVE AND STORED SETTINGS
+        # Get the settings the current controls are bound to, and all values stored in the registry
+        [System.String[]]$LivePropertyNames = @(Get-LiveControlPropertyName)
+        if ($LivePropertyNames.Count -eq 0) {
+            Write-Line 'No active controls were found, so unused settings cannot be determined. Nothing was removed.' -Type Warning
+            return
+        }
+        [System.String[]]$StoredNames = @((Get-Item -Path $UserSettingsRegistryPath).GetValueNames())
+
+        # Only control settings are considered; all other settings are never touched
+        [System.String[]]$UnusedNames = @(
+            $StoredNames | Where-Object { ($_ -match '^(TextBoxes|ComboBoxes)\.') -and ($LivePropertyNames -notcontains $_) } | Sort-Object
+        )
+        if ($UnusedNames.Count -eq 0) {
+            Write-Line 'There are no unused settings. Nothing was removed.' -Type Success
+            return
+        }
+
+        # PREPARATION - MIGRATION
+        # Find stale values that can fill an empty current setting with the same leaf name
+        [System.Collections.Hashtable]$Migrations = @{}
+        foreach ($UnusedName in $UnusedNames) {
+            [System.String]$Leaf = $UnusedName.Substring($UnusedName.LastIndexOf('.') + 1)
+            [System.String[]]$LiveMatches = @($LivePropertyNames | Where-Object { $_.EndsWith(".$Leaf", [System.StringComparison]::OrdinalIgnoreCase) })
+            if ($LiveMatches.Count -ne 1) { continue }
+            [System.String]$LiveName = $LiveMatches[0]
+            if ($Migrations.ContainsKey($LiveName)) { continue }
+            [System.String]$StaleValue = [System.String](Get-ItemPropertyValue -Path $UserSettingsRegistryPath -Name $UnusedName -ErrorAction SilentlyContinue)
+            [System.String]$LiveValue = if ($StoredNames -contains $LiveName) { [System.String](Get-ItemPropertyValue -Path $UserSettingsRegistryPath -Name $LiveName -ErrorAction SilentlyContinue) } else { '' }
+            if ((Test-String -IsPopulated $StaleValue) -and (Test-String -IsEmpty $LiveValue)) {
+                $Migrations[$LiveName] = $StaleValue
+            }
+        }
+
+        # VALIDATION - CONFIRMATION
+        # Show what will happen and ask for confirmation
+        [System.String]$ListedNames = ($UnusedNames | Select-Object -First 15) -join [System.Environment]::NewLine
+        if ($UnusedNames.Count -gt 15) { $ListedNames += "$([System.Environment]::NewLine)... and $($UnusedNames.Count - 15) more" }
+        [System.String]$Body = "($($UnusedNames.Count)) unused setting(s) were found:$([System.Environment]::NewLine)$([System.Environment]::NewLine)$ListedNames$([System.Environment]::NewLine)$([System.Environment]::NewLine)"
+        if ($Migrations.Count -gt 0) {
+            $Body += "($($Migrations.Count)) empty setting(s) will first receive the value of their old location.$([System.Environment]::NewLine)$([System.Environment]::NewLine)"
+        }
+        $Body += 'Do you want to remove the unused settings?'
+        if (-not (Get-UserConfirmation -Title 'Remove Unused Settings' -Body $Body)) {
+            Write-Line 'Removing unused settings was cancelled.' -Type Warning
+            return
+        }
+
+        # EXECUTION - MIGRATE AND REMOVE
+        # Copy the old values to the current settings, then remove the unused values
+        foreach ($LiveName in $Migrations.Keys) {
+            Set-ItemProperty -Path $UserSettingsRegistryPath -Name $LiveName -Value $Migrations[$LiveName] -Force -ErrorAction Stop
+            Write-Line "Restored the value of the setting ($LiveName) from its old location."
+        }
+        foreach ($UnusedName in $UnusedNames) {
+            Remove-ItemProperty -Path $UserSettingsRegistryPath -Name $UnusedName -Force -ErrorAction Stop
+        }
+
+        # POST-EXECUTION
+        # Report completion, and offer a restart when restored values need to be shown in the UI
+        Write-Line "Removed ($($UnusedNames.Count)) unused setting(s)." -Type Success
+        if ($Migrations.Count -gt 0) {
+            Write-Line 'Please restart the application to show the restored settings.' -Type Warning
+            Restart-ApplicationDeliveryAssistant -InputObject $InputObject
+        }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

@@ -7,6 +7,12 @@ Getting started
 3. Double-click Start Application.cmd.
 4. Optional: install the application in a folder of your choice with the Install Application to Folder action on the SETTINGS tab, Maintenance box, and create your own Start Menu or Desktop shortcut with the Create Startmenu Shortcut or Create Desktop Shortcut actions.
 
+Version 6.10.2  
+October 2026
+- General - User Settings: Fixed the error "PropertyLeaf (MyOutputFolder) is not unique" that appeared, for example, when clicking Create ISS with an empty field. After a tab was moved or renamed (such as the SETTINGS tab in 6.10.1), the old setting stayed in the registry next to the new one, and the lookup by leaf name found both. Get-UserSetting now prefers the setting that a control on screen is bound to and ignores the stale one. This applies to every TextBox and ComboBox, and to any future tab move or rename.
+- ADA Settings - Maintenance: Added the action USER SETTINGS: Remove Unused Settings to the APPLICATION MAINTENANCE box. It finds the TextBox and ComboBox settings in the registry that no control uses anymore (for example after a tab was moved), lists them and removes them after confirmation. When an old setting has the same name as a current setting that is empty, the old value is copied to the current setting first, so values are not lost after a move (a restart is offered to show them). All other settings are never touched.
+- General: Updated startup, Application Settings tab and touched function metadata to Version 6.10.2.
+
 Version 6.10.1  
 October 2026
 - ADA Settings: The GENERAL SETTINGS and MAINTENANCE sub-tabs were removed. The SETTINGS tab now shows everything on one page, in this order: FOLDER SETTINGS (My Output Folder), TAB COLOR SELECTION and APPLICATION MAINTENANCE. The features themselves work as before.
