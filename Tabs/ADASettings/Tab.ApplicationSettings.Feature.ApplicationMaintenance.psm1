@@ -316,15 +316,30 @@ function Invoke-ApplicationMaintenanceRemoveUnusedSettings {
         }
 
         # PREPARATION - MIGRATION
-        # Find stale values that can fill an empty current setting with the same leaf name
-        [System.Collections.Hashtable]$Migrations = @{}
+        # Find stale values that can fill an empty current setting with the same leaf name.
+        # When several stale values share the leaf name, only one with the same feature name (the segment before the leaf) is used; otherwise the value is not restored.
+        [System.Collections.Hashtable]$Candidates = @{}
         foreach ($UnusedName in $UnusedNames) {
             [System.String]$Leaf = $UnusedName.Substring($UnusedName.LastIndexOf('.') + 1)
             [System.String[]]$LiveMatches = @($LivePropertyNames | Where-Object { $_.EndsWith(".$Leaf", [System.StringComparison]::OrdinalIgnoreCase) })
             if ($LiveMatches.Count -ne 1) { continue }
-            [System.String]$LiveName = $LiveMatches[0]
-            if ($Migrations.ContainsKey($LiveName)) { continue }
-            [System.String]$StaleValue = [System.String](Get-ItemPropertyValue -Path $UserSettingsRegistryPath -Name $UnusedName -ErrorAction SilentlyContinue)
+            if (-not $Candidates.ContainsKey($LiveMatches[0])) { $Candidates[$LiveMatches[0]] = New-Object 'System.Collections.Generic.List[System.String]' }
+            $Candidates[$LiveMatches[0]].Add($UnusedName)
+        }
+        [System.Collections.Hashtable]$Migrations = @{}
+        foreach ($LiveName in $Candidates.Keys) {
+            [System.Collections.Generic.List[System.String]]$StaleNames = $Candidates[$LiveName]
+            [System.String]$ChosenName = $null
+            if ($StaleNames.Count -eq 1) {
+                $ChosenName = $StaleNames[0]
+            }
+            else {
+                [System.String]$LiveFeature = @($LiveName.Split('.'))[-2]
+                [System.String[]]$SameFeature = @($StaleNames | Where-Object { @($_.Split('.'))[-2] -eq $LiveFeature })
+                if ($SameFeature.Count -eq 1) { $ChosenName = $SameFeature[0] }
+            }
+            if (Test-String -IsEmpty $ChosenName) { continue }
+            [System.String]$StaleValue = [System.String](Get-ItemPropertyValue -Path $UserSettingsRegistryPath -Name $ChosenName -ErrorAction SilentlyContinue)
             [System.String]$LiveValue = if ($StoredNames -contains $LiveName) { [System.String](Get-ItemPropertyValue -Path $UserSettingsRegistryPath -Name $LiveName -ErrorAction SilentlyContinue) } else { '' }
             if ((Test-String -IsPopulated $StaleValue) -and (Test-String -IsEmpty $LiveValue)) {
                 $Migrations[$LiveName] = $StaleValue

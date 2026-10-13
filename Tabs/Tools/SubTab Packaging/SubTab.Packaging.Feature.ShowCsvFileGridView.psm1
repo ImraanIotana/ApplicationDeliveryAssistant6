@@ -1,11 +1,11 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the log file GridView feature into the Other sub-tab.
+    Imports the CSV file GridView feature into the General sub-tab.
 .DESCRIPTION
-    Creates a GroupBox for selecting a CSV log file and displaying its entries in a WinForms viewer.
+    Creates a GroupBox for selecting any CSV file and displaying its content in a sortable grid window.
 .EXAMPLE
-    Import-FeatureShowLogFileGridView -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureShowCsvFileGridView -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
@@ -14,13 +14,13 @@
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.4.1
+    Version         : 6.10.3
     Author          : Imraan Iotana
     Creation Date   : August 2026
-    Last Update     : August 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
-function Import-FeatureShowLogFileGridView {
+function Import-FeatureShowCsvFileGridView {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -42,7 +42,7 @@ function Import-FeatureShowLogFileGridView {
         [System.Collections.Hashtable]$GroupBoxProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'SHOW LOG FILE'
+            Title           = 'SHOW CSV FILE'
             Color           = $Color
             NumberOfRows    = 2
             GroupBoxAbove   = $GroupBoxAbove
@@ -52,34 +52,37 @@ function Import-FeatureShowLogFileGridView {
         [System.Windows.Forms.GroupBox]$FeatureGroupBox = New-GroupBox @GroupBoxProperties
 
         # PREPARATION - TEXTBOX PROPERTIES
-        [System.Collections.Hashtable]$LogFileTextBoxProperties = @{
+        [System.Collections.Hashtable]$CsvFileTextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'Select CSV Log File'
-            ToolTip         = 'Select the application CSV log file to display.'
+            Label           = 'Select CSV File'
+            ToolTip         = 'Select the CSV file to display. The delimiter (comma, semicolon, tab or pipe) is detected automatically.'
             SizeType        = 'Medium'
             SmallButtons    = @(@(5,'Browse File','Csv'),@(6,'Paste'),@(7,'Open'))
+            IsPath          = $true
+            # Keeps the path stored by earlier versions, when this feature was named SHOW LOG FILE
+            PropertyName    = 'TextBoxes.tools.other.showlogfile.SelectCSVLogFile'
         }
 
         # EXECUTION - TEXTBOX
-        [System.Windows.Forms.TextBox]$LogFileTextBox = New-TextBox @LogFileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        [System.Windows.Forms.TextBox]$CsvFileTextBox = New-TextBox @CsvFileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # PREPARATION - BUTTON PROPERTIES
         [System.Collections.Hashtable[]]$ActionButtons = @(
             @{
                 ColumnNumber    = 1
-                Text            = 'Show Log File'
+                Text            = 'Show CSV File'
                 PNGFileName     = 'file_extension_log'
                 SizeType        = 'Medium'
-                ToolTip         = 'Show the selected CSV log file in the ADA log viewer.'
-                Function        = { Show-LogFileInGridView -Path $LogFileTextBox.Text }.GetNewClosure()
+                ToolTip         = 'Show the selected CSV file in a sortable grid window.'
+                Function        = { Show-CsvFileInGridView -Path $CsvFileTextBox.Text }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
                 Text            = 'Clear Field'
                 PNGFileName     = 'textfield_delete'
                 SizeType        = 'Small'
-                ToolTip         = 'Clear the selected log file path.'
-                Function        = { Clear-TextBox -TextBox $LogFileTextBox }.GetNewClosure()
+                ToolTip         = 'Clear the selected CSV file path.'
+                Function        = { Clear-TextBox -TextBox $CsvFileTextBox }.GetNewClosure()
             }
         )
 

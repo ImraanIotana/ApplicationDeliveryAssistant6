@@ -466,11 +466,14 @@ function New-ApplicationLogFile {
 ####################################################################################################
 <#
 .SYNOPSIS
-	Creates a WinForms application log viewer.
+	Creates a WinForms CSV viewer.
 .DESCRIPTION
-	Builds a resizable form with a read-only, sortable DataGridView bound to the supplied log entries.
+	Builds a resizable form with a read-only, sortable DataGridView bound to the supplied CSV rows.
+	The columns keep the order of the CSV file. With -LogLayout the application log columns are shown first, in their canonical order, and the Details column is widened.
 .EXAMPLE
-	New-ApplicationLogViewerForm -LogEntries $Entries -Title 'Application Log'
+	New-ApplicationLogViewerForm -LogEntries $Entries -Title 'My File - CSV Viewer'
+.EXAMPLE
+	New-ApplicationLogViewerForm -LogEntries $Entries -Title 'Application Log' -LogLayout
 .INPUTS
 	[System.Object[]]
 	[System.String]
@@ -478,21 +481,24 @@ function New-ApplicationLogFile {
 	[System.Windows.Forms.Form]
 .NOTES
 	This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-	Version         : 6.4.1
+	Version         : 6.10.3
 	Author          : Imraan Iotana
 	Creation Date   : August 2026
-	Last Update     : August 2026
+	Last Update     : October 2026
 #>
 ####################################################################################################
 function New-ApplicationLogViewerForm {
 	[CmdletBinding()]
 	[OutputType([System.Windows.Forms.Form])]
 	param (
-		[Parameter(Mandatory=$true,HelpMessage='The imported application log entries to display.')]
+		[Parameter(Mandatory=$true,HelpMessage='The imported CSV rows to display.')]
 		[System.Object[]]$LogEntries,
 
-		[Parameter(Mandatory=$true,HelpMessage='The title of the log viewer window.')]
-		[System.String]$Title
+		[Parameter(Mandatory=$true,HelpMessage='The title of the viewer window.')]
+		[System.String]$Title,
+
+		[Parameter(Mandatory=$false,HelpMessage='Use the application log column order and presentation.')]
+		[System.Management.Automation.SwitchParameter]$LogLayout
 	)
 
 	# PREPARATION - DATA TABLE
@@ -512,8 +518,11 @@ function New-ApplicationLogViewerForm {
 		'ToolVersion',
 		'TimestampUTC'
 	)
-	[System.String[]]$ColumnNames = @($CanonicalColumnNames | Where-Object { $_ -in $AvailableColumnNames })
-	$ColumnNames += @($AvailableColumnNames | Where-Object { $_ -notin $CanonicalColumnNames })
+	[System.String[]]$ColumnNames = $AvailableColumnNames
+	if ($LogLayout.IsPresent) {
+		$ColumnNames = @($CanonicalColumnNames | Where-Object { $_ -in $AvailableColumnNames })
+		$ColumnNames += @($AvailableColumnNames | Where-Object { $_ -notin $CanonicalColumnNames })
+	}
 	foreach ($ColumnName in $ColumnNames) {
 		[void]$LogTable.Columns.Add($ColumnName, [System.String])
 	}
@@ -571,7 +580,7 @@ function New-ApplicationLogViewerForm {
 	}
 
 	# EXECUTION - COLUMN PRESENTATION
-	if ($LogGrid.Columns.Contains('Details')) {
+	if ($LogLayout.IsPresent -and $LogGrid.Columns.Contains('Details')) {
 		$LogGrid.Columns['Details'].AutoSizeMode = 'None'
 		$LogGrid.Columns['Details'].MinimumWidth = 250
 		$LogGrid.Columns['Details'].Width = 450
@@ -581,7 +590,7 @@ function New-ApplicationLogViewerForm {
 	# PREPARATION - STATUS BAR
 	[System.Windows.Forms.StatusStrip]$StatusBar = New-Object System.Windows.Forms.StatusStrip
 	[System.Windows.Forms.ToolStripStatusLabel]$RowCountLabel = New-Object System.Windows.Forms.ToolStripStatusLabel
-	$RowCountLabel.Text = "Entries: $($LogEntries.Count)"
+	$RowCountLabel.Text = if ($LogLayout.IsPresent) { "Entries: $($LogEntries.Count)" } else { "Rows: $($LogEntries.Count)   Columns: $($ColumnNames.Count)" }
 	[void]$StatusBar.Items.Add($RowCountLabel)
 
 	# EXECUTION - VIEWER CONTROLS
@@ -604,49 +613,157 @@ function New-ApplicationLogViewerForm {
 ####################################################################################################
 <#
 .SYNOPSIS
-	Displays a CSV application log file in the ADA log viewer.
+	Imports a CSV file with an automatically detected delimiter.
 .DESCRIPTION
-	Validates and imports the selected CSV file, then shows its rows in an owned WinForms DataGridView.
+	Reads the file as UTF-8 (falling back to the system ANSI code page when the file is not valid UTF-8), detects the delimiter
+	(comma, semicolon, tab or pipe) from the header line, and returns the rows as objects.
+	Empty and duplicate column names are made unique, so every CSV file can be shown in a grid.
 .EXAMPLE
-	Show-LogFileInGridView -Path 'C:\Temp\Vendor_App_1.0_Log.csv'
+	Import-CsvFileWithAutoDelimiter -Path 'C:\Temp\Export.csv'
+.INPUTS
+	[System.String]
+.OUTPUTS
+	[System.Object[]]
+.NOTES
+	This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+	Version         : 6.10.3
+	Author          : Imraan Iotana
+	Creation Date   : October 2026
+	Last Update     : October 2026
+#>
+####################################################################################################
+function Import-CsvFileWithAutoDelimiter {
+	[CmdletBinding()]
+	[OutputType([System.Object[]])]
+	param (
+		[Parameter(Mandatory=$true,HelpMessage='The CSV file to import.')]
+		[System.String]$Path
+	)
+
+	# PREPARATION - TEXT
+	# Decode as strict UTF-8 first, so that ANSI files (for example saved by Excel) are not shown with broken characters
+	[System.Byte[]]$FileBytes = [System.IO.File]::ReadAllBytes($Path)
+	[System.String]$Text = $null
+	try {
+		$Text = (New-Object System.Text.UTF8Encoding($false, $true)).GetString($FileBytes)
+	}
+	catch {
+		$Text = [System.Text.Encoding]::Default.GetString($FileBytes)
+	}
+	$Text = $Text.TrimStart([System.Char]0xFEFF).TrimStart("`r", "`n")
+	if (Test-String -IsEmpty $Text) { return @() }
+
+	# PREPARATION - HEADER LINE
+	[System.Int32]$HeaderEnd = $Text.IndexOfAny([System.Char[]]@("`r", "`n"))
+	if ($HeaderEnd -lt 0) { $HeaderEnd = $Text.Length }
+	[System.String]$HeaderLine = $Text.Substring(0, $HeaderEnd)
+
+	# PREPARATION - DELIMITER
+	# Count the candidate delimiters outside quotes and take the most frequent one
+	[System.Char[]]$Candidates = @(',', ';', "`t", '|')
+	[System.Collections.Hashtable]$Counts = @{}
+	foreach ($Candidate in $Candidates) { $Counts[$Candidate] = 0 }
+	[System.Boolean]$InQuotes = $false
+	foreach ($Character in $HeaderLine.ToCharArray()) {
+		if ($Character -eq '"') { $InQuotes = -not $InQuotes }
+		elseif ((-not $InQuotes) -and $Counts.ContainsKey($Character)) { $Counts[$Character]++ }
+	}
+	[System.Char]$Delimiter = ','
+	[System.Int32]$HighestCount = 0
+	foreach ($Candidate in $Candidates) {
+		if ($Counts[$Candidate] -gt $HighestCount) { $Delimiter = $Candidate; $HighestCount = $Counts[$Candidate] }
+	}
+
+	# PREPARATION - COLUMN NAMES
+	# Split the header line into fields, then make empty and duplicate names unique
+	[System.Collections.Generic.List[System.String]]$HeaderFields = New-Object 'System.Collections.Generic.List[System.String]'
+	[System.Text.StringBuilder]$Field = New-Object System.Text.StringBuilder
+	$InQuotes = $false
+	for ([System.Int32]$Index = 0; $Index -lt $HeaderLine.Length; $Index++) {
+		[System.Char]$Character = $HeaderLine[$Index]
+		if ($Character -eq '"') {
+			if ($InQuotes -and ($Index + 1 -lt $HeaderLine.Length) -and ($HeaderLine[$Index + 1] -eq '"')) { [void]$Field.Append('"'); $Index++ }
+			else { $InQuotes = -not $InQuotes }
+		}
+		elseif (($Character -eq $Delimiter) -and (-not $InQuotes)) { $HeaderFields.Add($Field.ToString()); [void]$Field.Clear() }
+		else { [void]$Field.Append($Character) }
+	}
+	$HeaderFields.Add($Field.ToString())
+	[System.Collections.Generic.List[System.String]]$ColumnNames = New-Object 'System.Collections.Generic.List[System.String]'
+	for ([System.Int32]$Index = 0; $Index -lt $HeaderFields.Count; $Index++) {
+		[System.String]$Name = $HeaderFields[$Index].Trim()
+		if (Test-String -IsEmpty $Name) { $Name = "Column $($Index + 1)" }
+		[System.String]$UniqueName = $Name
+		[System.Int32]$Suffix = 2
+		while ($ColumnNames -contains $UniqueName) { $UniqueName = "$Name ($Suffix)"; $Suffix++ }
+		$ColumnNames.Add($UniqueName)
+	}
+
+	# EXECUTION - ROWS
+	[System.String]$Body = $Text.Substring($HeaderEnd).TrimStart("`r", "`n")
+	if (Test-String -IsEmpty $Body) { return @() }
+	return @(ConvertFrom-Csv -InputObject $Body -Delimiter $Delimiter -Header $ColumnNames.ToArray())
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+	Displays a CSV file in a sortable grid window.
+.DESCRIPTION
+	Validates and imports the selected CSV file (the delimiter is detected automatically), then shows its rows in an owned WinForms DataGridView.
+	With -LogLayout the file is shown as an application log: log columns first and the title "Application Log".
+.EXAMPLE
+	Show-CsvFileInGridView -Path 'C:\Temp\Export.csv'
+.EXAMPLE
+	Show-CsvFileInGridView -Path 'C:\Temp\Vendor_App_1.0_Log.csv' -LogLayout
 .INPUTS
 	[System.String]
 .OUTPUTS
 	No objects are returned to the pipeline.
 .NOTES
 	This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-	Version         : 6.4.1
+	Version         : 6.10.3
 	Author          : Imraan Iotana
-	Creation Date   : August 2026
-	Last Update     : August 2026
+	Creation Date   : October 2026
+	Last Update     : October 2026
 #>
 ####################################################################################################
-function Show-LogFileInGridView {
+function Show-CsvFileInGridView {
 	[CmdletBinding()]
 	param (
-		[Parameter(Mandatory=$false,HelpMessage='The CSV application log file to display.')]
+		[Parameter(Mandatory=$false,HelpMessage='The CSV file to display.')]
 		[AllowNull()][AllowEmptyString()]
-		[System.String]$Path
+		[System.String]$Path,
+
+		[Parameter(Mandatory=$false,HelpMessage='Show the file as an application log.')]
+		[System.Management.Automation.SwitchParameter]$LogLayout
 	)
 
 	try {
-		# VALIDATION - LOG FILE
-		if (-not (Confirm-FileExtension -Path $Path -Name 'CSV Log File' -AllowedExtensions @('.csv'))) {
+		# VALIDATION - CSV FILE
+		$Path = ConvertFrom-ExplorerFilePath -Path $Path
+		[System.String]$DisplayName = if ($LogLayout.IsPresent) { 'CSV Log File' } else { 'CSV File' }
+		if (-not (Confirm-FileExtension -Path $Path -Name $DisplayName -AllowedExtensions @('.csv'))) {
 			return
 		}
 
-		# EXECUTION - IMPORT LOG ENTRIES
-		[System.Object[]]$LogEntries = @(Import-Csv -LiteralPath $Path -ErrorAction Stop)
-		if ($LogEntries.Count -eq 0) {
-			Write-Line "The selected CSV log file contains no entries. ($Path)" -Type Warning
+		# EXECUTION - IMPORT ROWS
+		[System.Object[]]$CsvRows = @(Import-CsvFileWithAutoDelimiter -Path $Path)
+		if ($CsvRows.Count -eq 0) {
+			Write-Line "The selected $DisplayName contains no rows. ($Path)" -Type Warning
 			return
 		}
 
-		# PREPARATION - LOG VIEWER
-		[System.String]$LogFileName = Split-Path -Path $Path -Leaf
-		[System.Windows.Forms.Form]$ViewerForm = New-ApplicationLogViewerForm -LogEntries $LogEntries -Title "$LogFileName - Application Log"
+		# PREPARATION - VIEWER
+		[System.String]$FileName = Split-Path -Path $Path -Leaf
+		[System.String]$ViewerTitle = if ($LogLayout.IsPresent) { "$FileName - Application Log" } else { "$FileName - CSV Viewer" }
+		[System.Windows.Forms.Form]$ViewerForm = New-ApplicationLogViewerForm -LogEntries $CsvRows -Title $ViewerTitle -LogLayout:$LogLayout
 
-		# EXECUTION - SHOW LOG VIEWER
+		# EXECUTION - SHOW VIEWER
 		try {
 			if ($null -ne $Global:MainForm -and -not $Global:MainForm.IsDisposed) {
 				[void]$ViewerForm.ShowDialog($Global:MainForm)
@@ -662,6 +779,41 @@ function Show-LogFileInGridView {
 	catch {
 		Write-ErrorReport -ErrorRecord $_
 	}
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+	Displays a CSV application log file in the ADA log viewer.
+.DESCRIPTION
+	Shows the selected CSV application log file with the application log layout. This is a wrapper around Show-CsvFileInGridView -LogLayout.
+.EXAMPLE
+	Show-LogFileInGridView -Path 'C:\Temp\Vendor_App_1.0_Log.csv'
+.INPUTS
+	[System.String]
+.OUTPUTS
+	No objects are returned to the pipeline.
+.NOTES
+	This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+	Version         : 6.10.3
+	Author          : Imraan Iotana
+	Creation Date   : August 2026
+	Last Update     : October 2026
+#>
+####################################################################################################
+function Show-LogFileInGridView {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory=$false,HelpMessage='The CSV application log file to display.')]
+		[AllowNull()][AllowEmptyString()]
+		[System.String]$Path
+	)
+
+	Show-CsvFileInGridView -Path $Path -LogLayout
 }
 
 ### END OF FUNCTION

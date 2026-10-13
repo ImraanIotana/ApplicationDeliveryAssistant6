@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Convert Image to ICO feature into the Other sub-tab.
+    Imports the Convert Image to ICO feature into the General sub-tab.
 .DESCRIPTION
-    This function imports the Convert Image to ICO feature into the Other sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Convert Image to ICO feature into the General sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
     Import-FeatureConvertImageToIcon -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
@@ -13,7 +13,7 @@
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.10.0
+    Version         : 6.10.3
     Author          : Imraan Iotana
     Creation Date   : October 2026
     Last Update     : October 2026
@@ -113,7 +113,7 @@ function Import-FeatureConvertImageToIcon {
 ####################################################################################################
 <#
 .SYNOPSIS
-    Converts the image selected in the Other sub-tab to an .ico file.
+    Converts the image selected in the General sub-tab to an .ico file.
 .DESCRIPTION
     Confirms overwrite when the destination already exists, then writes a multi-size Windows icon.
 .EXAMPLE
@@ -124,7 +124,7 @@ function Import-FeatureConvertImageToIcon {
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.10.0
+    Version         : 6.10.3
     Author          : Imraan Iotana
     Creation Date   : October 2026
     Last Update     : October 2026

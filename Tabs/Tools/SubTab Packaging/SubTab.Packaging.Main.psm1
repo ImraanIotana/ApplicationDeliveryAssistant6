@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Packaging sub-tab into the Tools tab.
+    Imports the General sub-tab into the Tools tab.
 .DESCRIPTION
-    This function imports the Packaging sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
+    This function imports the General sub-tab into the Tools tab by creating a new TabPage and adding it to the specified parent TabControl.
 .EXAMPLE
     Import-SubTabPackaging -InputObject $MyApplicationObject -ParentTabControl $MySubTabControl
 .INPUTS
@@ -13,7 +13,7 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.10.0
+    Version         : 6.10.3
     Author          : Imraan Iotana
     Creation Date   : October 2026
     Last Update     : October 2026
@@ -34,8 +34,8 @@ function Import-SubTabPackaging {
         # Tab properties
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
-            Title               = 'PACKAGING'
-            Version             = '6.10.0'
+            Title               = 'GENERAL'
+            Version             = '6.10.3'
             BackGroundColor     = 'DarkBlue'
         }
         # Set the main color for the GroupBoxes in this sub-tab
@@ -50,7 +50,9 @@ function Import-SubTabPackaging {
         $MSISetupGroupBox = Import-FeatureMSISetup -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor
         $ISSSetupGroupBox = Import-FeatureISSSetup -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $MSISetupGroupBox
         $INNOSetupGroupBox = Import-FeatureINNOSetup -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $ISSSetupGroupBox
-        $null = Import-FeatureShortcutExport -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $INNOSetupGroupBox
+        $ShortcutExportGroupBox = Import-FeatureShortcutExport -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $INNOSetupGroupBox
+        $ConvertImageToIconGroupBox = Import-FeatureConvertImageToIcon -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $ShortcutExportGroupBox
+        $null = Import-FeatureShowCsvFileGridView -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $ConvertImageToIconGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

@@ -1,27 +1,25 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Folder Properties feature into the Folders sub-tab.
+    Imports the File Properties feature into the Other sub-tab.
 .DESCRIPTION
-    This function imports the Folder Properties feature into the Folders sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the File Properties feature into the Other sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureFolderProperties -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureFileProperties -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
-    [System.Windows.Forms.GroupBox]
-    [System.String]
 .OUTPUTS
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.0.0.1
+    Version         : 6.10.3
     Author          : Imraan Iotana
-    Creation Date   : July 2026
-    Last Update     : July 2026
+    Creation Date   : June 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
-function Import-FeatureFolderProperties {
+function Import-FeatureFileProperties {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -44,7 +42,7 @@ function Import-FeatureFolderProperties {
         [System.Collections.Hashtable]$GroupBoxProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'FOLDER PROPERTIES'
+            Title           = 'FILE PROPERTIES'
             Color           = $Color
             NumberOfRows    = 2
             GroupBoxAbove   = $GroupBoxAbove
@@ -56,27 +54,25 @@ function Import-FeatureFolderProperties {
 
         # PREPARATION - TEXTBOX PROPERTIES
         # Set the TextBox properties
-        [System.Collections.Hashtable]$FolderTextBoxProperties = @{
+        [System.Collections.Hashtable]$FileTextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'Select Folder'
-            ToolTip         = 'The path of the folder to analyze.'
+            Label           = 'Select File'
+            ToolTip         = 'The path of the file to analyze'
             SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Browse Folder'),@(6,'Paste'),@(7,'Open'))
+            SmallButtons    = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
         }
-
-        # EXECUTION - TEXTBOX
         # Create the TextBox
-        [System.Windows.Forms.TextBox]$FolderPathTextBox = New-TextBox @FolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        [System.Windows.Forms.TextBox]$FilePathTextBox = New-TextBox @FileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
-        # Set the button properties
+        # Set the Button properties
         [System.Collections.Hashtable[]]$ActionButtons = @(
             @{
                 ColumnNumber    = 1
                 Text            = 'Properties'
                 PNGFileName     = 'microscope'
                 SizeType        = 'Medium'
-                Function        = { Write-FolderPropertiesToHost -Path $FolderPathTextBox.Text }.GetNewClosure()
+                Function        = { Write-FilePropertiesToHost -Path $FilePathTextBox.Text }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
@@ -84,10 +80,9 @@ function Import-FeatureFolderProperties {
                 PNGFileName     = 'textfield_delete'
                 SizeType        = 'Small'
                 ToolTip         = 'Clear this field.'
-                Function        = { Clear-TextBox -TextBox $FolderPathTextBox }.GetNewClosure()
+                Function        = { Clear-TextBox -TextBox $FilePathTextBox }.GetNewClosure()
             }
         )
-
         # Create the Buttons
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ActionButtons -ParentGroupBox $FeatureGroupBox -RowNumber 2
 

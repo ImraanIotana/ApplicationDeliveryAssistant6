@@ -1,25 +1,27 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the File Bitness feature into the Files sub-tab.
+    Imports the Folder Properties feature into the Other sub-tab.
 .DESCRIPTION
-    This function imports the File Bitness feature into the Files sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Folder Properties feature into the Other sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
-    Import-FeatureFileBitness -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
+    Import-FeatureFolderProperties -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
     [PSCustomObject]
     [System.Windows.Forms.TabPage]
+    [System.Windows.Forms.GroupBox]
+    [System.String]
 .OUTPUTS
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.0.0.1
+    Version         : 6.10.3
     Author          : Imraan Iotana
-    Creation Date   : June 2026
-    Last Update     : July 2026
+    Creation Date   : July 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
-function Import-FeatureFileBitness {
+function Import-FeatureFolderProperties {
     [CmdletBinding()]
     [OutputType([System.Windows.Forms.GroupBox])]
     param (
@@ -42,7 +44,7 @@ function Import-FeatureFileBitness {
         [System.Collections.Hashtable]$GroupBoxProperties = @{
             InputObject     = $InputObject
             ParentTabPage   = $ParentTabPage
-            Title           = 'FILE BITNESS'
+            Title           = 'FOLDER PROPERTIES'
             Color           = $Color
             NumberOfRows    = 2
             GroupBoxAbove   = $GroupBoxAbove
@@ -54,25 +56,27 @@ function Import-FeatureFileBitness {
 
         # PREPARATION - TEXTBOX PROPERTIES
         # Set the TextBox properties
-        [System.Collections.Hashtable]$FileTextBoxProperties = @{
+        [System.Collections.Hashtable]$FolderTextBoxProperties = @{
             RowNumber       = 1
-            Label           = 'Select File'
-            ToolTip         = 'The path of the file to analyze'
+            Label           = 'Select Folder'
+            ToolTip         = 'The path of the folder to analyze.'
             SizeType        = 'Medium'
-            SmallButtons    = @(@(5,'Browse File'),@(6,'Paste'),@(7,'Open'))
+            SmallButtons    = @(@(5,'Browse Folder'),@(6,'Paste'),@(7,'Open'))
         }
+
+        # EXECUTION - TEXTBOX
         # Create the TextBox
-        [System.Windows.Forms.TextBox]$FilePathTextBox = New-TextBox @FileTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
+        [System.Windows.Forms.TextBox]$FolderPathTextBox = New-TextBox @FolderTextBoxProperties -InputObject $InputObject -ParentGroupBox $FeatureGroupBox -ReturnTextBox
 
         # EXECUTION - BUTTONS
-        # Set the Button properties
+        # Set the button properties
         [System.Collections.Hashtable[]]$ActionButtons = @(
             @{
                 ColumnNumber    = 1
-                Text            = 'Analyze'
+                Text            = 'Properties'
                 PNGFileName     = 'microscope'
                 SizeType        = 'Medium'
-                Function        = { Get-FileBitness -Path $FilePathTextBox.Text -OutHost }.GetNewClosure()
+                Function        = { Write-FolderPropertiesToHost -Path $FolderPathTextBox.Text }.GetNewClosure()
             }
             @{
                 ColumnNumber    = 7
@@ -80,9 +84,10 @@ function Import-FeatureFileBitness {
                 PNGFileName     = 'textfield_delete'
                 SizeType        = 'Small'
                 ToolTip         = 'Clear this field.'
-                Function        = { Clear-TextBox -TextBox $FilePathTextBox }.GetNewClosure()
+                Function        = { Clear-TextBox -TextBox $FolderPathTextBox }.GetNewClosure()
             }
         )
+
         # Create the Buttons
         New-ButtonLine -InputObject $InputObject -ButtonPropertiesArray $ActionButtons -ParentGroupBox $FeatureGroupBox -RowNumber 2
 

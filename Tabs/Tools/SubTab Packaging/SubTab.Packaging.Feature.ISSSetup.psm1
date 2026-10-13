@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the ISS Setup feature into the Packaging sub-tab.
+    Imports the ISS Setup feature into the General sub-tab.
 .DESCRIPTION
-    This function imports the ISS Setup feature into the Packaging sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the ISS Setup feature into the General sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
     Import-FeatureISSSetup -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS

@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Shortcut Export feature into the Packaging sub-tab.
+    Imports the Shortcut Export feature into the General sub-tab.
 .DESCRIPTION
-    This function imports the Shortcut Export feature into the Packaging sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the Shortcut Export feature into the General sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
     The ComboBox setup follows the 6.0.0.3 graphics pattern where New-ComboBox handles
     PropertyName generation and flattened graphics registration directly.
 .EXAMPLE

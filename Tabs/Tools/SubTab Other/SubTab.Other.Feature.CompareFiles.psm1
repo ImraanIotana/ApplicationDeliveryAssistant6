@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the File Compare feature into the Files sub-tab.
+    Imports the File Compare feature into the Other sub-tab.
 .DESCRIPTION
-    This function imports the File Compare feature into the Files sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the File Compare feature into the Other sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
     Import-FeatureCompareFiles -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS
@@ -13,10 +13,10 @@
     [System.Windows.Forms.GroupBox]
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.7.0
+    Version         : 6.10.3
     Author          : Imraan Iotana
     Creation Date   : May 2026
-    Last Update     : September 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-FeatureCompareFiles {
