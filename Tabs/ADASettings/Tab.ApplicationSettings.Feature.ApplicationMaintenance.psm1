@@ -1,7 +1,7 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Application Maintenance feature into the Maintenance sub-tab
+    Imports the Application Maintenance feature into the Settings tab
 .DESCRIPTION
     This function creates a placeholder GroupBox for the Application Maintenance feature
 .EXAMPLE

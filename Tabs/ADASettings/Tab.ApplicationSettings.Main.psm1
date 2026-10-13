@@ -13,7 +13,7 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.9.1
+    Version         : 6.10.1
     Author          : Imraan Iotana
     Creation Date   : May 2026
     Last Update     : October 2026
@@ -35,20 +35,21 @@ function Import-TabApplicationSettings {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'SETTINGS'
-            Version             = '6.9.1'
+            Version             = '6.10.1'
             BackGroundColor     = 'Cornsilk'
         }
+        # Set the main color for the GroupBoxes in this tab
+        [System.String]$MainColor = 'Brown'
 
         # EXECUTION - TAB
         # Create the TabPage
         [System.Windows.Forms.TabPage]$ParentTabPage = New-TabPage @TabProperties
 
-        # EXECUTION - SUBTABS
-        # Create the SubTabControl and add it to the TabPage
-        [System.Windows.Forms.TabControl]$SubTabControl = New-SubTabControl -InputObject $InputObject -ParentTabPage $ParentTabPage
-        # Import the SubTabs
-        Import-SubTabGeneralSettings -InputObject $InputObject -ParentTabControl $SubTabControl
-        Import-SubTabMaintenance -InputObject $InputObject -ParentTabControl $SubTabControl
+        # EXECUTION - FEATURES
+        # Import the Features, from top to bottom
+        $UserFoldersGroupBox            = Import-FeatureUserFolders             -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor
+        $TabColorSelectionGroupBox      = Import-FeatureTabColorSelection       -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $UserFoldersGroupBox
+        $null                           = Import-FeatureApplicationMaintenance  -InputObject $InputObject -ParentTabPage $ParentTabPage -Color $MainColor -GroupBoxAbove $TabColorSelectionGroupBox
     }
     catch {
         Write-ErrorReport -ErrorRecord $_

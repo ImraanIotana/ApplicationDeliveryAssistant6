@@ -267,7 +267,7 @@ function Install-ApplicationToFolder {
 
         # POST-EXECUTION - START THE INSTALLED COPY
         if (Get-UserConfirmation -Title 'Start Application' -Body "Would you like to start the installed application now?`n`nThis window and the current application stay open. You can remove the folder you downloaded the application to.") {
-            [System.String]$Launcher = Join-Path -Path $Result.Destination -ChildPath 'Start Application Delivery Assistant.cmd'
+            [System.String]$Launcher = Join-Path -Path $Result.Destination -ChildPath 'Start Application.cmd'
             if (Test-Path -LiteralPath $Launcher -PathType Leaf) {
                 Start-Process -FilePath $Launcher -WorkingDirectory $Result.Destination
             }

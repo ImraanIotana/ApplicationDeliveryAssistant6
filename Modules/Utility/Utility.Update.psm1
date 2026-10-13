@@ -69,7 +69,7 @@ catch {
 finally {
     Remove-Item -LiteralPath $StagingFolder -Recurse -Force -ErrorAction SilentlyContinue
 }
-$Launcher = Join-Path -Path $InstallFolder -ChildPath 'Start Application Delivery Assistant.cmd'
+$Launcher = Join-Path -Path $InstallFolder -ChildPath 'Start Application.cmd'
 if (Test-Path -LiteralPath $Launcher -PathType Leaf) {
     Start-Process -FilePath $Launcher -WorkingDirectory $InstallFolder
 }

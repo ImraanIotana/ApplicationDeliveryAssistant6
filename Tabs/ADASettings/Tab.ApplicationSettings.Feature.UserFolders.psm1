@@ -1,9 +1,9 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the User Folders feature into the Folder Settings sub-tab.
+    Imports the User Folders feature into the Settings tab.
 .DESCRIPTION
-    This function imports the User Folders feature into the Folder Settings sub-tab by creating a new GroupBox and adding it to the specified parent TabPage.
+    This function imports the User Folders feature into the Settings tab by creating a new GroupBox and adding it to the specified parent TabPage.
 .EXAMPLE
     Import-FeatureUserFolders -InputObject $MyApplicationObject -ParentTabPage $MyTabPage
 .INPUTS

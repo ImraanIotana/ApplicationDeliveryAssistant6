@@ -187,7 +187,7 @@ function Write-WelcomeMessage {
     Write-Line "Welcome to the $($InputObject.Name) $($InputObject.Version)" -Type Info
     # Point to the installation when the application does not run from an installed copy
     if (-not (Test-Path -LiteralPath (Join-Path -Path ([System.String]$InputObject.RootFolder) -ChildPath 'Installed.marker') -PathType Leaf)) {
-        Write-Line "Tip: install this application in a folder of your choice on the SETTINGS tab, Maintenance sub-tab, with 'GENERAL: Install Application to Folder'. Start it afterwards with 'Start Application Delivery Assistant.cmd'." -Type Info
+        Write-Line "Tip: install this application in a folder of your choice on the SETTINGS tab, Maintenance box, with 'GENERAL: Install Application to Folder'. Start it afterwards with 'Start Application.cmd'." -Type Info
     }
 }
 

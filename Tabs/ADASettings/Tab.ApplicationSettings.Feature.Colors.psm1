@@ -2,7 +2,7 @@
 ####################################################################################################
 <#
 .SYNOPSIS
-    Imports the Tab color selection feature into the Maintenance Settings sub-tab.
+    Imports the Tab color selection feature into the Settings tab.
 .DESCRIPTION
     This function creates a GroupBox and adds a Graphic ComboBox filled with Windows Forms known color names.
 .EXAMPLE

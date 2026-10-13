@@ -4,8 +4,13 @@ Application Delivery Assistant version 6 - Copyright (C) Iotana. Licensed under 
 Getting started
 1. Download the ZIP file. Before extracting it, right-click it, choose Properties and tick Unblock (if shown), then click OK.
 2. Extract it to a folder that you can write to, for example %LOCALAPPDATA%\Programs\Application Delivery Assistant. Avoid Program Files.
-3. Double-click Start Application Delivery Assistant.cmd.
-4. Optional: install the application in a folder of your choice with the Install Application to Folder action on the SETTINGS tab, Maintenance sub-tab, and create your own Start Menu or Desktop shortcut with the Create Startmenu Shortcut or Create Desktop Shortcut actions.
+3. Double-click Start Application.cmd.
+4. Optional: install the application in a folder of your choice with the Install Application to Folder action on the SETTINGS tab, Maintenance box, and create your own Start Menu or Desktop shortcut with the Create Startmenu Shortcut or Create Desktop Shortcut actions.
+
+Version 6.10.1  
+October 2026
+- ADA Settings: The GENERAL SETTINGS and MAINTENANCE sub-tabs were removed. The SETTINGS tab now shows everything on one page, in this order: FOLDER SETTINGS (My Output Folder), TAB COLOR SELECTION and APPLICATION MAINTENANCE. The features themselves work as before.
+- General: Updated startup and Application Settings tab metadata to Version 6.10.1.
 
 Version 6.10.0  
 October 2026
