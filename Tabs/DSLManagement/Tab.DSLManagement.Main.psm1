@@ -13,10 +13,10 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.4.1
+    Version         : 6.11.0
     Author          : Imraan Iotana
     Creation Date   : July 2026
-    Last Update     : August 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-TabDSLManagement {
@@ -35,7 +35,7 @@ function Import-TabDSLManagement {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'DSL MANAGEMENT'
-            Version             = '6.4.1'
+            Version             = '6.11.0'
             BackGroundColor     = 'SteelBlue'
         }
 
@@ -49,6 +49,7 @@ function Import-TabDSLManagement {
 
         # Import the SubTabs
         Import-SubTabDSLManagementSearch -InputObject $InputObject -ParentTabControl $SubTabControl
+        Import-SubTabDSLManagementCorrection -InputObject $InputObject -ParentTabControl $SubTabControl
         Import-SubTabDSLManagementSettings -InputObject $InputObject -ParentTabControl $SubTabControl
 
     }

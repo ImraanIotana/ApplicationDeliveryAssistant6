@@ -802,9 +802,77 @@ function Get-DocumentReplacementMap {
 ####################################################################################################
 <#
 .SYNOPSIS
+    Returns the content control tag for a document placeholder token.
+.DESCRIPTION
+    Maps a placeholder token such as [FORMALAPPLICATIONVERSION] to the tag of the Word content control that
+    holds its value in the generated document (ADA_FormalApplicationVersion). The tag is how a value is found
+    again later. Returns an empty string for a token that has no tag.
+.EXAMPLE
+    Get-WordDocumentControlTag -Token '[FORMALAPPLICATIONVERSION]'
+.INPUTS
+    [System.String]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.11.0
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Get-WordDocumentControlTag {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The placeholder token, for example [FORMALAPPLICATIONVERSION].')]
+        [AllowNull()][AllowEmptyString()]
+        [System.String]$Token
+    )
+
+    try {
+        # PREPARATION
+        # The tag names follow the metadata property names. Tags always start with ADA_ so they never clash with other content controls (for example Templafy).
+        [System.Collections.Hashtable]$TagNames = @{
+            '[APPLICATIONID]'            = 'ApplicationID'
+            '[FORMALVENDORNAME]'         = 'FormalVendorName'
+            '[FORMALAPPLICATIONNAME]'    = 'FormalApplicationName'
+            '[FORMALAPPLICATIONVERSION]' = 'FormalApplicationVersion'
+            '[CUSTOMVENDORNAME]'         = 'CustomVendorName'
+            '[CUSTOMAPPLICATIONNAME]'    = 'CustomApplicationName'
+            '[CUSTOMAPPLICATIONVERSION]' = 'CustomApplicationVersion'
+            '[INSTALLATIONFOLDER]'       = 'InstallationFolder'
+            '[BITNESS]'                  = 'Bitness'
+            '[USERFULLNAME]'             = 'UserFullName'
+            '[USEREMAILADDRESS]'         = 'UserEmailAddress'
+        }
+
+        # EXECUTION
+        # Return the tag, or an empty string when the token is unknown.
+        if ((Test-String -IsPopulated $Token) -and $TagNames.ContainsKey($Token.ToUpperInvariant())) {
+            return "ADA_$($TagNames[$Token.ToUpperInvariant()])"
+        }
+        return ''
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+        return ''
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
     Updates a Word document by replacing placeholder text values.
 .DESCRIPTION
-    Uses a supplied replacement map to perform Find/Replace operations over the whole document body.
+    Replaces each placeholder token in the document body with its value. For tokens that have a tag
+    (see Get-WordDocumentControlTag) the value is wrapped in a Word content control with that tag, so the
+    place of the value is remembered and can be updated later without the placeholder. Tokens without a tag,
+    and tokens with an empty value, are replaced with plain text.
 .EXAMPLE
     Update-WordDocument -Document $Document -ReplaceMap $ReplaceMap
 .INPUTS
@@ -814,10 +882,10 @@ function Get-DocumentReplacementMap {
     No objects are returned to the pipeline. The Word document is modified in place.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.0.0.2
+    Version         : 6.11.0
     Author          : Imraan Iotana
     Creation Date   : June 2026
-    Last Update     : July 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Update-WordDocument {
@@ -837,32 +905,223 @@ function Update-WordDocument {
         if ($null -eq $ReplaceMap) { throw 'The replacement map is null.' }
 
         # PREPARATION
-        # Prepare the Word find/replace settings for each placeholder token.
+        # Process each placeholder token separately.
         foreach ($Key in $ReplaceMap.Keys) {
-            [System.Object]$Find = $Document.Content.Find
-            [void]$Find.ClearFormatting()
-            [void]$Find.Replacement.ClearFormatting()
+            [System.String]$Token = [System.String]$Key
+            [System.String]$Value = if ($null -ne $ReplaceMap[$Key]) { [System.String]$ReplaceMap[$Key] } else { '' }
+            [System.String]$Tag = Get-WordDocumentControlTag -Token $Token
+            # A value with a line break (for example the bitness text) needs a rich text control (0); other values use a plain text control (1).
+            [System.Int32]$ControlType = if ($Value -match '[\r\n\v]') { 0 } else { 1 }
 
             # EXECUTION
-            # Apply each placeholder replacement across the document.
-            [void]$Find.Execute(
-                [ref]$Key,
-                [ref]$false,
-                [ref]$false,
-                [ref]$false,
-                [ref]$false,
-                [ref]$false,
-                [ref]$true,
-                [ref]1,
-                [ref]$false,
-                [ref]$ReplaceMap[$Key],
-                [ref]2
-            )
+            # Replace the occurrences one by one, always searching the whole body again (a search that starts halfway can return an earlier hit inside a table). The replaced token is gone, so the next search finds the next occurrence.
+            if ($Value.IndexOf($Token, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                Write-Warning "The value for $Token contains the placeholder itself, so it was not replaced."
+                continue
+            }
+            for ($Count = 0; $Count -lt 1000; $Count++) {
+                [System.Object]$Range = $Document.Content
+                [void]$Range.Find.ClearFormatting()
+                [System.Boolean]$Found = $Range.Find.Execute($Token, $false, $false, $false, $false, $false, $true, 0)
+                if (-not $Found) { break }
+
+                $Range.Text = $Value
+                if ((Test-String -IsPopulated $Tag) -and (Test-String -IsPopulated $Value)) {
+                    [System.Object]$Control = $Document.ContentControls.Add($ControlType, $Range)
+                    $Control.Tag = $Tag
+                    $Control.Title = $Tag
+                }
+            }
         }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
     }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Sets the value of the ADA content controls in a Word document, found by their tag.
+.DESCRIPTION
+    For each tag in the Values hashtable (for example ADA_FormalApplicationVersion) the text of every content
+    control with that tag is replaced by the new value. Only controls whose tag starts with ADA_ are touched,
+    so other content controls (for example Templafy or the table of contents) are never changed.
+    A tag that is not found in the document is reported, so the caller knows that value has to be corrected another way.
+.EXAMPLE
+    Update-WordDocumentControlValue -Document $Document -Values @{ ADA_FormalApplicationVersion = '1.9' }
+.INPUTS
+    [System.Object]
+    [System.Collections.Hashtable]
+.OUTPUTS
+    [System.Object[]] One object per tag, with the properties Tag, Updated and Failed.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.11.0
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Update-WordDocumentControlValue {
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The Word document object to update.')]
+        [System.Object]$Document,
+
+        [Parameter(Mandatory=$true,HelpMessage='Hashtable mapping content control tags (ADA_...) to their new values.')]
+        [System.Collections.Hashtable]$Values
+    )
+
+    try {
+        # VALIDATION
+        if ($null -eq $Document) { throw 'The Word document object is null.' }
+        if ($null -eq $Values) { throw 'The values hashtable is null.' }
+
+        # PREPARATION
+        # Count the results per tag. Only tags that start with ADA_ are accepted.
+        [System.Collections.Specialized.OrderedDictionary]$Results = [ordered]@{}
+        foreach ($Key in $Values.Keys) {
+                    [System.String]$Tag = [System.String]$Key
+                    if (-not $Tag.StartsWith('ADA_')) { Write-Warning "The tag '$Tag' does not start with ADA_ and is ignored."; continue }
+                    $Results[$Tag] = [PSCustomObject]@{ Tag = $Tag; Updated = 0; Failed = 0 }
+        }
+
+        # EXECUTION
+        # Go through all content controls once. Controls without a tag (for example the table of contents) have an empty tag.
+        foreach ($Control in $Document.ContentControls) {
+                    [System.String]$ControlTag = [System.String]$Control.Tag
+                    if (-not $Results.Contains($ControlTag)) { continue }
+
+                    [System.String]$Value = if ($null -ne $Values[$ControlTag]) { [System.String]$Values[$ControlTag] } else { '' }
+                    try {
+                        $Control.Range.Text = $Value
+                        $Results[$ControlTag].Updated++
+                    }
+                    catch {
+                        $Results[$ControlTag].Failed++
+                        Write-Warning "The content control '$ControlTag' could not be updated: $($_.Exception.Message)"
+                    }
+        }
+
+        # Return one result per tag.
+        return @($Results.Values)
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Sets the value of the ADA content controls in Word document files, found by their tag.
+.DESCRIPTION
+    Opens each document with Word (one Word instance for all documents), updates the ADA content controls with
+    Update-WordDocumentControlValue, and saves the document when at least one control was updated and none failed.
+    A document without any of the requested controls (for example a document made before the content controls existed)
+    is not changed. A document that cannot be opened or saved (for example because it is open in Word) is reported and not changed.
+.EXAMPLE
+    Update-WordDocumentFileControlValue -DocumentPath 'C:\DSL\App\1. Documentation\Dossier.docx' -Values @{ ADA_FormalApplicationVersion = '1.9' }
+.INPUTS
+    [System.String[]]
+    [System.Collections.Hashtable]
+.OUTPUTS
+    [System.Object[]] One object per document, with the properties Path, Status (Updated, NoControls or Failed), Updated and Message.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.11.0
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Update-WordDocumentFileControlValue {
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The full paths of the Word documents to update.')]
+        [System.String[]]$DocumentPath,
+
+        [Parameter(Mandatory=$true,HelpMessage='Hashtable mapping content control tags (ADA_...) to their new values.')]
+        [System.Collections.Hashtable]$Values
+    )
+
+    [System.Collections.Generic.List[System.Object]]$DocumentResults = New-Object 'System.Collections.Generic.List[System.Object]'
+    $Word = $null
+    try {
+        # VALIDATION
+        if ($DocumentPath.Count -eq 0) { return @() }
+        if ($null -eq [System.Type]::GetTypeFromProgID('Word.Application')) { throw 'Microsoft Word is not installed.' }
+
+        # PREPARATION
+        # Start Word without alerts, so a problem never waits for a dialog nobody can see.
+        $Word = New-Object -ComObject Word.Application
+        $Word.Visible = $false
+        $Word.DisplayAlerts = 0
+
+        # EXECUTION
+        foreach ($Path in $DocumentPath) {
+            # The path has to be a real [string]: a path that comes from Join-Path can make Word hang.
+            [System.String]$FullPath = [System.IO.Path]::GetFullPath([System.String]$Path)
+            [System.String]$Status = 'Failed'
+            [System.Int32]$UpdatedCount = 0
+            [System.String]$Message = ''
+            $Document = $null
+            try {
+                $Document = $Word.Documents.Open($FullPath, $false, $false)
+                if ($Document.ReadOnly) {
+                    $Message = 'The document is read-only. Is it open in Word?'
+                }
+                else {
+                    [System.Object[]]$ControlResults = @(Update-WordDocumentControlValue -Document $Document -Values $Values)
+                    $UpdatedCount = [System.Int32](($ControlResults | Measure-Object -Property Updated -Sum).Sum)
+                    [System.Int32]$FailedCount = [System.Int32](($ControlResults | Measure-Object -Property Failed -Sum).Sum)
+                    if ($FailedCount -gt 0) {
+                        $Message = "$FailedCount content control(s) could not be updated. The document was not saved."
+                    }
+                    elseif ($UpdatedCount -eq 0) {
+                        $Status = 'NoControls'
+                        $Message = 'The document has no content controls for these values, so it was not changed.'
+                    }
+                    else {
+                        $Document.Save()
+                        $Status = 'Updated'
+                    }
+                }
+            }
+            catch {
+                $Message = $_.Exception.Message
+            }
+            finally {
+                if ($Document) {
+                    try { $Document.Close($false) } catch { }
+                    [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Document)
+                }
+            }
+            [void]$DocumentResults.Add([PSCustomObject]@{ Path = $FullPath; Status = $Status; Updated = $UpdatedCount; Message = $Message })
+        }
+    }
+    catch {
+        Write-ErrorReport -ErrorRecord $_
+    }
+    finally {
+        # POST-EXECUTION
+        if ($Word) {
+            try { $Word.Quit() } catch { }
+            [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($Word)
+        }
+    }
+    return @($DocumentResults)
 }
 
 ### END OF FUNCTION

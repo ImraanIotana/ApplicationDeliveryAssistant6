@@ -68,6 +68,7 @@ function Get-ApplicationLogFolderPath {
 .DESCRIPTION
 	Searches an application package recursively for its structured *_Log.csv file. The exact
 	<ApplicationFolderName>_Log.csv file is preferred; otherwise one unambiguous log is accepted.
+	The Application ID is taken from the last log entry, because it can be changed after the folder was created.
 	When CreateIfMissing is specified, a new canonical log path is resolved in the package's unique
 	Logs folder, or in 9. Archive\Logs when no Logs folder exists.
 .EXAMPLE
@@ -81,10 +82,10 @@ function Get-ApplicationLogFolderPath {
 	CreateIfMissing is not specified.
 .NOTES
 	This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-	Version         : 6.0.3.0
+	Version         : 6.11.0
 	Author          : Imraan Iotana
 	Creation Date   : August 2026
-	Last Update     : August 2026
+	Last Update     : October 2026
 #>
 ####################################################################################################
 function Get-ApplicationLogContext {
@@ -147,9 +148,10 @@ function Get-ApplicationLogContext {
 		}
 
 		# PREPARATION - CANONICAL APPLICATION ID
-		[PSCustomObject]$FirstLogEntry = Import-Csv -LiteralPath $LogFile.FullName | Select-Object -First 1
-		[System.String]$ApplicationID = if (($null -ne $FirstLogEntry) -and (Test-String -IsPopulated ([System.String]$FirstLogEntry.ApplicationID))) {
-			[System.String]$FirstLogEntry.ApplicationID
+		# The last entry holds the current Application ID: the Application ID can be changed afterwards, while the older entries keep the ID they were written with
+		[PSCustomObject]$LastLogEntry = Import-Csv -LiteralPath $LogFile.FullName | Select-Object -Last 1
+		[System.String]$ApplicationID = if (($null -ne $LastLogEntry) -and (Test-String -IsPopulated ([System.String]$LastLogEntry.ApplicationID))) {
+			[System.String]$LastLogEntry.ApplicationID
 		}
 		else {
 			$LogFile.BaseName -replace '_Log$', ''
