@@ -26,8 +26,6 @@ function Start-Application {
     )
 
     try {
-        # Move the window to the top-left corner of the screen
-        Move-WindowToTopLeft
         # Import and attach application settings to the ApplicationObject
         Import-ApplicationSettings -InputObject $InputObject
         # Initialize the User Settings
