@@ -1,6 +1,14 @@
 # Application Delivery Assistant 6
 Application Delivery Assistant version 6 - Copyright (C) Iotana. Licensed under the Apache License 2.0.
 
+**Application Delivery Assistant** takes the repetitive administration out of application packaging.
+- Create an Application Intake and fill in the Word documentation automatically
+- Generate AppLocker files, MSI/ISS/INNO helper files and ICO icons
+- Export shortcuts, compare files and folders, and view CSV files
+- Search, manage and correct application folders in the DSL
+
+Built with PowerShell. No installation required, just extract and run.
+
 Getting started
 1. Download the ZIP file. Before extracting it, right-click it, choose Properties and tick Unblock (if shown), then click OK.
 2. Extract it to a folder that you can write to, for example %LOCALAPPDATA%\Programs\Application Delivery Assistant. Avoid Program Files.
