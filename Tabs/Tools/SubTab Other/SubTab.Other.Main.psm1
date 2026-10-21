@@ -13,7 +13,7 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.10.3
+    Version         : 6.11.1
     Author          : Imraan Iotana
     Creation Date   : May 2026
     Last Update     : October 2026
@@ -35,11 +35,11 @@ function Import-SubTabToolsOther {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'OTHER'
-            Version             = '6.10.3'
-            BackGroundColor     = 'DarkBlue'
+            Version             = '6.11.1'
+            BackGroundColor     = '#2F6F6D'
         }
         # Set the main color for the GroupBoxes in this sub-tab
-        [System.String]$MainColor = 'Cyan'
+        [System.String]$MainColor = '#E6F4F1'
 
         # EXECUTION - TAB
         # Create the TabPage

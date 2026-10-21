@@ -13,10 +13,10 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.4.0
+    Version         : 6.11.1
     Author          : Imraan Iotana
     Creation Date   : August 2026
-    Last Update     : August 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Import-TabUDF {
@@ -35,11 +35,11 @@ function Import-TabUDF {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'UDF'
-            Version             = '6.4.0'
-            BackGroundColor     = '#2F6F6D'
+            Version             = '6.11.1'
+            BackGroundColor     = 'DarkBlue'
         }
         # Set the main color for the GroupBoxes in this tab
-        [System.String]$MainColor = '#E6F4F1'
+        [System.String]$MainColor = 'Cyan'
 
         # EXECUTION - TAB
         # Create the TabPage

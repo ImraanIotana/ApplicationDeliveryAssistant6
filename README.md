@@ -15,6 +15,12 @@ Getting started
 3. Double-click Start Application.cmd.
 4. Optional: install the application in a folder of your choice with the Install Application to Folder action on the SETTINGS tab, Maintenance box, and create your own Start Menu or Desktop shortcut with the Create Startmenu Shortcut or Create Desktop Shortcut actions.
 
+Version 6.11.1  
+October 2026
+- Tools - Hyper-V: Removed the obsolete HYPER-V sub-tab (virtual machine creation, selection, details and removal) and its functions, as it is no longer used. The Hyper-V virtual machines themselves are not touched.
+- General: Restored the alternating Tools sub-tab color sequence after removing Hyper-V: UDF is now dark blue and OTHER is now teal.
+- General: Updated startup, Tools tab, Tools - UDF and Tools - Other sub-tabs and touched function metadata to Version 6.11.1.
+
 Version 6.11.0  
 October 2026
 - DSL Management - DSL CORRECTION: Added a new DSL CORRECTION sub-tab, after DSL SEARCH, for correcting an existing application folder. Select an application folder in the list and click Load to show its metadata in four read-only groups: METADATA FILE, FOLDER NAME, FORMAL PROPERTIES and CUSTOM PROPERTIES. Nothing is loaded when you only select a folder, and the details are cleared when you select another folder, so the details on screen always belong to the loaded folder. The small Copy button copies the folder name, the small Refresh button reloads the list of folders (a loaded folder stays loaded), and the small Open Folder button opens the selected application folder in File Explorer.

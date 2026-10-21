@@ -13,7 +13,7 @@
     No objects are returned to the pipeline.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.10.3
+    Version         : 6.11.1
     Author          : Imraan Iotana
     Creation Date   : May 2026
     Last Update     : October 2026
@@ -35,7 +35,7 @@ function Import-TabTools {
         [System.Collections.Hashtable]$TabProperties = @{
             ParentTabControl    = $ParentTabControl
             Title               = 'TOOLS'
-            Version             = '6.10.3'
+            Version             = '6.11.1'
             BackGroundColor     = 'DarkBlue'
         }
 
@@ -52,7 +52,6 @@ function Import-TabTools {
         Import-SubTabServices -InputObject $InputObject -ParentTabControl $SubTabControl
         Import-SubTabDrivers -InputObject $InputObject -ParentTabControl $SubTabControl
         Import-SubTabCertificates -InputObject $InputObject -ParentTabControl $SubTabControl
-        Import-SubTabHyperV -InputObject $InputObject -ParentTabControl $SubTabControl
         Import-TabUDF -InputObject $InputObject -ParentTabControl $SubTabControl
         Import-SubTabToolsOther -InputObject $InputObject -ParentTabControl $SubTabControl
     }
