@@ -967,7 +967,8 @@ function Start-SelectedApplicationAction {
 .DESCRIPTION
     Opens existing documentation normally. When Dossier or TAT documents are missing, the function
     creates only the missing documents from package templates or, after confirmation, the selected
-    customer template from the Intake Templates screen.
+    customer template from the Intake Templates screen. Package templates in the application folder
+    are removed once their document exists. Customer templates are never removed.
 .EXAMPLE
     Invoke-DSLSelectedApplicationDocumentation -Path 'C:\Applications\Vendor_App_1.0'
 .INPUTS
@@ -976,10 +977,10 @@ function Start-SelectedApplicationAction {
     None.
 .NOTES
     This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
-    Version         : 6.7.1
+    Version         : 6.11.2
     Author          : Imraan Iotana
     Creation Date   : August 2026
-    Last Update     : September 2026
+    Last Update     : October 2026
 #>
 ####################################################################################################
 function Invoke-DSLSelectedApplicationDocumentation {
@@ -1007,6 +1008,7 @@ function Invoke-DSLSelectedApplicationDocumentation {
         }
 
         [System.Boolean]$UseSelectedCustomerTemplateFallback = $false
+        [System.Boolean]$HasExistingDocument = $false
         [System.IO.FileInfo[]]$TemplateFiles = @(
             '*.dotx','*.dotm' | ForEach-Object {
                 Get-ChildItem -LiteralPath $Path -File -Filter $_ -Recurse -ErrorAction SilentlyContinue
@@ -1018,37 +1020,58 @@ function Invoke-DSLSelectedApplicationDocumentation {
 
         if ($null -eq $TemplateFile) {
             [System.String]$ExistingDocumentPath = Resolve-DSLApplicationDocumentationFile -ApplicationFolderPath $Path
-            if (-not [System.String]::IsNullOrWhiteSpace($ExistingDocumentPath)) {
-                Open-DSLDocumentationFile -Path $ExistingDocumentPath
-                return
-            }
+            [System.Boolean]$HasExistingDocument = -not [System.String]::IsNullOrWhiteSpace($ExistingDocumentPath)
 
             [System.Windows.Forms.ComboBox]$DocumentTemplateComboBox = Get-ComboBoxObject -ComboBoxName 'DocumentCustomerTemplate'
             [System.Object]$SelectedCustomerTemplate = if ($null -ne $DocumentTemplateComboBox) { $DocumentTemplateComboBox.SelectedItem } else { $null }
             [System.String]$SelectedCustomerTemplateName = if ($null -ne $SelectedCustomerTemplate -and $null -ne $SelectedCustomerTemplate.PSObject.Properties['Identity']) { [System.String]$SelectedCustomerTemplate.Identity } else { '' }
+            [System.Boolean]$HasUsableCustomerTemplate = ($null -ne $SelectedCustomerTemplate) -and
+                -not ($null -ne $SelectedCustomerTemplate.PSObject.Properties['IsCustomTemplate'] -and [System.Boolean]$SelectedCustomerTemplate.IsCustomTemplate)
 
-            if ($null -eq $SelectedCustomerTemplate -or
-                ($null -ne $SelectedCustomerTemplate.PSObject.Properties['IsCustomTemplate'] -and [System.Boolean]$SelectedCustomerTemplate.IsCustomTemplate)) {
-                Write-Line "No Word document or copied Word template was found in the selected application folder, and no customer template selection is available. ($Path)" -Type Warning
-                return
-            }
-
-            [System.String]$FallbackConfirmationBody = "No Word template was found in the selected application folder.`n`nDo you want to use the selected customer template '$SelectedCustomerTemplateName' from the Intake Templates screen?"
-            if (-not (Get-UserConfirmation -Title 'USE CUSTOMER TEMPLATE' -Body $FallbackConfirmationBody -Type Warning)) {
-                Write-Line 'Customer template fallback cancelled by user.'
-                return
-            }
-
-            [System.String[]]$FallbackTemplateNames = @()
-            if ($null -ne $SelectedCustomerTemplate.Content -and $SelectedCustomerTemplate.Content -is [System.Collections.IDictionary]) {
-                if ($SelectedCustomerTemplate.Content.Contains('TemplateName') -and (Test-String -IsPopulated $SelectedCustomerTemplate.Content.TemplateName)) {
-                    $FallbackTemplateNames += [System.String]$SelectedCustomerTemplate.Content.TemplateName
+            if ($HasExistingDocument) {
+                # The Dossier exists and the folder has no templates: only a missing TAT document can still be offered from the customer template
+                [System.String]$TatTemplateName = if ($HasUsableCustomerTemplate) { Get-DSLCustomerTatTemplateName -CustomerTemplate $SelectedCustomerTemplate } else { '' }
+                [System.String]$ExistingApplicationID = Resolve-DSLApplicationIDFromPackage -ApplicationFolderPath $Path
+                if ((Test-String -IsEmpty $TatTemplateName) -or (Test-String -IsEmpty $ExistingApplicationID) -or (Test-String -IsEmpty ([System.String]$SelectedCustomerTemplate.Directory))) {
+                    Open-DSLDocumentationFile -Path $ExistingDocumentPath
+                    return
                 }
-                if ($SelectedCustomerTemplate.Content.Contains('TatTemplateName') -and (Test-String -IsPopulated $SelectedCustomerTemplate.Content.TatTemplateName)) {
-                    $FallbackTemplateNames += [System.String]$SelectedCustomerTemplate.Content.TatTemplateName
+                [System.String]$ExpectedTatDocumentName = Get-IntakeOutputDocumentFileName -TemplateFileName $TatTemplateName -ApplicationID $ExistingApplicationID
+                [System.IO.FileInfo]$ExistingTatDocument = Get-ChildItem -LiteralPath $Path -File -Filter $ExpectedTatDocumentName -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($null -ne $ExistingTatDocument) {
+                    Open-DSLDocumentationFile -Path $ExistingDocumentPath
+                    return
                 }
-                elseif ($SelectedCustomerTemplate.Content.Contains('TATTemplateName') -and (Test-String -IsPopulated $SelectedCustomerTemplate.Content.TATTemplateName)) {
-                    $FallbackTemplateNames += [System.String]$SelectedCustomerTemplate.Content.TATTemplateName
+
+                [System.String]$TatConfirmationBody = "The TAT document is missing:`n`n$ExpectedTatDocumentName`n`nDo you want to create it now with the selected customer template '$SelectedCustomerTemplateName' from the Intake Templates screen?"
+                if (-not (Get-UserConfirmation -Title 'CREATE TAT DOCUMENT' -Body $TatConfirmationBody -Type Warning)) {
+                    Write-Line 'TAT document creation cancelled by user.'
+                    Open-DSLDocumentationFile -Path $ExistingDocumentPath
+                    return
+                }
+                [System.String[]]$FallbackTemplateNames = @($TatTemplateName)
+            }
+            else {
+                if (-not $HasUsableCustomerTemplate) {
+                    Write-Line "No Word document or copied Word template was found in the selected application folder, and no customer template selection is available. ($Path)" -Type Warning
+                    return
+                }
+
+                [System.String]$FallbackConfirmationBody = "No Word template was found in the selected application folder.`n`nDo you want to use the selected customer template '$SelectedCustomerTemplateName' from the Intake Templates screen?"
+                if (-not (Get-UserConfirmation -Title 'USE CUSTOMER TEMPLATE' -Body $FallbackConfirmationBody -Type Warning)) {
+                    Write-Line 'Customer template fallback cancelled by user.'
+                    return
+                }
+
+                [System.String[]]$FallbackTemplateNames = @()
+                if ($null -ne $SelectedCustomerTemplate.Content -and $SelectedCustomerTemplate.Content -is [System.Collections.IDictionary]) {
+                    if ($SelectedCustomerTemplate.Content.Contains('TemplateName') -and (Test-String -IsPopulated $SelectedCustomerTemplate.Content.TemplateName)) {
+                        $FallbackTemplateNames += [System.String]$SelectedCustomerTemplate.Content.TemplateName
+                    }
+                    [System.String]$FallbackTatTemplateName = Get-DSLCustomerTatTemplateName -CustomerTemplate $SelectedCustomerTemplate
+                    if (Test-String -IsPopulated $FallbackTatTemplateName) {
+                        $FallbackTemplateNames += $FallbackTatTemplateName
+                    }
                 }
             }
 
@@ -1065,6 +1088,7 @@ function Invoke-DSLSelectedApplicationDocumentation {
 
             if ($null -eq $TemplateFile) {
                 Write-Line "The selected customer template does not contain any usable Word templates. ($SelectedCustomerTemplateName)" -Type Warning
+                if ($HasExistingDocument) { Open-DSLDocumentationFile -Path $ExistingDocumentPath }
                 return
             }
         }
@@ -1085,7 +1109,10 @@ function Invoke-DSLSelectedApplicationDocumentation {
                 $DocumentationRelativePath = [System.String]$SelectedCustomerTemplate.ApplicationFolderSubFolders.Documentation
             }
         }
-        [System.String]$DocumentationFolderPath = if ($UseSelectedCustomerTemplateFallback) {
+        [System.String]$DocumentationFolderPath = if ($UseSelectedCustomerTemplateFallback -and $HasExistingDocument) {
+            Split-Path -Path $ExistingDocumentPath -Parent
+        }
+        elseif ($UseSelectedCustomerTemplateFallback) {
             Join-Path -Path $Path -ChildPath $DocumentationRelativePath
         }
         else {
@@ -1102,6 +1129,9 @@ function Invoke-DSLSelectedApplicationDocumentation {
         )
 
         if ($PendingTemplateFiles.Count -eq 0) {
+            if (-not $UseSelectedCustomerTemplateFallback) {
+                Remove-DSLProcessedDocumentTemplate -TemplateFiles $TemplateFiles -DocumentationFolderPath $DocumentationFolderPath -ApplicationID $ApplicationID
+            }
             [System.String]$DocumentPath = Resolve-DSLApplicationDocumentationFile -ApplicationFolderPath $Path
             if (Test-String -IsPopulated $DocumentPath) {
                 Open-DSLDocumentationFile -Path $DocumentPath
@@ -1109,6 +1139,11 @@ function Invoke-DSLSelectedApplicationDocumentation {
             else {
                 Write-Line "The selected application has no dossier documentation file to open. ($Path)" -Type Warning
             }
+            return
+        }
+
+        if ($null -eq $MetadataFile) {
+            Write-Line "No metadata file (Metadata_*.json) was found in the selected application folder, so the documentation cannot be created. ($Path)" -Type Warning
             return
         }
 
@@ -1126,12 +1161,115 @@ function Invoke-DSLSelectedApplicationDocumentation {
             [System.Boolean]$CurrentDocumentCreated = Invoke-DocumentGeneration -WordTemplatePath $PendingTemplateFile.FullName -MetaDataJsonPath $MetadataFile.FullName -OutputFolder $DocumentationFolderPath
             $AnyDocumentCreated = $AnyDocumentCreated -or $CurrentDocumentCreated
         }
+        # Templates copied into the application folder are only needed to create the documents; templates of the customer fallback are never removed
+        if (-not $UseSelectedCustomerTemplateFallback) {
+            Remove-DSLProcessedDocumentTemplate -TemplateFiles $TemplateFiles -DocumentationFolderPath $DocumentationFolderPath -ApplicationID $ApplicationID
+        }
         if ($AnyDocumentCreated -or (Test-String -IsPopulated (Resolve-DSLApplicationDocumentationFile -ApplicationFolderPath $Path))) {
             Open-DSLSelectedApplicationDocumentation -Path $Path
         }
     }
     catch {
         Write-ErrorReport -ErrorRecord $_
+    }
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Gets the TAT template file name of a customer template.
+.DESCRIPTION
+    Reads TatTemplateName (or TATTemplateName) from the content of the customer template object.
+    Returns an empty string when the customer template has no TAT template.
+.EXAMPLE
+    Get-DSLCustomerTatTemplateName -CustomerTemplate $SelectedCustomerTemplate
+.INPUTS
+    [System.Object]
+.OUTPUTS
+    [System.String]
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.11.2
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Get-DSLCustomerTatTemplateName {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The selected customer template object from the Template Selection ComboBox.')]
+        [System.Object]$CustomerTemplate
+    )
+
+    if ($null -eq $CustomerTemplate.Content -or $CustomerTemplate.Content -isnot [System.Collections.IDictionary]) { return '' }
+    foreach ($KeyName in 'TatTemplateName','TATTemplateName') {
+        if ($CustomerTemplate.Content.Contains($KeyName) -and (Test-String -IsPopulated $CustomerTemplate.Content[$KeyName])) {
+            return [System.String]$CustomerTemplate.Content[$KeyName]
+        }
+    }
+    return ''
+}
+
+### END OF FUNCTION
+####################################################################################################
+
+
+####################################################################################################
+<#
+.SYNOPSIS
+    Removes Word templates from an application folder after their documents have been created.
+.DESCRIPTION
+    Removes each given template file only when the document that was created from it exists in the
+    documentation folder. Templates without a created document are kept. Failures to remove a
+    template are reported as a warning.
+.EXAMPLE
+    Remove-DSLProcessedDocumentTemplate -TemplateFiles $TemplateFiles -DocumentationFolderPath 'C:\DSL\App\1. Documentation' -ApplicationID 'Vendor_App_1.0'
+.INPUTS
+    [System.IO.FileInfo[]]
+.OUTPUTS
+    None.
+.NOTES
+    This script is part of the Application Delivery Assistant. Copyright (C) Iotana. Licensed under the Apache License 2.0.
+    Version         : 6.11.2
+    Author          : Imraan Iotana
+    Creation Date   : October 2026
+    Last Update     : October 2026
+#>
+####################################################################################################
+function Remove-DSLProcessedDocumentTemplate {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$true,HelpMessage='The Word template files that were found in the application folder.')]
+        [AllowEmptyCollection()]
+        [System.IO.FileInfo[]]$TemplateFiles,
+
+        [Parameter(Mandatory=$true,HelpMessage='The documentation folder where the documents are created.')]
+        [ValidateNotNullOrEmpty()]
+        [System.String]$DocumentationFolderPath,
+
+        [Parameter(Mandatory=$true,HelpMessage='The Application ID used in the document file names.')]
+        [ValidateNotNullOrEmpty()]
+        [System.String]$ApplicationID
+    )
+
+    foreach ($TemplateFile in $TemplateFiles) {
+        try {
+            [System.String]$ExpectedDocumentName = Get-IntakeOutputDocumentFileName -TemplateFileName $TemplateFile.Name -ApplicationID $ApplicationID
+            if (-not (Test-Path -LiteralPath (Join-Path -Path $DocumentationFolderPath -ChildPath $ExpectedDocumentName) -PathType Leaf)) { continue }
+            if (-not (Test-Path -LiteralPath $TemplateFile.FullName -PathType Leaf)) { continue }
+
+            Remove-Item -LiteralPath $TemplateFile.FullName -Force -ErrorAction Stop
+            Write-Line "Word template removed after document creation: $($TemplateFile.FullName)"
+        }
+        catch {
+            Write-Line "The Word template could not be removed. ($($TemplateFile.FullName))" -Type Warning
+        }
     }
 }
 

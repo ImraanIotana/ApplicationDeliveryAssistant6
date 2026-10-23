@@ -15,6 +15,12 @@ Getting started
 3. Double-click Start Application.cmd.
 4. Optional: install the application in a folder of your choice with the Install Application to Folder action on the SETTINGS tab, Maintenance box, and create your own Start Menu or Desktop shortcut with the Create Startmenu Shortcut or Create Desktop Shortcut actions.
 
+Version 6.11.2  
+October 2026
+- DSL Management - DSL SEARCH: The Documentation button now removes the Word templates (.dotx/.dotm) from the application folder after the documents have been created from them. A template is only removed when its document exists, so a template whose document could not be created stays. Templates found while all documents already exist are removed as well. Templates of the selected customer template (Intake Templates screen) are never removed.
+- DSL Management - DSL SEARCH: Added a check for a missing metadata file. When documents have to be created but no Metadata_*.json file is found in the application folder, a warning is shown and nothing is created. When the application folder contains no Word template at all, the selected customer template is used as before when there is no document yet. When the Dossier already exists but the TAT document is missing, the Documentation button now offers to create only the TAT document from the TAT template of the selected customer template (Intake Templates screen), next to the existing Dossier. Declining, or a customer template without a TAT template, just opens the Dossier.
+- General: Updated startup and touched function metadata to Version 6.11.2.
+
 Version 6.11.1  
 October 2026
 - Tools - Hyper-V: Removed the obsolete HYPER-V sub-tab (virtual machine creation, selection, details and removal) and its functions, as it is no longer used. The Hyper-V virtual machines themselves are not touched.
